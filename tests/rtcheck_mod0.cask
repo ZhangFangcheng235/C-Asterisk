@@ -1,0 +1,6 @@
+// rtcheck_mod0.cask -- Excel MOD() still checks division by zero
+start {
+    number d = 0;
+    say "before: ", MOD(10, d);
+    say "you should never see this";
+}

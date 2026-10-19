@@ -1,0 +1,13 @@
+function main() {
+    number n = 0;
+    do {
+        n = n + 1;
+        print n;
+    } while (n < 3);
+
+    number k = 99;
+    do {
+        print k;          // runs once even though the condition is false
+    } while (k < 5);
+    print k;
+}

@@ -1,0 +1,1 @@
+// eol_cr.cask -- this file is deliberately saved with CR-only line endings,// to prove the compiler does not depend on the line-ending style.function main() {    print "line endings do not matter";}

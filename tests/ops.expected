@@ -1,0 +1,25 @@
+a + b = 13
+a - b = 7
+a * b = 30
+a / b = 3
+a % b = 1
+after a++: 11
+after a-- twice: 9
+after ++a: 10
+a += 5: 15
+a -= 3: 12
+a *= 2: 24
+a /= 4: 6
+1 << 10 = 1024
+1024 >> 3 = 128
+6 & 3 = 2
+6 | 3 = 7
+6 ^ 3 = 5
+~0 = -1
+not ok = false
+ok and false = false
+ok or false = true
+grade marker: fail
+max: 6
+a > b -> true
+a == b -> false

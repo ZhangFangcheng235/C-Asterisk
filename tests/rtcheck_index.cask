@@ -1,0 +1,7 @@
+// rtcheck2.cask -- array index out of range must stop the program
+start {
+    number a[3] = {10, 20, 30};
+    number i = 5;
+    say "before: ", a[i];    // index 5 of 3 -> run-time error
+    say "you should never see this";
+}

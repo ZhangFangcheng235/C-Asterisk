@@ -1,0 +1,6 @@
+function main() {
+    text t = "a";
+    switch (t) {
+        case 1: print 1;
+    }
+}

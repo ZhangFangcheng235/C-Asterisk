@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build: toolchain (build.bat)",
+      "type": "shell",
+      "command": "build.bat",
+      "windows": { "options": { "shell": "cmd.exe" } },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "cask: compile current file",
+      "type": "shell",
+      "command": "bin\\caskc.exe \"${file}\"",
+      "windows": { "options": { "shell": "cmd.exe" } },
+      "group": "build",
+      "problemMatcher": [
+        {
+          "owner": "cask",
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(error|warning):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        }
+      ]
+    },
+    {
+      "label": "cask: compile and run current file",
+      "type": "shell",
+      "command": "bin\\caskc.exe \"${file}\" --run",
+      "windows": { "options": { "shell": "cmd.exe" } },
+      "group": "build",
+      "problemMatcher": [
+        {
+          "owner": "cask",
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(error|warning):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        }
+      ]
+    },
+    {
+      "label": "cask: run all tests",
+      "type": "shell",
+      "command": "run_tests.bat",
+      "windows": { "options": { "shell": "cmd.exe" } },
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

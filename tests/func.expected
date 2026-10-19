@@ -1,0 +1,6 @@
+fib(20) = 6765
+sum 1..100 = 5050
+max(3, 9) = 9
+greet says:
+Hello, world!
+swap-like copy: a-b

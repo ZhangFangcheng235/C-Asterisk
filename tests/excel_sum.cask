@@ -1,0 +1,13 @@
+// excel_sum.cask -- Excel aggregate functions over an array
+start {
+    number a[5] = {10, 20, 30, 40, 50};
+    real r[3] = {1.5, 2.5, 3.0};
+    say "SUM: ", SUM(a);
+    say "AVERAGE: ", AVERAGE(a);
+    say "COUNT: ", COUNT(a);
+    say "MAX/MIN: ", MAX(a), " ", MIN(a);
+    say "real SUM: ", SUM(r);
+    say "real AVERAGE: ", AVERAGE(r);
+    say "real MAX/MIN: ", MAX(r), " ", MIN(r);
+    say "MAX(values): ", MAX(a[0], a[4]);
+}

@@ -1,0 +1,12 @@
+function main() {
+    number n = 0;
+    until (n >= 3) {
+        n = n + 1;
+        print n;
+    }
+    number k = 7;
+    until (k == 0) {
+        k = k - 1;
+    }
+    print k;
+}

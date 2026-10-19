@@ -1,0 +1,2 @@
+// cerr_if_cond.cask -- the IF() condition must be a comparison
+start { number x = 1; say IF(x, 1, 2); }

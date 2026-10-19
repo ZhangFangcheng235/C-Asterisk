@@ -1,0 +1,9 @@
+// val.cask -- VALUE() / VAL(): 把一段文字变成整数（Excel 的 VALUE 函数）
+function main() {
+    print VALUE("42");
+    print VAL("  -8 ");
+    print VALUE("abc");            // 不是数字 -> 0
+    string 行 = "123";
+    print VALUE(行) + 1;
+    print VALUE(""), LEN("abc");
+}

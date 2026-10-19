@@ -1,0 +1,1 @@
+tests\native\cerr_op_type.cask:4:25: 错误: 参数 1（window()）必须是 string

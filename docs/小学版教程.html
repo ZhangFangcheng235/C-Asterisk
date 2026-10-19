@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>小学版教程 · C* 语言（0.4.2）</title>
+<style>
+  body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+         line-height: 1.7; color: #222; background: #fafafa;
+         max-width: 920px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { border-bottom: 3px solid #2b6cb0; padding-bottom: 8px; }
+  h2 { border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 2em; }
+  a { color: #2b6cb0; }
+  code { background: #eef1f5; padding: 1px 6px; border-radius: 4px;
+          font-family: Consolas, "Courier New", monospace; font-size: 0.95em; }
+  pre { background: #1e2430; color: #e6e6e6; padding: 14px 16px;
+         border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  img { max-width: 100%; border: 1px solid #ccd; border-radius: 6px;
+         margin: 10px 0; }
+  table { border-collapse: collapse; margin: 1em 0; width: 100%; }
+  th, td { border: 1px solid #ccd; padding: 7px 10px; text-align: left; }
+  th { background: #eef1f5; }
+  blockquote { border-left: 4px solid #2b6cb0; margin: 1em 0;
+                padding: 4px 16px; color: #444; background: #f0f4f8; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2.5em 0; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<h1>小学版教程 · C* 语言（0.4.2）</h1>
+<blockquote><p>C* 读作 <strong>C Asterisk</strong>。程序文件的后缀是 <code>.cask</code>。
+这本教程写给第一次学编程的同学：会打字、会数数就够了，不需要任何基础。
+一共 16 课，每课都有能直接按 F5 跑起来的小例子。
+想查细节，翻 <code>docs\CStar手册.md</code>；想练更难的题，接着看《C* 初中版教程》。</p></blockquote>
+<hr>
+<h2>开始之前：先认识两个程序</h2>
+<p>安装好 C* 以后，<code>bin</code> 文件夹里有两个程序：</p>
+<ol><li><code>bin\caskide.exe</code> —— **C* Studio**，写程序用的编辑器，界面是中文的。</li><li><code>bin\caskc.exe</code> —— 编译器，把 <code>.cask</code> 文件翻译成能运行的 <code>.exe</code>。平时不用管它，你在 Studio 里按 F5，它会自动帮你叫这个程序。</li></ol>
+<p>双击 <code>bin\caskide.exe</code> 打开 C* Studio，会用到这里：</p>
+<table>
+<thead><tr><th>在哪儿</th><th>干什么</th></tr></thead>
+<tbody>
+<tr><td>工具栏「新建 / 打开 / 保存」</td><td>管文件。<code>Ctrl+N</code> 新建，<code>Ctrl+S</code> 保存</td></tr>
+<tr><td>工具栏「▶ 运行」「■ 停止」</td><td><code>F5</code> 运行，<code>Esc</code> 停下来</td></tr>
+<tr><td>中间大片地方</td><td>写代码的位置，左边灰色的数字是行号</td></tr>
+<tr><td>下面的「输出」面板</td><td>程序说的话、问你的事，都在这里</td></tr>
+<tr><td>下面的「问题」面板</td><td>哪里写错了，一条条列在这儿；点一下，光标就跳过去</td></tr>
+<tr><td>工具栏「代码 / 积木」</td><td>同一个程序的两种看法，随时切换</td></tr>
+<tr><td>工具栏「格式化」</td><td>自动把缩进排整齐</td></tr>
+<tr><td><code>F1</code></td><td>帮助（快捷键小抄）</td></tr>
+<tr><td>最下面的状态栏</td><td>文件名、编码、第几行第几列，还有四个计数：严重、语法、拼写、提示</td></tr>
+</tbody></table>
+<p>四个计数是什么意思，见文末的「附录：常见错误」。</p>
+<p>写好的文件要用 <code>.cask</code> 结尾，比如 <code>你好.cask</code>。</p>
+<hr>
+<h2>第 1 课　让电脑说第一句话</h2>
+<p><strong>这一课学什么</strong>：把第一个程序敲进去，按 F5，看到电脑说话。</p>
+<p>打开 C* Studio，按 <code>Ctrl+N</code> 新建一个文件，把下面这几行<strong>一个字母一个字母</strong>打进去：</p>
+<pre><code class="lang-cask">function main() {
+    print "你好，我是电脑！";
+}</code></pre>
+<p>打完后按 <code>F5</code>。下面「输出」面板里会出现：</p>
+<pre><code class="lang-text">你好，我是电脑！</code></pre>
+<p>这就是你的第一个程序。</p>
+<p><strong>一行一行看</strong>：</p>
+<table>
+<thead><tr><th>你写的</th><th>它的意思</th></tr></thead>
+<tbody>
+<tr><td><code>function main() {</code></td><td>程序的开始。<code>main</code> 的意思是"主要的"，电脑从这里开始做事。每个程序都要有它</td></tr>
+<tr><td><code>print</code></td><td>让电脑说一句话</td></tr>
+<tr><td><code>"你好，我是电脑！"</code></td><td>双引号里的字会原样说出来。这种带双引号的文字叫<strong>字符串</strong></td></tr>
+<tr><td><code>;</code></td><td>分号，表示"这句话说完了"。每一句后面都要写</td></tr>
+<tr><td><code>}</code></td><td>最后一行，表示程序结束</td></tr>
+</tbody></table>
+<p><strong>想说几句就说几句</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    print "第一句";
+    print "第二句";
+    print "第三句";
+}</code></pre>
+<p><code>print</code> 说完会换行，所以三句话各占一行。</p>
+<p><strong>想连着说、不换行</strong>，把 <code>print</code> 换成 <code>show</code>：</p>
+<pre><code class="lang-cask">function main() {
+    show "1 加 1 等于 ";
+    print 1 + 1;
+}</code></pre>
+<p>输出是 <code>1 加 1 等于 2</code>：<code>show</code> 说完停在原地，接着 <code>print</code> 说完再换行。</p>
+<blockquote><p>小提醒：双引号和分号一个都不能少。少了双引号，电脑不知道哪段是文字；少了分号，它不知道这句话说完了。</p></blockquote>
+<h3>动手试一试</h3>
+<ol><li>把 <code>"你好，我是电脑！"</code> 换成你自己的名字，再按一次 F5。</li><li>用三行 <code>print</code> 说出你最喜欢的三样东西。</li><li>用 <code>show</code> 和 <code>print</code> 拼出一行：<code>我的名字是______，我今年______岁。</code></li></ol>
+<hr>
+<h2>第 2 课　程序的壳、注释和缩进</h2>
+<p><strong>这一课学什么</strong>：看清每个程序的"壳"，学会写注释，学会看错误在哪一行。</p>
+<p>每个 C* 程序都长这个样子：</p>
+<pre><code class="lang-text">function main() {
+    // 这里写你要电脑做的事
+}</code></pre>
+<ul><li><code>function</code> 的意思是"函数"，也就是一段可以反复用的做法。</li><li><code>main</code> 是这段做法的名字。电脑只从 <code>main</code> 开始做。名字前面什么都没写，说明它做完就完了，不用给答案。</li><li><code>{</code> 和 <code>}</code> 是一对<strong>大括号</strong>，要做的事写在它们中间。有开就有合，少一个都会报错。</li><li><code>//</code> 后面的字是<strong>注释</strong>，只给人和自己看，电脑完全不理它。</li></ul>
+<p>带注释的完整程序：</p>
+<pre><code class="lang-cask">// 这是我写的第二个程序
+function main() {
+    print "好记性不如烂笔头";     // 注释也可以写在句子后面
+    print "注释不会影响结果";
+}</code></pre>
+<p>每行前面的空格叫<strong>缩进</strong>。不缩进程序也能跑，但大家都缩进，这样一眼就能看出谁包在谁里面。打一下 <code>Tab</code> 缩四格；懒得管就写完按工具栏的「格式化」，它会自动排好。</p>
+<p><strong>写错了怎么办</strong>：</p>
+<ol><li>停下打字大约半秒，编辑器就在下面「问题」面板里列出问题，出错那一行的行号会变红。</li><li>按 <code>F5</code> 也会先检查一遍再运行。</li><li>点「问题」面板里的某一条，光标就跳到出错的地方。</li></ol>
+<p>故意少写一个分号，问题面板会说：</p>
+<pre><code class="lang-text">S|3|1|这里要写 ';'，它要写在 print 后面，但是碰到了 '}'</code></pre>
+<p>意思是：第 3 行第 1 列，<code>print</code> 这一句少了分号。行首的 <code>S</code> 是"语法"级别，下面附录里会讲。</p>
+<h3>动手试一试</h3>
+<ol><li>在程序最上面写一行注释，写上今天的日期。</li><li>故意删掉一个 <code>;</code>，看看问题面板怎么说。</li><li>再故意删掉一个 <code>}</code>，看看又怎么说，然后把它们都加回来。</li></ol>
+<hr>
+<h2>第 3 课　盒子：装整数（int）</h2>
+<p><strong>这一课学什么</strong>：用盒子记住一个整数，需要时拿出来用，还能把里面的数换掉。</p>
+<pre><code class="lang-cask">function main() {
+    int 苹果 = 3;
+    print "桌上有 ", 苹果, " 个苹果";
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">桌上有 3 个苹果</code></pre>
+<p><strong>一行一行看</strong>：</p>
+<ul><li><code>int 苹果 = 3;</code> —— 准备一个装<strong>整数</strong>的盒子，起名叫 <code>苹果</code>，先放进去 3。<code>int</code> 是整数类型，integer 的缩写。</li><li>盒子名可以用中文，也可以用英文，只要中间没有空格。名字最好一眼能看出装的是什么。</li><li>这里的 <code>=</code> 不是"等于"，而是"把右边的东西放进左边的盒子里"。</li><li><code>print "桌上有 ", 苹果, " 个苹果";</code> —— 用逗号把几样东西接起来，一样一样说出去。文字要加双引号，盒子名不加引号。</li></ul>
+<p><strong>盒子里的数能换</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    int 糖果 = 5;
+    print "原来有 ", 糖果, " 颗糖";
+    糖果 = 7;
+    print "现在有 ", 糖果, " 颗糖";
+    糖果 = 糖果 + 1;
+    print "又得到一颗，变成 ", 糖果, " 颗";
+    糖果 += 10;
+    print "一次得到十颗，变成 ", 糖果, " 颗";
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">原来有 5 颗糖
+现在有 7 颗糖
+又得到一颗，变成 8 颗
+一次得到十颗，变成 18 颗</code></pre>
+<ul><li><code>糖果 = 糖果 + 1;</code> 先看盒子里现在是几，加 1，再放回去。</li><li><code>糖果 += 10;</code> 是 <code>糖果 = 糖果 + 10;</code> 的简写。<code>-=</code>、<code>*=</code>、<code>/=</code> 也一样。</li><li><strong>忘记给初值也没关系</strong>：<code>int 数量;</code> 这样的盒子自动就是 <code>0</code>，不会冒出一个乱七八糟的数。</li></ul>
+<h3>动手试一试</h3>
+<ol><li>建一个 <code>int 分数 = 100;</code>，打印出 <code>我考了 100 分</code>。</li><li>建一个盒子装你今年的年龄，再建一个装明年的年龄，两句话打印出来。</li><li>建一个装 5 颗星的盒子，先加 3 颗，再吃掉 2 颗，每做一步都打印一次。</li></ol>
+<hr>
+<h2>第 4 课　盒子：装文字、装一个字符、装真假</h2>
+<p><strong>这一课学什么</strong>：另外三种盒子 —— 装文字的 <code>string</code>、装一个字符的 <code>char</code>、装真假的 <code>bool</code>。</p>
+<pre><code class="lang-cask">function main() {
+    string 名字 = "小明";
+    string 问候 = "你好，" + 名字 + "！";
+    print 问候;
+
+    char 首字母 = 'X';
+    print "首字母是 ", 首字母;
+
+    bool 喜欢编程 = true;
+    print "喜欢编程：", 喜欢编程;
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">你好，小明！
+首字母是 X
+喜欢编程：true</code></pre>
+<ul><li><code>string</code> 装一串<strong>文字</strong>，用双引号包起来：<code>"小明"</code>、<code>"你好，小明！"</code>。</li><li><code>+</code> 能把两段文字接起来：<code>"你好，" + 名字</code> 就是 <code>"你好，小明"</code>。数字也能直接接进去，比如 <code>"一共 " + 3 + " 个"</code>。</li><li><code>char</code> 只装<strong>一个</strong>字符，用单引号包起来：<code>'X'</code>、<code>'A'</code>、<code>'7'</code>。单引号里写两个字符会报错。</li><li><code>bool</code> 只装两个值：<code>true</code>（真）和 <code>false</code>（假）。它现在看着没用，第 5 课比大小、第 6 课做判断时就要靠它。</li></ul>
+<p><strong>名词小对照</strong>：</p>
+<table>
+<thead><tr><th>类型</th><th>装什么</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><code>int</code></td><td>整数</td><td><code>int 年龄 = 9;</code></td></tr>
+<tr><td><code>float</code></td><td>小数</td><td><code>float 身高 = 1.35;</code>（第 9 课细讲）</td></tr>
+<tr><td><code>string</code></td><td>一串文字</td><td><code>string 名字 = "小红";</code></td></tr>
+<tr><td><code>char</code></td><td>一个字符</td><td><code>char 首字母 = 'X';</code></td></tr>
+<tr><td><code>bool</code></td><td>真或假</td><td><code>bool 开心 = true;</code></td></tr>
+</tbody></table>
+<p><strong>老名字的一句交代</strong>：整数、小数、文字、字符的老名字分别是 <code>number</code>、<code>real</code>、<code>text</code>、<code>letter</code>。这些老名字照样能编译，只是编辑器会在状态栏的<strong>提示</strong>里建议你换新的。新写的程序一律用 <code>int</code>、<code>float</code>、<code>string</code>、<code>char</code>。</p>
+<h3>动手试一试</h3>
+<ol><li>建一个 <code>string 学校 = "..."</code>，写你学校的名字，打印出 <code>我在______上学</code>。</li><li>把你的姓写进一个 <code>char</code>，打印 <code>我姓___</code>。</li><li>建一个 <code>bool 下雨了 = false;</code>，打印 <code>下雨了吗？</code> 和这个盒子。</li><li>把两个 <code>string</code> 用 <code>+</code> 接成一句话，只用一个 <code>print</code> 说出来。</li></ol>
+<hr>
+<h2>第 5 课　算一算，比一比</h2>
+<p><strong>这一课学什么</strong>：加减乘除、取余、比大小，还有 <code>and</code>、<code>or</code>、<code>not</code>。</p>
+<pre><code class="lang-cask">function main() {
+    print "3 + 4 = ", 3 + 4;
+    print "10 - 6 = ", 10 - 6;
+    print "6 * 7 = ", 6 * 7;
+    print "9 / 2 = ", 9 / 2;
+    print "9 % 2 = ", 9 % 2;
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">3 + 4 = 7
+10 - 6 = 6
+6 * 7 = 42
+9 / 2 = 4
+9 % 2 = 1</code></pre>
+<ul><li><code>*</code> 是乘号，<code>/</code> 是除号。键盘上没有 <code>×</code> 和 <code>÷</code>，要用这两个符号。</li><li>两个<strong>整数</strong>相除，只留整数部分：<code>9 / 2</code> 得 <code>4</code>，不是 4.5。想要 4.5，看第 9 课的小数。</li><li><code>%</code> 读作"取余"，就是"除完了剩下多少"：<code>9 % 2</code> 是 <code>1</code>。判断奇偶、做游戏经常用它。</li><li><strong>除以 0 会当场停下并报错</strong>，不会给你一个奇怪的结果。这是 C* 故意设计的：宁可停下，也不要算错。</li></ul>
+<p><strong>比大小</strong>，结果是 <code>bool</code>（真或假）：</p>
+<table>
+<thead><tr><th>写法</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td><code>==</code></td><td>相等。注意是<strong>两个</strong>等号</td></tr>
+<tr><td><code>!=</code></td><td>不相等</td></tr>
+<tr><td><code>&lt;</code> <code>&gt;</code></td><td>小于、大于</td></tr>
+<tr><td><code>&lt;=</code> <code>&gt;=</code></td><td>小于等于、大于等于</td></tr>
+</tbody></table>
+<pre><code class="lang-cask">function main() {
+    print "5 比 3 大？", 5 &gt; 3;
+    print "5 等于 8？", 5 == 8;
+    print "5 不等于 8？", 5 != 8;
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">5 比 3 大？true
+5 等于 8？false
+5 不等于 8？true</code></pre>
+<p><strong>把几个判断连起来</strong>用 <code>and</code>（都要成立）、<code>or</code>（有一个成立就行）、<code>not</code>（反过来）：</p>
+<pre><code class="lang-cask">function main() {
+    int 年龄 = 9;
+    print "是 6 到 12 岁吗？", 年龄 &gt;= 6 and 年龄 &lt;= 12;
+    print "是 9 岁或 10 岁吗？", 年龄 == 9 or 年龄 == 10;
+    print "不是 8 岁吗？", not (年龄 == 8);
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">是 6 到 12 岁吗？true
+是 9 岁或 10 岁吗？true
+不是 8 岁吗？true</code></pre>
+<p><strong>自己加自己</strong>：<code>数++</code> 就是 <code>数 = 数 + 1</code> 的简写，下一课做循环时天天用。</p>
+<h3>动手试一试</h3>
+<ol><li>算一算一周有多少分钟：<code>7 * 24 * 60</code>。</li><li>打印 <code>100 % 7</code>，想一想这个数是什么意思。</li><li>先猜一猜 <code>5 == 5 and 3 &gt; 4</code> 是真是假，再打印出来看看猜得对不对。</li></ol>
+<hr>
+<h2>第 6 课　会做选择的程序（if）</h2>
+<p><strong>这一课学什么</strong>：让程序看情况做不同的事。</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 85;
+    if (分数 &gt;= 90) {
+        print "优秀";
+    } else if (分数 &gt;= 60) {
+        print "及格";
+    } else {
+        print "再来一次";
+    }
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">及格</code></pre>
+<p>读法：<strong>如果……否则如果……否则……</strong></p>
+<ol><li>先看 <code>分数 &gt;= 90</code> 是不是真的。是真的，就做第一段，后面几段全跳过。</li><li>不是，再看 <code>分数 &gt;= 60</code> 是不是真的。是真的，就做这一段。</li><li>都不真，就做 <code>else</code> 后面那一段。</li></ol>
+<p>三件事要记住：</p>
+<ul><li><code>if</code> 后面的圆括号里要放<strong>能判断真假的东西</strong>：比较，或者一个 <code>bool</code> 盒子。</li><li>圆括号里不能只写一个数字。<code>if (分数)</code> 会报错，要写 <code>if (分数 != 0)</code>。</li><li>每一段都老老实实加上大括号，别省。</li></ul>
+<p><strong>里面还能再套一层</strong>（就像套娃）：</p>
+<pre><code class="lang-cask">function main() {
+    bool 下雨 = true;
+    bool 有伞 = true;
+
+    if (下雨) {
+        if (有伞) {
+            print "带伞出门";
+        } else {
+            print "在家看书";
+        }
+    } else {
+        print "出去玩";
+    }
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">带伞出门</code></pre>
+<h3>动手试一试</h3>
+<ol><li>写一个程序：<code>身高 &gt; 120</code> 就打印"可以坐过山车"，否则打印"再长高一点就能坐了"。</li><li>判断一个数是正数、负数还是零（用 <code>&gt; 0</code>、<code>&lt; 0</code>，剩下的是零）。</li><li>用 <code>and</code> 改写这个判断：分数在 60 到 100 之间才打印"这个分数是有效的"。</li></ol>
+<hr>
+<h2>第 7 课　一遍又一遍（while）</h2>
+<p><strong>这一课学什么</strong>：让程序重复做一件事，直到条件不再成立。</p>
+<pre><code class="lang-cask">function main() {
+    int 数 = 1;
+    while (数 &lt;= 5) {
+        print "第 ", 数, " 次说你好";
+        数++;
+    }
+    print "说完了";
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">第 1 次说你好
+第 2 次说你好
+第 3 次说你好
+第 4 次说你好
+第 5 次说你好
+说完了</code></pre>
+<p>读法：只要 <code>数 &lt;= 5</code> 是真的，就把大括号里的事做一遍，做完再回来问一次，问到不成立为止。</p>
+<p>大括号里有两件事：</p>
+<ul><li><code>print</code> —— 真正要做的事。</li><li><code>数++;</code> —— 让条件慢慢变得不成立。<strong>少了这一句，循环就永远停不下来</strong>，程序会一直跑，只能按 <code>Esc</code> 硬停。</li></ul>
+<p>写循环前，按这个顺序想三件事：<strong>起点</strong>（数从几开始）、<strong>条件</strong>（做到什么时候停）、<strong>变化</strong>（每一轮怎么变）。</p>
+<h3>动手试一试</h3>
+<ol><li>打印 1 到 100。</li><li>打印 1 到 100 里所有的偶数（提示：<code>数 % 2 == 0</code> 才打印）。</li><li>倒着数：从 10 数到 1，最后打印"发射！"。</li></ol>
+<hr>
+<h2>第 8 课　和电脑聊天（input）</h2>
+<p><strong>这一课学什么</strong>：让程序问你要一个值，读进来，再用它做事。</p>
+<pre><code class="lang-cask">function main() {
+    show "你叫什么名字？";
+    string 名字;
+    input 名字;
+    print "你好，", 名字, "！";
+
+    show "你几岁了？";
+    int 年龄;
+    input 年龄;
+    print "你今年 ", 年龄, " 岁，明年 ", 年龄 + 1, " 岁。";
+}</code></pre>
+<p><strong>一行一行看</strong>：</p>
+<ul><li><code>show "你叫什么名字？";</code> —— 先问一句。用 <code>show</code> 是因为它<strong>不换行</strong>，你打的字就接在问号后面，看起来自然。</li><li><code>string 名字;</code> —— 先准备一个盒子接答案。</li><li><code>input 名字;</code> —— 读你打的那一行，放进盒子里。注意 <code>input</code> 后面<strong>只写盒子名</strong>，不写括号，也不加引号。</li><li><code>input</code> 一次读一整行，你打完按回车它才往下走。</li></ul>
+<p>数字盒子读数字，文字盒子读一整行（中间可以有空格）。数字打错了（比如打了汉字），它会说 <code>请输入一个整数:</code> 请你重打一行，不会一下子就乱掉。</p>
+<p><strong>猜数字小游戏</strong>（把前面几课都用上）：</p>
+<pre><code class="lang-cask">// 电脑想一个 1 到 100 的数，你来猜
+function main() {
+    int 秘密 = now() % 100 + 1;
+    int 猜 = 0;
+    int 次数 = 0;
+
+    print "我想了一个 1 到 100 的数，猜猜看！";
+    while (猜 != 秘密) {
+        show "请输入你猜的数：";
+        input 猜;
+        次数++;
+        if (猜 &lt; 秘密) { print "小了"; }
+        else if (猜 &gt; 秘密) { print "大了"; }
+    }
+    print "猜对了！你一共猜了 ", 次数, " 次。";
+}</code></pre>
+<ul><li><code>now()</code> 给出当前时间（一串很大的秒数），<code>% 100</code> 取它的后两位，再加 1，就得到 1 到 100 之间的一个数。</li><li><code>while (猜 != 秘密)</code>：只要还没猜对，就一直问。</li><li>第 13 课有一个更省事的写法 <code>RANDBETWEEN(1, 100)</code>。</li></ul>
+<h3>动手试一试</h3>
+<ol><li>让程序问你的名字和年龄，再打印 <code>××× 今年 × 岁</code>。</li><li>给猜数字游戏加一句：猜对以后，把秘密数本身也打印出来。</li><li>让程序问你今天走了多少步，再打印"大约______公里"（用 <code>/ 1500</code> 算）。</li></ol>
+<hr>
+<h2>第 9 课　小数（float）</h2>
+<p><strong>这一课学什么</strong>：用 <code>float</code> 装小数，让除法得到小数，学会四舍五入。</p>
+<pre><code class="lang-cask">function main() {
+    float 身高 = 1.35;
+    print "我的身高 ", 身高, " 米";
+
+    print "9 / 2 = ", 9 / 2;
+    print "9.0 / 2 = ", 9.0 / 2;
+
+    int 总分 = 253;
+    float 平均 = 总分 / 4.0;
+    print "平均分 ", 平均;
+    print "保留一位小数 ", ROUND(平均, 1);
+    print "整数部分 ", INT(平均);
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">我的身高 1.35 米
+9 / 2 = 4
+9.0 / 2 = 4.5
+平均分 63.25
+保留一位小数 63.3
+整数部分 63</code></pre>
+<ul><li><code>float</code> 装<strong>小数</strong>：<code>3.5</code>、<code>1.35</code>、<code>0.1</code>。带小数点的数字就是小数。</li><li>两个整数相除，结果还是整数（<code>9 / 2</code> 是 <code>4</code>）。<strong>只要有一个是小数</strong>，结果就是小数（<code>9.0 / 2</code> 是 <code>4.5</code>）。</li><li>小数的盒子和整数的盒子不能混着用。<code>int 平均 = 253 / 4.0;</code> 会报 <code>不能把 float 放进 int</code>，把 <code>int</code> 改成 <code>float</code> 就好。</li><li><code>ROUND(小数, 位数)</code> 是四舍五入：<code>ROUND(平均, 1)</code> 保留一位小数。</li><li><code>INT(小数)</code> 是去掉小数部分（向下取整）：<code>INT(63.25)</code> 得 <code>63</code>。</li></ul>
+<h3>动手试一试</h3>
+<ol><li>把 4 个分数写进程序，用 <code>总分 / 4.0</code> 算平均分，打印出来。</li><li>用 <code>ROUND</code> 把 <code>3.14159</code> 保留两位小数。</li><li>让程序问你身高（单位米，可以带小数），打印"你的身高约______厘米"（乘 100）。</li></ol>
+<hr>
+<h2>第 10 课　数着次数做（for）</h2>
+<p><strong>这一课学什么</strong>：用 <code>for</code> 把"从几开始、做到几、每次加几"写在一行里。</p>
+<pre><code class="lang-cask">function main() {
+    for (int i = 1; i &lt;= 5; i++) {
+        print "第 ", i, " 次";
+    }
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">第 1 次
+第 2 次
+第 3 次
+第 4 次
+第 5 次</code></pre>
+<p><code>for</code> 的圆括号里分三段，用两个分号隔开：</p>
+<table>
+<thead><tr><th>段</th><th>什么时候做</th><th>写什么</th></tr></thead>
+<tbody>
+<tr><td>第一段</td><td>开始前做一次</td><td><code>int i = 1</code>，准备一个计数器</td></tr>
+<tr><td>第二段</td><td>每一轮开始前检查</td><td><code>i &lt;= 5</code>，还要继续吗</td></tr>
+<tr><td>第三段</td><td>每一轮结束后做</td><td><code>i++</code>，计数器加 1</td></tr>
+</tbody></table>
+<p><code>i</code> 是大家习惯给计数器起的名字。它和 <code>while</code> 做的是同一件事，只是写在一起更清楚。</p>
+<p><strong>想提前停 / 想跳过一轮</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    for (int i = 1; i &lt;= 10; i++) {
+        if (i == 4) { continue; }      // 第 4 轮什么都不做，直接下一轮
+        if (i == 8) { break; }         // 到 8 就整圈结束
+        print i;
+    }
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">1
+2
+3
+5
+6
+7</code></pre>
+<p><strong><code>for</code> 里还能套 <code>for</code></strong>，九九乘法表就是这样：</p>
+<pre><code class="lang-cask">function main() {
+    for (int i = 1; i &lt;= 9; i++) {
+        for (int j = 1; j &lt;= i; j++) {
+            show j, "x", i, "=", i * j, "  ";
+        }
+        print "";
+    }
+}</code></pre>
+<p><code>show</code> 不换行，所以一行里能连出好几道题；一层循环做完，用 <code>print "";</code> 换一行（<code>""</code> 是两个引号挨在一起，里面什么都没有）。</p>
+<h3>动手试一试</h3>
+<ol><li>打印 1 到 100 里所有 3 的倍数。</li><li>用 <code>for</code> 从 10 数到 1。</li><li>算 1 + 2 + 3 + …… + 100 是多少（先准备一个 <code>int 和 = 0;</code>，每一轮加进去）。</li></ol>
+<hr>
+<h2>第 11 课　一排格子（数组）</h2>
+<p><strong>这一课学什么</strong>：把很多个同类的值装进一排格子，再用循环一个个访问。</p>
+<pre><code class="lang-cask">function main() {
+    int 成绩[5] = {88, 95, 72, 66, 100};
+    string 同学[3] = {"小明", "小红", "小刚"};
+
+    print "第一个同学 ", 同学[0], "，分数 ", 成绩[0];
+    print "最后一个同学 ", 同学[2], "，分数 ", 成绩[4];
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">第一个同学 小明，分数 88
+最后一个同学 小刚，分数 100</code></pre>
+<ul><li><code>int 成绩[5]</code> 是说"给我 5 个装整数的格子，排成一排"。</li><li><code>= {88, 95, 72, 66, 100}</code> 是开始的时候按顺序把 5 个数放进去。</li><li>用的时候写 <code>成绩[0]</code>：<strong>方括号里的号码从 0 开始数</strong>。5 个格子的号码是 <code>0 1 2 3 4</code>。</li><li>号码超出范围（比如写 <code>成绩[5]</code>）程序会马上停下，告诉你是哪一行，不会乱读别人的数据。</li></ul>
+<p><strong>用循环看一遍</strong>，这是数组最常用的写法：</p>
+<pre><code class="lang-cask">function main() {
+    int 成绩[5] = {88, 95, 72, 66, 100};
+    int 总分 = 0;
+    for (int i = 0; i &lt; 5; i++) {
+        总分 += 成绩[i];
+    }
+    print "总分 ", 总分;
+    print "平均 ", 总分 / 5.0;
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">总分 421
+平均 84.2</code></pre>
+<p><code>i</code> 从 0 数到 4，正好和格子号码对上。注意条件是 <code>i &lt; 5</code>，不能写 <code>i &lt;= 5</code>：那样最后一轮会去读不存在的 <code>成绩[5]</code>，程序会报错。</p>
+<h3>动手试一试</h3>
+<ol><li>把 5 个成绩换成你自己的分数，算总分和平均分。</li><li>用 7 个格子装 7 天的气温，找出最高的一天（先假设 <code>气温[0]</code> 最高，再逐个比）。</li><li>想一想：上面那个循环，为什么条件写 <code>i &lt; 5</code> 而不是 <code>i &lt;= 5</code>？</li></ol>
+<hr>
+<h2>第 12 课　自己造工具（函数）</h2>
+<p><strong>这一课学什么</strong>：把一段常用的事包成一个函数，起个名字，以后叫名字就行。</p>
+<pre><code class="lang-cask">// 只管做事、不给答案的函数
+function 打招呼(string 谁) {
+    print "你好，", 谁, "！";
+}
+
+// 要给答案的函数：答案的类型写在名字前面
+int 求和(int a, int b) {
+    return a + b;
+}
+
+function main() {
+    打招呼("小明");
+    打招呼("小红");
+    print "3 + 4 = ", 求和(3, 4);
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">你好，小明！
+你好，小红！
+3 + 4 = 7</code></pre>
+<ul><li><code>function 打招呼(string 谁) { ... }</code> —— 名字是 <code>打招呼</code>，括号里的 <code>谁</code> 是要告诉它的东西，叫<strong>参数</strong>。名字前面写 <code>function</code>，表示这个函数只管做事，不给答案。</li><li><code>int 求和(int a, int b) { ... }</code> —— 名字前面写了答案的类型 <code>int</code>，里面用 <code>return</code> 把答案交出来。<code>return</code> 一执行，函数立刻结束，后面的句子不再运行。</li><li>不给答案的函数也可以写 <code>none 打招呼(string 谁) { ... }</code>，和 <code>function</code> 开头一样。</li><li>两个函数都写在 <code>main</code> 的<strong>外面</strong>，在 <code>main</code> 里像用积木一样用它。</li></ul>
+<p><strong>带判断的函数</strong>：</p>
+<pre><code class="lang-cask">string 等级(int 分) {
+    if (分 &gt;= 90) { return "优秀"; }
+    if (分 &gt;= 60) { return "及格"; }
+    return "再来一次";
+}
+
+function main() {
+    print "85 分：", 等级(85);
+    print "100 分：", 等级(100);
+    print "30 分：", 等级(30);
+}</code></pre>
+<p>输出：</p>
+<pre><code class="lang-text">85 分：及格
+100 分：优秀
+30 分：再来一次</code></pre>
+<p>参数是<strong>复印</strong>过去的：函数拿到的是参数的一份拷贝，在函数里怎么改，外面那个盒子都不会变。</p>
+<h3>动手试一试</h3>
+<ol><li>写一个 <code>int 正方形面积(int 边长)</code>，返回边长乘边长。</li><li>写一个 <code>string 奇偶(int n)</code>，偶数返回"偶数"，奇数返回"奇数"。</li><li>写一个 <code>float 打折(float 原价)</code>，返回原价的八折（乘 <code>0.8</code>）。</li></ol>
+<hr>
+<h2>第 13 课　会用表格公式就会写（大写函数）</h2>
+<p><strong>这一课学什么</strong>：C* 里有一整套和 Excel 同名同义的内建函数，名字都大写。表格里的公式，几乎可以直接搬进程序。</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 75;
+    print "75 分算及格吗？", IF(分数 &gt;= 60, "及格", "不及格");
+    print "97 是奇数吗？", MOD(97, 2) == 1;
+    print "-9 的绝对值 ", ABS(-9);
+    print "3.14159 保留两位 ", ROUND(3.14159, 2);
+    print "2 的 10 次方 ", POWER(2, 10);
+    print "9 的平方根 ", SQRT(9);
+    print "圆周率约 ", ROUND(PI(), 2);
+
+    int 成绩[5] = {88, 95, 72, 66, 100};
+    print "总分 ", SUM(成绩);
+    print "平均 ", AVERAGE(成绩);
+    print "最高 ", MAX(成绩), "，最低 ", MIN(成绩);
+    print "一共 ", COUNT(成绩), " 个人";
+
+    print "hello 的长度 ", LEN("hello");
+    print "前两个字母 ", LEFT("hello", 2);
+    print "后两个字母 ", RIGHT("hello", 2);
+    print "第 2 个起取 3 个 ", MID("hello", 2, 3);
+    print "变大写 ", UPPER("hi"), "，变小写 ", LOWER("HI");
+    print "去掉两头空格 [", TRIM("  hi  "), "]";
+    print "拼起来 ", CONCAT("a", 1, true);
+    print "abc 的第 2 个字符 ", at("abc", 1);
+    print "在 hello 里找 ll ", FIND("hello", "ll");
+    print "把 a 换成 1 ", SUBSTITUTE("banana", "a", "1");
+    print "重复 3 次 ", REPT("哈", 3);
+    print "码 65 的字符 ", CHAR(65), "，a 的码 ", CODE("a");
+}</code></pre>
+<p>运行结果：</p>
+<pre><code class="lang-text">75 分算及格吗？及格
+97 是奇数吗？true
+-9 的绝对值 9
+3.14159 保留两位 3.14
+2 的 10 次方 1024
+9 的平方根 3
+圆周率约 3.14
+总分 421
+平均 84.2
+最高 100，最低 66
+一共 5 个人
+hello 的长度 5
+前两个字母 he
+后两个字母 lo
+第 2 个起取 3 个 ell
+变大写 HI，变小写 hi
+去掉两头空格 [hi]
+拼起来 a1true
+abc 的第 2 个字符 b
+在 hello 里找 ll 3
+把 a 换成 1 b1n1n1
+重复 3 次 哈哈哈
+码 65 的字符 A，a 的码 97</code></pre>
+<table>
+<thead><tr><th>想干什么</th><th>函数</th></tr></thead>
+<tbody>
+<tr><td>二选一</td><td><code>IF(条件, 真值, 假值)</code></td></tr>
+<tr><td>数学</td><td><code>ABS</code> <code>SIGN</code> <code>MOD</code> <code>ROUND</code> <code>INT</code> <code>SQRT</code> <code>POWER</code> <code>PI()</code></td></tr>
+<tr><td>三角和取整</td><td><code>SIN</code> <code>COS</code> <code>TAN</code> <code>FLOOR</code> <code>CEILING</code> <code>TRUNC</code></td></tr>
+<tr><td>一排数汇总</td><td><code>SUM(数组)</code> <code>AVERAGE(数组)</code> <code>MAX(数组)</code> <code>MIN(数组)</code> <code>COUNT(数组)</code></td></tr>
+<tr><td>文字</td><td><code>LEN</code> <code>LEFT</code> <code>RIGHT</code> <code>MID</code> <code>UPPER</code> <code>LOWER</code> <code>TRIM</code> <code>CONCAT</code> <code>at</code></td></tr>
+<tr><td>文字查找替换</td><td><code>FIND(文字, 要找的)</code> <code>SUBSTITUTE(文字, 旧, 新)</code> <code>REPT(文字, 次数)</code> <code>EXACT(甲, 乙)</code></td></tr>
+<tr><td>字符和码</td><td><code>CHAR(码)</code> <code>CODE(文字)</code></td></tr>
+<tr><td>随机和时间</td><td><code>RAND()</code> <code>RANDBETWEEN(a, b)</code> <code>now()</code></td></tr>
+</tbody></table>
+<p>三条容易踩的坑：</p>
+<ul><li>传数组时<strong>只写数组名字</strong>，不写方括号：<code>SUM(成绩)</code>，不是 <code>SUM(成绩[])</code>。</li><li><code>LEFT</code>、<code>RIGHT</code>、<code>MID</code> 的位置<strong>从 1 开始数</strong>（和 Excel 一样）；<code>at</code> 是从 0 开始数的（和数组一样）。两个不一样，用的时候看清楚。</li><li><code>LEN</code> 数的是字节：一个英文字母算 1，一个汉字算 3。所以数"有几个字"的时候别拿它去数汉字。</li></ul>
+<p><strong>老的小写写法</strong>（<code>abs</code>、<code>sin</code>、<code>floor</code>、<code>ceil</code> 等）还能用，但 0.4.2 起编译器会给你一条蓝色"提示"，建议改写成上面的大写名字。新写的程序一律用大写。</p>
+<h3>动手试一试</h3>
+<ol><li>用 <code>IF</code> 判断一个数是正数还是非正数。</li><li>用 <code>MOD</code> 判断奇偶：<code>MOD(n, 2) == 0</code> 就是偶数。</li><li>把 4 个同学的身高放进数组，用 <code>AVERAGE</code> 算平均身高，用 <code>MAX</code> 找出最高的。</li><li>用 <code>RANDBETWEEN(1, 6)</code> 掷 10 次骰子，把每次的点数打印出来。</li></ol>
+<hr>
+<h2>第 14 课　第一个窗口程序</h2>
+<p><strong>这一课学什么</strong>：写一个真正的小窗口，上面有文字和一个按钮，点了有反应。</p>
+<pre><code class="lang-cask">use "C_OPED.cash";                 // 文件最前面一行：打开 C / C++ / Win32 世界
+
+int 次数标签;
+int 点击次数 = 0;
+
+function on_click(int 控件) {      // 按钮被点击时，C* 自动叫这个函数
+    点击次数 = 点击次数 + 1;
+    settext(次数标签, "你点了 " + 点击次数 + " 次");
+}
+
+function main() {
+    int 窗口 = window("我的第一个窗口", 460, 260);       // 标题, 宽, 高
+    label("你好，点一下按钮看看：", 24, 24, 400, 24);     // 文字, x, y, 宽, 高
+    次数标签 = label("你点了 0 次", 24, 56, 400, 24);
+    button("点我", 24, 104, 140, 34);
+    run();                                              // 显示窗口，等到窗口关了才结束
+}</code></pre>
+<p><strong>一段一段看</strong>：</p>
+<ul><li><code>use "C_OPED.cash";</code> —— 第一行，把窗口这套工具请进来。写了它，C、C++ 和 Win32 的函数也能直接叫，不用再写 <code>include</code>。</li><li><code>int 次数标签;</code> 和 <code>int 点击次数 = 0;</code> 写在所有函数<strong>外面</strong>，每个函数都能看到。要记住"哪个是标签、点了多少次"，就得这么写。</li><li><code>function on_click(int 控件) { ... }</code> —— 这是<strong>事件函数</strong>：有控件被点了，C* 就来叫它，参数 <code>控件</code> 是被点的那个控件的编号。你写了它才会被叫；不写也行，只是按钮点了没反应。</li><li><code>window("标题", 宽, 高)</code> 开一个窗口，返回一个<strong>编号</strong>，存进 <code>窗口</code> 里。</li><li><code>label(文字, x, y, 宽, 高)</code> 放一段文字。<code>x, y</code> 是它左上角离窗口左上角多远（单位是像素），后两个数是它占多大地方。</li><li><code>button(文字, x, y, 宽, 高)</code> 放一个按钮。按钮和标签的用法一模一样，只是多了能点的功能。</li><li><code>run();</code> 让窗口显示出来，在这里等你点，直到你关掉窗口才往下走。<strong>不写 <code>run()</code>，窗口一闪就没了。</strong></li><li><code>settext(控件, "文字")</code> 把某个控件上的文字换掉。</li></ul>
+<p><strong>运行</strong>：还是按 <code>F5</code>。窗口程序默认<strong>没有黑色控制台</strong>。调试的时候想在黑色窗口里看到 <code>print</code> 的结果，用命令行这样跑：</p>
+<pre><code class="lang-bat">bin\caskc.exe 程序.cask --run --console</code></pre>
+<h3>动手试一试</h3>
+<ol><li>把窗口标题改成你的名字，把第一行标签改成一句问候，运行看看。</li><li>再加一个按钮，比如"再点一次"，让它也能改标签。</li><li>把计数改成从 10 开始倒数，标签上写"还剩几次"，点到 0 时改成"点完了"。</li></ol>
+<hr>
+<h2>第 15 课　窗口里能写、能勾、能弹框</h2>
+<p><strong>这一课学什么</strong>：输入框、勾选框、进度条，还有弹出来的对话框。</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+
+int 名字框;
+int 结果标签;
+int 按钮;
+
+function on_click(int 控件) {
+    if (控件 != 按钮) return;                    // 只理按钮，别的控件不管
+    string 名字 = readtext(名字框);               // 把输入框里的字读出来
+    if (名字 == "") {
+        settext(结果标签, "先在框里写上名字");
+        return;
+    }
+    settext(结果标签, 名字 + "，你好！");
+    alert("我认识你了：" + 名字);
+}
+
+function main() {
+    int 窗口 = window("打招呼", 460, 260);
+    label("你的名字：", 24, 24, 100, 24);
+    名字框 = textbox("小明", 130, 24, 200, 24);
+    按钮 = button("打招呼", 130, 64, 120, 32);
+    结果标签 = label("在框里写上名字，再点按钮", 24, 116, 400, 24);
+    run();
+}</code></pre>
+<p><strong>新东西</strong>：</p>
+<ul><li><code>textbox("初值", x, y, 宽, 高)</code> 是单行输入框，<code>readtext(控件)</code> 把里面的字读出来。</li><li><code>if (控件 != 按钮) return;</code> 是"守门员"：窗口里控件多了以后，用它保证只有按钮做正事。</li><li><code>if (名字 == "")</code> 判断框里是不是空的。<code>""</code> 是两个引号挨着，里面什么都没有。</li><li><code>alert("内容")</code> 弹一个小对话框，点确定就关掉。</li></ul>
+<p><strong>再来一个：勾选框和进度条。</strong></p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+
+int 勾选框;
+int 进度条;
+int 进度标签;
+int 按钮;
+
+function on_click(int 控件) {
+    if (控件 != 按钮) return;
+    if (checked(勾选框) == 1) {
+        setvalue(进度条, 100);
+        settext(进度标签, "全部做完啦");
+        msgbox("真棒", "表扬");
+    } else {
+        setvalue(进度条, 50);
+        settext(进度标签, "先勾上「我把作业做完了」");
+    }
+}
+
+function main() {
+    int 窗口 = window("今天的作业", 460, 300);
+    勾选框 = checkbox("我把作业做完了", 24, 24, 240, 24);
+    进度条 = progress(24, 64, 400, 20);
+    进度标签 = label("还差一点点", 24, 96, 400, 24);
+    按钮 = button("看看进度", 24, 136, 120, 32);
+    run();
+}</code></pre>
+<table>
+<thead><tr><th>想干什么</th><th>怎么写</th></tr></thead>
+<tbody>
+<tr><td>弹出消息（带标题）</td><td><code>msgbox("内容", "标题");</code></td></tr>
+<tr><td>问"是 / 否"</td><td><code>if (ask("要做吗？", "问一句") == 1) { ... }</code>，1 是"是"，0 是"否"</td></tr>
+<tr><td>勾选框</td><td><code>int 勾 = checkbox("文字", x, y, 宽, 高);</code></td></tr>
+<tr><td>看有没有勾上</td><td><code>checked(勾)</code> 得 1 或 0</td></tr>
+<tr><td>帮它勾上 / 取消</td><td><code>setchecked(勾, 1);</code> 和 <code>setchecked(勾, 0);</code></td></tr>
+<tr><td>进度条</td><td><code>int 条 = progress(x, y, 宽, 高);</code></td></tr>
+<tr><td>设置进度</td><td><code>setvalue(条, 60);</code>，读进度用 <code>getvalue(条)</code></td></tr>
+<tr><td>多行输入框</td><td><code>memo("文字", x, y, 宽, 高)</code></td></tr>
+<tr><td>等一会儿</td><td><code>sleep(1000);</code>（1000 毫秒 = 1 秒）</td></tr>
+</tbody></table>
+<h3>动手试一试</h3>
+<ol><li>给"打招呼"加上一句：名字太长（<code>LEN(名字) &gt; 12</code>）就换成"名字好长呀"。</li><li>把"作业"窗口再加一个勾选框，两个都勾上才算 100 分（用 <code>and</code> 连起来）。</li><li>用 <code>ask</code> 问一句"要不要开始？"，选"是"就用 <code>alert</code> 说"好的"，选"否"就用 <code>alert</code> 说"下次再来"。</li></ol>
+<hr>
+<h2>第 16 课　做一个小作品：待办清单</h2>
+<p><strong>这一课学什么</strong>：把前面学的控件凑成一个真能用的小程序。</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+
+int 输入框;
+int 列表;
+int 提示标签;
+
+function on_click(int 控件) {
+    string 一件事 = readtext(输入框);
+    if (一件事 == "") {
+        settext(提示标签, "先写一件事，再点添加");
+        return;
+    }
+    additem(列表, 一件事);            // 往列表里加一行
+    settext(输入框, "");             // 清空输入框，好写下一件
+    settext(提示标签, "已加入：" + 一件事);
+}
+
+function main() {
+    int 窗口 = window("我的待办清单", 480, 340);
+    label("要做的事：", 20, 20, 90, 24);
+    输入框 = textbox("", 110, 20, 240, 24);
+    button("添加", 360, 18, 100, 28);
+    提示标签 = label("写下第一件事吧", 20, 56, 440, 24);
+    列表 = listbox(20, 92, 440, 220);
+    run();
+}</code></pre>
+<p><strong>新东西</strong>：</p>
+<ul><li><code>listbox(x, y, 宽, 高)</code> 是一个列表，<code>additem(列表, "一项")</code> 往里加一行。加进去的行会自己一行行排下来。</li><li><code>on_click</code> 里先读出输入框的字。空的话提醒一句就 <code>return</code>——在这里 <code>return</code> 的意思是"这次点击不做了，回去等下一次"。</li><li><code>settext(输入框, "")</code> 把输入框清空，方便接着写下一件。</li></ul>
+<p><strong>还能做</strong>：</p>
+<table>
+<thead><tr><th>想做什么</th><th>用什么</th></tr></thead>
+<tbody>
+<tr><td>改控件的文字</td><td><code>settext(控件, "新文字")</code></td></tr>
+<tr><td>改控件的标题</td><td><code>settitle(控件, "新标题")</code></td></tr>
+<tr><td>输入框内容一变就有反应</td><td>写 <code>function on_change(int 控件) { ... }</code></td></tr>
+<tr><td>窗口被关时收个尾</td><td>写 <code>function on_close() { ... }</code></td></tr>
+<tr><td>删掉某个控件</td><td><code>destroy(控件)</code></td></tr>
+</tbody></table>
+<p><strong>打开 C 的世界</strong>：第一行写了 <code>use "C_OPED.cash";</code> 之后，C 和 C++ 的函数可以直接叫，不用再写什么 <code>include</code>。比如：</p>
+<pre><code class="lang-text">int 毫秒 = GetTickCount();      // 程序启动到现在过了多少毫秒
+int 数 = atoi("42");            // 把文字 "42" 变成整数 42</code></pre>
+<p><code>atoi</code> 这种 C 函数很有用：输入框里读出来的是文字，想拿它算数，就请 <code>atoi</code> 帮忙变成整数。</p>
+<p><strong>C# 不行</strong>：C# 没有 C 头文件，所以窗口程序只能请 C、C++ 和 Win32 帮忙，用不了 C#。</p>
+<p><strong>调试</strong>：窗口程序默认没有黑色控制台。想在控制台里看 <code>print</code>，用 <code>bin\caskc.exe 程序.cask --run --console</code>。</p>
+<h3>动手试一试</h3>
+<ol><li>加一个按钮，点一下把提示标签换成一句鼓励的话。</li><li>加一个勾选框"只显示今天要做的"。</li><li>加一个 <code>memo</code> 多行框，让你能写一条详细说明。</li><li>把窗口标题改成"我的第一件作品"，运行给家里人看看。</li></ol>
+<hr>
+<h2>附录 A　关键字小词典</h2>
+<table>
+<thead><tr><th>中文说法</th><th>写法</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td>打印一行</td><td><code>print</code></td><td><code>print "你好";</code></td></tr>
+<tr><td>打印不换行</td><td><code>show</code></td><td><code>show "请输入：";</code></td></tr>
+<tr><td>读入一行</td><td><code>input</code></td><td><code>input 年龄;</code></td></tr>
+<tr><td>程序的外壳</td><td><code>function main()</code></td><td><code>function main() { ... }</code></td></tr>
+<tr><td>整数 / 小数</td><td><code>int</code> / <code>float</code></td><td><code>int n = 3;</code> <code>float x = 1.5;</code></td></tr>
+<tr><td>文字 / 一个字符</td><td><code>string</code> / <code>char</code></td><td><code>string s = "hi";</code> <code>char c = 'A';</code></td></tr>
+<tr><td>真和假</td><td><code>bool</code> <code>true</code> <code>false</code></td><td><code>bool ok = true;</code></td></tr>
+<tr><td>定死的数（不能改）</td><td><code>constant</code></td><td><code>constant int 满分 = 100;</code></td></tr>
+<tr><td>如果 / 否则</td><td><code>if</code> / <code>else</code></td><td><code>if (n &gt; 0) { ... } else { ... }</code></td></tr>
+<tr><td>一直做到条件不成立</td><td><code>while</code></td><td><code>while (n &lt; 10) { ... }</code></td></tr>
+<tr><td>数着次数做</td><td><code>for</code></td><td><code>for (int i = 0; i &lt; 5; i++) { ... }</code></td></tr>
+<tr><td>马上停 / 跳过这一轮</td><td><code>break</code> / <code>continue</code></td><td><code>if (i == 3) { break; }</code></td></tr>
+<tr><td>把答案交出去</td><td><code>return</code></td><td><code>return a + b;</code></td></tr>
+<tr><td>并且 / 或者 / 不是</td><td><code>and</code> / <code>or</code> / <code>not</code></td><td><code>a &gt; 0 and b &gt; 0</code></td></tr>
+<tr><td>引入头文件</td><td><code>use</code></td><td><code>use "C_OPED.cash";</code></td></tr>
+</tbody></table>
+<p>算术和比较：<code>+ - * / %</code>，<code>== != &lt; &lt;= &gt; &gt;=</code>。自增自减 <code>++ --</code>，复合赋值 <code>+= -= *= /= %=</code>。</p>
+<p>老名字（都还能用，编译时会得到一条不算错的"提示"）：
+<code>number</code> = <code>int</code>，<code>real</code> = <code>float</code>，<code>text</code> = <code>string</code>，<code>letter</code> = <code>char</code>，<code>say</code> = <code>print</code>，
+<code>start { }</code> = <code>function main() { }</code>，<code>func</code> = <code>function</code>，<code>const</code> = <code>constant</code>，<code>void</code> = <code>none</code>，
+<code>&amp;&amp; || !</code> = <code>and or not</code>。</p>
+<hr>
+<h2>彩蛋时间：<code>rcl</code></h2>
+<p>写到这里你可能已经会很多东西了。藏一个小秘密：C* 里有一个内置函数叫 <code>rcl</code>，它不用 <code>use</code>、不用自己写函数体，直接调用就行。</p>
+<ul><li><code>rcl(235);</code> 或者 <code>rcl("FC235");</code> —— 会打印出 <code>方程235 爱 rcl</code>，然后继续往下走。</li><li><code>rcl("rcl");</code> —— 打印出 <code>rcl，方程235永远爱你！</code>。</li><li>空着的 <code>rcl();</code> —— 打印出 <code>方程235永远爱rcl！</code>，然后<strong>整个程序就停了</strong>，后面的话一句也不执行。可以把它当成一个"急停"按钮。</li><li>别的值（比如 <code>rcl(1);</code>、<code>rcl("hello");</code>）—— 什么都不做，程序照常跑。</li></ul>
+<p>它认的字符串暗号（不分大小写）有：<code>235</code>、<code>方程235</code>、<code>FangCheng235</code>、<code>ZFC235</code>、<code>JF235</code>、<code>JF</code>、<code>FC235</code>、<code>FC</code>、<code>ZFC</code>、<code>FangCheng</code>。</p>
+<p>试试看：把你的名字或班级编号藏在 <code>rcl</code> 里，写个"只有我们班才看得懂"的小程序。</p>
+<hr>
+<h2>附录 B　C* Studio 小抄</h2>
+<table>
+<thead><tr><th>操作</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>Ctrl+N</code> / <code>Ctrl+O</code> / <code>Ctrl+S</code></td><td>新建 / 打开 / 保存</td></tr>
+<tr><td><code>F5</code></td><td>编译并运行</td></tr>
+<tr><td><code>Esc</code></td><td>停止正在运行的程序</td></tr>
+<tr><td><code>Tab</code></td><td>缩进四格</td></tr>
+<tr><td><code>F1</code></td><td>帮助（快捷键小抄）</td></tr>
+<tr><td>工具栏「代码 / 积木」</td><td>两种视图来回切换</td></tr>
+<tr><td>工具栏「格式化」</td><td>自动理清缩进</td></tr>
+<tr><td>工具栏「编码 ▾」</td><td>把文件转成 UTF-8 或 GBK 保存</td></tr>
+<tr><td>点「问题」面板里的一条</td><td>光标跳到出错的那一行</td></tr>
+</tbody></table>
+<p><strong>积木视图</strong>：左边的积木箱分成输出输入、变量数据、运算、判断、循环、函数、字符串与数组、窗口程序、CSS 美化、其它十类。其中"窗口程序""CSS 美化"是头文件插件：程序里 <code>use</code> 了对应的 <code>.cash</code> 才出现，没 <code>use</code> 就不显示。把它拖到右边松手就插进去了，双击积木上黄色的小格子能改内容，选中后按 <code>Delete</code> 删掉。注释行会画成一块能点改的绿色积木，<code>use</code> 积木还会拉一条线连到右侧的头文件概述卡片。<strong>代码和积木是同一个程序</strong>：积木里改，代码跟着改；代码里改，积木跟着变。</p>
+<p><strong>中文名字</strong>：变量名、函数名都可以写中文。只要文件保存为 UTF-8（状态栏能看到，不是的话点「编码 ▾」→ 转成 UTF-8）。中文名字对程序本身没有影响，读起来还更清楚。</p>
+<hr>
+<h2>附录：常见错误</h2>
+<p><strong>先认识四个计数。</strong> 状态栏最右边有四个数字，是四类问题的条数：</p>
+<table>
+<thead><tr><th>计数</th><th>字母</th><th>颜色</th><th>什么意思</th></tr></thead>
+<tbody>
+<tr><td>严重</td><td><code>E</code></td><td>红</td><td>程序跑不起来。比如把小数塞进 <code>int</code>、名字根本没定义、<code>if</code> 里只写了一个数字</td></tr>
+<tr><td>语法</td><td><code>S</code></td><td>橙</td><td>写法不对：少分号、括号或大括号不配对。编译器会跳过错的地方继续看，所以一次能报好几条</td></tr>
+<tr><td>拼写</td><td><code>P</code></td><td>绿</td><td>名字打错了。像的时候后面还会附一句"是不是想写 ×××"</td></tr>
+<tr><td>提示</td><td><code>H</code></td><td>蓝</td><td>不算错，只是建议。比如你还在用老名字 <code>number</code>、<code>text</code>、<code>say</code>，它提醒你换成 <code>int</code>、<code>string</code>、<code>print</code></td></tr>
+</tbody></table>
+<p>前三种会让程序跑不起来，最后一种不影响运行。问题面板里每条长这样：</p>
+<pre><code class="lang-text">demo.cask:3:1: 错误: 这里要写 ';'，它要写在 print 后面，但是碰到了 '}'</code></pre>
+<p>读法是 <code>文件:行:列: 错误: 说明</code>。点一下这一条，光标就跳过去。</p>
+<p><strong>初学最容易犯的八个错</strong>：</p>
+<table>
+<thead><tr><th>你写的</th><th>编辑器会说什么</th><th>怎么改</th></tr></thead>
+<tbody>
+<tr><td><code>print "你好"</code>（少了分号）</td><td>语法（S）：<code>这里要写 ';'，它要写在 print 后面，但是碰到了 '}'</code></td><td>句尾补一个 <code>;</code></td></tr>
+<tr><td><code>if (分数 &gt; 60 { ... }</code>（圆括号没关）</td><td>语法（S）：<code>这里要写 ')'，它用来关掉 if ( ... )，但是碰到了 '{'</code></td><td>在 <code>60</code> 后面补一个 <code>)</code></td></tr>
+<tr><td><code>if (分数 = 60)</code>（一个等号当成比较）</td><td>严重（E）：<code>条件必须是一个比较（true 或 false），不能是 int —— 例如写 'n != 0'</code></td><td>改成 <code>if (分数 == 60)</code>，比较要用两个等号</td></tr>
+<tr><td>直接在外面写 <code>print "你好";</code></td><td>语法（S）：<code>顶层只允许写 'use'、'constant'、变量声明、函数和 'function main() { ... }'（这里是 'print'）</code></td><td>把句子放进 <code>function main() { ... }</code> 里面</td></tr>
+<tr><td>忘了写 <code>function main()</code></td><td>严重（E）：<code>程序没有入口 —— 请加一个 'function main() { ... }' 块（或者 'start { ... }'）</code></td><td>加上 <code>function main() { ... }</code>，所有要运行的句子都放进去</td></tr>
+<tr><td>少写一个 <code>}</code></td><td>语法（S）：<code>少了 '}'，也就是 'main' 的函数体</code></td><td>数一数 <code>{</code> 和 <code>}</code> 是不是一样多，多半缺在最后</td></tr>
+<tr><td><code>print 分树;</code>（名字打错）</td><td>拼写（P）：<code>不认识的名称 '分树'，是不是想写 '分数'？</code></td><td>改成对的盒子名 <code>分数</code></td></tr>
+<tr><td><code>int 平均 = 253 / 4.0;</code>（类型对不上）</td><td>严重（E）：<code>不能把 float 放进 int</code></td><td>把 <code>int</code> 改成 <code>float</code></td></tr>
+</tbody></table>
+<p>还有一种错不是编译出来的，是<strong>程序跑到一半才出错</strong>。比如：</p>
+<pre><code class="lang-text">C* 运行错误: 除以零
+  位置 demo.cask:7</code></pre>
+<p>它的意思是第 7 行除数是 0。数组越界也一样，会告诉你 <code>数组下标越界</code> 和出错的行号。看到这种信息，就去看那一行的除数和方括号里的号码。C* 遇到这种错会<strong>立刻停下</strong>，不会接着乱算——这是好事，它帮你把问题指出来了。</p>
+<p><strong>最后一种：程序跑完了，但结果不对。</strong> 这种最难找，办法是：一次只改一样东西，中间多加几个 <code>print</code>，把盒子里的数打出来看看对不对。比如怀疑平均分算错了，就先把总分打出来，看看总分对不对。</p>
+<hr>
+<p>小学版教程 · C* 语言（0.4.2）。更细的说明见 <code>docs\CStar手册.md</code>。</p>
+<hr>
+<p style="color:#888;font-size:0.9em;">由 docs/md2html.py 从 小学版教程.md 生成</p>
+</body>
+</html>

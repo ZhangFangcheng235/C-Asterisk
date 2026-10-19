@@ -1,0 +1,3 @@
+before: 
+C* 运行错误: 数组下标越界
+  位置 tests\rtcheck_index.cask:5

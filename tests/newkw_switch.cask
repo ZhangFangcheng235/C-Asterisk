@@ -1,0 +1,15 @@
+text grade(number score) {
+    switch (score / 10) {
+        case 10: return "perfect";
+        case 9: return "great";
+        case 8: return "good";
+        default: return "keep trying";
+    }
+    return "hmm";
+}
+function main() {
+    print grade(100);
+    print grade(95);
+    print grade(85);
+    print grade(50);
+}

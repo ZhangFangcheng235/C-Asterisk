@@ -1,0 +1,38 @@
+// func.cask -- functions (and calling one that is defined later)
+start {
+    say "fib(20) = ", fib(20);
+    say "sum 1..100 = ", sum_to(100);
+    say "max(3, 9) = ", max3(3, 9);
+    say "greet says:"; greet("world");
+    say "swap-like copy: ", join2("a", "b");
+}
+
+number fib(number n) {
+    if (n < 2) { return n; }
+    return fib(n - 1) + fib(n - 2);
+}
+
+number sum_to(number n) {
+    number s = 0;
+    for (number i = 1; i <= n; i++) { s += i; }
+    return s;
+}
+
+// uses a helper defined even further down
+number max3(number a, number b) {
+    return bigger(a, b);
+}
+
+number bigger(number a, number b) {
+    if (a > b) { return a; }
+    return b;
+}
+
+none greet(text who) {
+    show "Hello, ";
+    say who, "!";
+}
+
+text join2(text a, text b) {
+    return a + "-" + b;
+}

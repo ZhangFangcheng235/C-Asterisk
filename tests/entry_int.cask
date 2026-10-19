@@ -1,0 +1,13 @@
+// entry_int.cask -- 'int main()' and 'int' as an alias of 'number' also work
+int square(int x) {
+    return x * x;
+}
+
+int main() {
+    print "3 squared is ", square(3);
+    int i = 0;
+    while (i < 3) {
+        print "line ", i;
+        i = i + 1;
+    }
+}

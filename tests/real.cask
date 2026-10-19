@@ -1,0 +1,34 @@
+// real.cask -- real (floating point) maths and built-in functions
+constant real PI = 3.14159265358979;
+
+start {
+    real x = 2.0;
+    real y = 3.0;
+
+    say "x + y = ", x + y;
+    say "x / y = ", x / y;
+    say "x ** ? pow(x, y) = ", pow(x, y);
+    say "sqrt(16) = ", sqrt(16.0);
+    say "abs(-2.75) = ", abs(-2.75);
+
+    say "floor(2.7) = ", floor(2.7);
+    say "ceil(2.1) = ", ceil(2.1);
+    say "round(2.567) = ", round(2.567);
+
+    say "sin(0) = ", sin(0.0);
+    say "cos(0) = ", cos(0.0);
+    say "log10(1000) = ", log10(1000.0);
+    say "exp(0) = ", exp(0.0);
+
+    real r = 7.0 / 2.0;
+    say "7.0 / 2.0 = ", r;
+    say "r * 2 = ", r * 2.0;
+
+    // mixing whole numbers and reals
+    number n = 3;
+    real z = n * 1.5;
+    say "3 * 1.5 = ", z;
+
+    say "PI = ", PI;
+    say "half PI = ", PI / 2.0;
+}

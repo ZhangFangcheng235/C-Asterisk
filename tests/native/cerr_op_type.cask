@@ -1,0 +1,6 @@
+use "C_OPED.cash";
+
+function main() {
+    int 窗口 = window(123, 400, 300);
+    run();
+}

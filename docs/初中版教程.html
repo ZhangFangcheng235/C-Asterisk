@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>初中版教程 · `C*` 语言（0.4.2）</title>
+<style>
+  body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+         line-height: 1.7; color: #222; background: #fafafa;
+         max-width: 920px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { border-bottom: 3px solid #2b6cb0; padding-bottom: 8px; }
+  h2 { border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 2em; }
+  a { color: #2b6cb0; }
+  code { background: #eef1f5; padding: 1px 6px; border-radius: 4px;
+          font-family: Consolas, "Courier New", monospace; font-size: 0.95em; }
+  pre { background: #1e2430; color: #e6e6e6; padding: 14px 16px;
+         border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  img { max-width: 100%; border: 1px solid #ccd; border-radius: 6px;
+         margin: 10px 0; }
+  table { border-collapse: collapse; margin: 1em 0; width: 100%; }
+  th, td { border: 1px solid #ccd; padding: 7px 10px; text-align: left; }
+  th { background: #eef1f5; }
+  blockquote { border-left: 4px solid #2b6cb0; margin: 1em 0;
+                padding: 4px 16px; color: #444; background: #f0f4f8; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2.5em 0; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<h1>初中版教程 · <code>C*</code> 语言（0.4.2）</h1>
+<blockquote><p>这是一本写给初中生的编程入门书，从零开始，一直写到能做出带按钮的窗口程序。
+书里的语言叫 <code>C*</code>，读作 <strong>C Asterisk</strong>。</p></blockquote>
+<hr>
+<h2>这本书怎么用</h2>
+<ul><li><strong>读者</strong>：学过一点数学，编程零基础或刚起步，年龄大约 12 到 15 岁。</li><li><strong>每一课的结构固定</strong>：先看"这一课学什么"，再读能直接运行的程序，然后是逐行解释、易错点、练习。</li><li><strong>代码块</strong>：标着 <code>cask</code> 的代码就是 <code>C*</code> 源文件的内容，保存成后缀为 <code>.cask</code> 的文件（例如 <code>hello.cask</code>）就能编译。</li><li><strong>单元小项目</strong>：每个单元末尾会有一个完整的程序，把这一单元学到的东西合起来用一次。</li><li><strong>想查细节</strong>：随时翻 <code>docs\CStar手册.md</code>，那里有关键字总表和全部内置函数。</li></ul>
+<h2>三分钟跑通第一个程序</h2>
+<p>新建一个文件 <code>hello.cask</code>，内容只有这几行：</p>
+<pre><code class="lang-cask">function main() {
+    print "你好，C*！";
+}</code></pre>
+<p>在命令行里编译并运行（<code>--run</code> 表示编译完马上运行）：</p>
+<pre><code class="lang-bat">bin\caskc.exe hello.cask --run</code></pre>
+<p>屏幕上出现 <code>你好，C*！</code>，第一个程序就成了。不加 <code>--run</code> 只会编译出 <code>hello.exe</code>，需要自己双击运行。</p>
+<p>不想敲命令也可以双击 <code>bin\caskide.exe</code> 打开 <strong><code>C*</code> Studio 编辑器</strong>，把代码粘进去，按 <code>F5</code> 运行、按 <code>Esc</code> 停止。编辑器用的是和命令行一样的编译器，结果完全一致。</p>
+<h2>六种基本类型</h2>
+<p>程序里的每份数据都有"类型"，类型决定它能装什么。<code>C*</code> 0.4.2 一共六种：</p>
+<table>
+<thead><tr><th>类型</th><th>装什么</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><code>int</code></td><td>整数</td><td><code>int 分数 = 90;</code></td></tr>
+<tr><td><code>float</code></td><td>小数</td><td><code>float 价格 = 3.5;</code></td></tr>
+<tr><td><code>string</code></td><td>一串文字</td><td><code>string 名字 = "小明";</code></td></tr>
+<tr><td><code>char</code></td><td>单个字符</td><td><code>char 字母 = 'A';</code></td></tr>
+<tr><td><code>bool</code></td><td>真或假</td><td><code>bool 及格 = true;</code></td></tr>
+<tr><td><code>none</code></td><td>不返回任何东西，只用于函数</td><td><code>none 问候() { ... }</code></td></tr>
+</tbody></table>
+<h2>一个版本约定</h2>
+<p><code>C*</code> 0.4.2 统一使用上面这六个类型名。更早的版本里，同样的东西写作 <code>number</code>（整数）、<code>real</code>（小数）、<code>text</code>（文字）、<code>letter</code>（字符）。</p>
+<p>这四个老名字现在叫<strong>软弃用别名</strong>：写出来<strong>照样能编译、能运行</strong>，只是编辑器会给你一条"提示"级的信息，建议换成新名字。本书一律用新名字 <code>int / float / string / char / bool / none</code>。</p>
+<hr>
+<h2>第一单元　起步</h2>
+<p>这个单元的三课回答三个最基本的问题：程序长什么样？数据放在哪里？程序怎么和人对话？</p>
+<h3>第 1 课　第一个程序</h3>
+<p><strong>这一课学什么</strong>：认识程序的外壳——入口、语句、大括号、分号、注释。</p>
+<p>上面那个 <code>hello.cask</code> 就是最小的完整程序。把它拆开看：</p>
+<pre><code class="lang-cask">// hello.cask —— 第一个程序
+function main() {
+    print "你好，C*！";
+    print "这是我写的第二行。";
+    print 1 + 2;
+}</code></pre>
+<p>运行结果是三行：</p>
+<pre><code>你好，C*！
+这是我写的第二行。
+3</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>// hello.cask —— 第一个程序</code> 是<strong>注释</strong>。<code>//</code> 后面的内容编译器完全不看，只写给人看。</li><li><code>function main() { ... }</code> 是<strong>程序入口</strong>。程序从 <code>main</code> 的第一条语句开始执行，<code>{</code> 和 <code>}</code> 中间的部分叫<strong>程序块</strong>。</li><li><code>print ...;</code> 是<strong>输出语句</strong>，把后面的东西显示到屏幕上，并且<strong>自动换行</strong>。</li><li><code>print "你好，C*！";</code> 里，双引号包起来的 <code>"你好，C*！"</code> 叫<strong>字符串字面量</strong>，表示一段文字。</li><li><code>print 1 + 2;</code> 里没有引号，<code>1 + 2</code> 是<strong>算式</strong>，程序会先算出 <code>3</code> 再打印。</li><li>每条语句末尾的分号 <code>;</code> 表示"这一句到此结束"。忘了写，编译器会报"语法"错误。</li></ul>
+<p><strong>易错点</strong>：</p>
+<ul><li>大括号、小括号、双引号都要<strong>成对</strong>出现。少一个右边的括号，是最常见的新手错误。</li><li>入口的小括号里<strong>不要写东西</strong>：<code>function main()</code> 后面直接跟 <code>{</code>。写成 <code>function main(参数)</code> 编译器会提示入口不能带参数。</li><li>中文标点和英文标点不能混用。语句末尾的分号必须是英文的 <code>;</code>，不是 <code>；</code>；字符串的引号必须是英文的 <code>"</code>，不是中文引号 <code>“”</code>。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>把程序改成打印你的名字、班级和一句你喜欢的格言，各占一行。</li><li>再写一条 <code>print 7 * 8;</code>，猜一猜会打印出什么，然后运行验证。</li><li>故意删掉一行末尾的分号，编译一次，读一读报错信息里写的行号和说明。</li></ol>
+<p><strong>小结</strong>：程序从 <code>function main()</code> 开始；一条语句一个分号；<code>print</code> 输出并换行；<code>//</code> 写注释。</p>
+<hr>
+<h3>第 2 课　变量：给数据起名字</h3>
+<p><strong>这一课学什么</strong>：把数据装进一个有名字的盒子，需要时用名字取出来。</p>
+<p>把数据存下来，才能反复使用。存数据的盒子叫<strong>变量</strong>，起名字的写法是"类型 名字 = 初值;"。</p>
+<pre><code class="lang-cask">function main() {
+    int 年龄 = 14;
+    float 身高 = 1.62;
+    string 名字 = "小明";
+    char 等级 = 'A';
+    bool 是班长 = true;
+
+    print "我叫", 名字, "，今年", 年龄, "岁。";
+    print "身高", 身高, "米，等级是", 等级, "。";
+    print "是班长吗？", 是班长;
+}</code></pre>
+<p>运行结果：</p>
+<pre><code>我叫小明，今年14岁。
+身高1.62米，等级是A。
+是班长吗？true</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>int 年龄 = 14;</code> 声明了一个类型为 <code>int</code> 的变量，名字叫 <code>年龄</code>，初值是 <code>14</code>。之后写 <code>年龄</code> 就等于写 <code>14</code>。</li><li><code>float 身高 = 1.62;</code> 装小数。<code>string 名字 = "小明";</code> 装文字，用<strong>双引号</strong>。<code>char 等级 = 'A';</code> 装<strong>单个字符</strong>，用<strong>单引号</strong>。</li><li><code>bool 是班长 = true;</code> 装真假。<code>bool</code> 变量只能取 <code>true</code> 或 <code>false</code> 两个值。</li><li><code>print "我叫", 名字, "，今年", 年龄, "岁。";</code> 里，<code>print</code> 后面跟了<strong>好几样东西</strong>，用逗号隔开，它们会依次打印、连成一整行。这正是 <code>print</code> 比 <code>show</code> 方便的地方：一句话里可以文字和变量混着写。</li></ul>
+<p><strong>变量名可以写中文</strong>。<code>年龄</code>、<code>名字</code> 都是合法名字。规则只有几条：不能以数字开头，不能和关键字（<code>if</code>、<code>while</code>、<code>int</code> 这些）重名，也不能用内置函数名（<code>print</code>、<code>SUM</code>、<code>LEN</code> 这些）当名字。中文名字要求文件保存为 <strong>UTF-8</strong> 编码。</p>
+<p><strong>变量的值可以改</strong>。用 <code>=</code> 给它重新赋值，<code>=</code> 读作"把右边的值放进左边的盒子"：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 60;
+    print "最初的分数：", 分数;
+
+    分数 = 分数 + 5;      // 先算右边（60 + 5），再把结果放回盒子
+    print "加 5 分后：", 分数;
+
+    分数 = 90;            // 直接换一个新值
+    print "改成 90：", 分数;
+}</code></pre>
+<p>运行结果：</p>
+<pre><code>最初的分数：60
+加 5 分后：65
+改成 90：90</code></pre>
+<p>注意 <code>分数 = 分数 + 5;</code> 不是"分数等于分数加 5"这种数学等式，而是"把 <code>分数 + 5</code> 的结果存回 <code>分数</code>"。编程里的 <code>=</code> 是<strong>赋值</strong>，不是相等。判断相等要用 <code>==</code>，第 5 课会讲。</p>
+<p><strong>不想被改的盒子叫常量</strong>。全程序固定不变的值（满分、圆周率、数组长度）用 <code>constant</code> 声明：</p>
+<pre><code class="lang-cask">constant int 满分 = 100;
+constant float 圆周率 = 3.14159;
+constant string 学校 = "实验中学";
+
+function main() {
+    int 语文 = 88;
+    print 学校, "的语文得分率：", 语文 * 1.0 / 满分;
+    print "圆周率大约是 ", 圆周率;
+}</code></pre>
+<p>常量名习惯上全程序唯一。它的好处是<strong>改一处、处处生效</strong>：以后满分从 100 改成 120，只改第一行就行。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li>字符串用双引号 <code>"..."</code>，字符用单引号 <code>'...'</code>。写 <code>char c = "A";</code>（用双引号）会报类型不符。</li><li>变量必须先声明再使用。直接写 <code>print 分数;</code> 而没有声明过，会得到"未定义的名字"这种"严重"错误。</li><li>变量名区分大小写，但<strong>不要</strong>靠大小写区分两个名字（<code>score</code> 和 <code>Score</code> 混用很容易看错），养成好习惯。</li><li><code>int</code> 只能装整数。写 <code>int 身高 = 1.62;</code> 会在编译期报错，因为 <code>1.62</code> 是小数。小数要用 <code>float</code>。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>声明三个变量分别存你的语文、数学、英语成绩，打印三科的总分。</li><li>用 <code>constant</code> 声明一个 <code>int 我的年龄 = 你的岁数;</code>，再声明一个 <code>int 明年 = 我的年龄 + 1;</code>，打印"我明年 X 岁"。</li><li>把 <code>1.62</code> 改成 <code>"1.62"</code> 存进一个 <code>string</code> 变量，想想它和 <code>float</code> 版本最大的区别是什么。</li></ol>
+<p><strong>小结</strong>：变量 = 有名字的盒子，格式 <code>类型 名字 = 初值;</code>；<code>=</code> 是赋值；不变的值用 <code>constant</code>。</p>
+<hr>
+<h3>第 3 课　对话：输入与输出</h3>
+<p><strong>这一课学什么</strong>：让程序能问问题、读你敲进去的回答。</p>
+<p>只会打印的程序是单向的。加上 <code>input</code>，程序就能读键盘输入，变成双向对话。</p>
+<pre><code class="lang-cask">function main() {
+    string 名字 = "";
+    int 年龄 = 0;
+
+    print "你叫什么名字？";
+    input 名字;
+
+    print "你几岁？";
+    input 年龄;
+
+    print 名字, "，你好！你今年 ", 年龄, " 岁。";
+}</code></pre>
+<p>试运行（<code>&gt;</code> 后面是你敲进去的内容）：</p>
+<pre><code>你叫什么名字？
+&gt; 小明
+你几岁？
+&gt; 14
+小明，你好！你今年 14 岁。</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>string 名字 = "";</code> 先给变量一个空字符串当初值。<code>""</code> 就是"里面什么都没有"的文字。</li><li><code>input 名字;</code> 是一条<strong>语句</strong>，不是函数。它读一整行键盘输入，按变量的类型解析后放进变量里。读到 <code>小明</code> 就存进 <code>名字</code>。</li><li><code>input 年龄;</code> 读进来的是数字文本，因为 <code>年龄</code> 是 <code>int</code>，程序会自动把 <code>14</code> 解析成整数 14。如果这里输入了字母，程序会提醒你重输。</li><li><code>input</code> <strong>每次读一整行</strong>。所以文字、数字交替输入也不会互相"吃掉"对方的回车。</li></ul>
+<p><code>input</code> 读数字时：<code>int</code> 变量要输入整数，<code>float</code> 变量可以输入小数，<code>char</code> 变量取这一行的第一个字符。文字用 <code>input</code> 会读入整行（可以带空格）。</p>
+<p><strong>不换行的输出用 <code>show</code></strong>。<code>print</code> 打完自动换行，<code>show</code> 打完停在原地，适合排版：</p>
+<pre><code class="lang-cask">function main() {
+    for (int i = 1; i &lt;= 3; i++) {
+        show i, " ";
+    }
+    print "到头了！";
+}</code></pre>
+<p>运行结果：<code>1 2 3 到头了！</code>（三个数字在同一行，最后才换行）。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li>给 <code>input</code> 的变量必须已经声明过，<code>input</code> 只负责读，不负责声明。</li><li><code>print</code> 和 <code>show</code> 是两条不同的语句，不要写 <code>print;</code> 或 <code>print()</code>。</li><li>变量有初值最保险。如果 <code>input</code> 之前就用了变量，读到的可能是默认值（数字是 0），容易出错。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>写一个程序，问用户的姓名和爱好，最后打印一句"XXX 喜欢 YYY"。</li><li>用 <code>show</code> 打印一排 5 个星号 <code>*</code>，再用 <code>print</code> 换行。（提示：星号要写在字符串里：<code>"*"</code>。）</li><li>让程序问两个整数，打印它们的和、差、积。（除法和余数下一单元再讲。）</li></ol>
+<p><strong>小结</strong>：<code>print</code> 输出并换行，<code>show</code> 输出不换行，<code>input 变量;</code> 读一整行进来。</p>
+<hr>
+<h3>单元小项目 1　自我介绍卡片</h3>
+<p>把前三课合起来：输入姓名、年龄、爱好，打印一张排版好的卡片。</p>
+<pre><code class="lang-cask">// 自我介绍卡片
+function main() {
+    string 名字 = "";
+    int 年龄 = 0;
+    string 爱好 = "";
+
+    print "===== 自我介绍卡片 =====";
+    show "你的名字：";
+    input 名字;
+    show "你的年龄：";
+    input 年龄;
+    show "你的爱好：";
+    input 爱好;
+
+    print "-------------------------";
+    print "姓名：", 名字;
+    print "年龄：", 年龄, " 岁";
+    print "爱好：", 爱好;
+    print "欢迎你，", 名字, "！";
+    print "=========================";
+}</code></pre>
+<p><strong>这段程序用到了</strong>：变量（第 2 课）、<code>print</code> 与 <code>show</code> 的分工、<code>input</code> 读三种不同的数据（第 3 课）。</p>
+<p><strong>动手改一改</strong>：</p>
+<ol><li>再加一个问题"你的梦想"，并打印在卡片上。</li><li>把分隔线从 <code>-</code> 换成 <code>=</code> 或 <code>*</code>，换个样式。</li><li>把卡片改成"欢迎新同学"的公告，把三行输入换成写死的文字（不用 <code>input</code>）。</li></ol>
+<hr>
+<h2>第二单元　数据与运算</h2>
+<p>这一单元讲清"程序怎么算""怎么比""有哪些现成的函数可以直接用"。</p>
+<h3>第 4 课　算数：整数、小数与四则运算</h3>
+<p><strong>这一课学什么</strong>：用 <code>+ - * / %</code> 做计算，并且弄懂"整数除法会把小数丢掉"这个最常见的坑。</p>
+<p><code>C*</code> 的运算符和数学课上的写法基本一致：</p>
+<pre><code class="lang-cask">function main() {
+    int a = 7;
+    int b = 2;
+
+    print "a + b = ", a + b;    // 9
+    print "a - b = ", a - b;    // 5
+    print "a * b = ", a * b;    // 14
+    print "a / b = ", a / b;    // 3，不是 3.5
+    print "a % b = ", a % b;    // 1，余数
+    print "a 是偶数吗？", a % 2 == 0;   // false
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>+ - *</code> 就是加、减、乘。</li><li><code>/</code> 是除。<strong>两个 <code>int</code> 相除，结果还是 <code>int</code>，小数部分被直接丢掉</strong>，所以 <code>7 / 2</code> 得到 <code>3</code> 而不是 <code>3.5</code>。这叫<strong>整数除法</strong>。</li><li><code>%</code> 读作"取余"，算的是除法剩下的余数：<code>7 % 2</code> 是 <code>1</code>。</li><li><code>a % 2 == 0</code> 是判断奇偶的常用写法：余数是 0 就是偶数。</li></ul>
+<p><strong>想要小数结果怎么办</strong>：让参与运算的至少一边是 <code>float</code>。最省事的办法是乘以 <code>1.0</code>：</p>
+<pre><code class="lang-cask">function main() {
+    int 总分 = 321;
+    int 人数 = 4;
+
+    print "整数除法：", 总分 / 人数;              // 80
+    print "小数除法：", 总分 * 1.0 / 人数;         // 80.25
+    print "保留两位：", ROUND(总分 * 1.0 / 人数, 2);   // 80.25
+}</code></pre>
+<p><code>总分 * 1.0</code> 先把整数变成小数，之后的除法就都是小数除法了。算平均分时几乎每次都要这么写。</p>
+<p><code>int</code> 和 <code>float</code> 可以混着算，结果自动变成小数：</p>
+<pre><code class="lang-cask">function main() {
+    int 整数 = 5;
+    float 小数 = 2.5;
+    print 整数 + 小数;    // 7.5
+    print 整数 * 小数;    // 12.5
+    print 小数 / 2;       // 1.25
+}</code></pre>
+<p><strong>复合赋值与自增</strong>：给变量加减一个数，有更短的写法：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 60;
+    分数 += 5;    // 等于 分数 = 分数 + 5
+    分数 -= 2;    // 63
+    分数 *= 2;    // 126
+    分数 /= 3;    // 42
+    print 分数;
+
+    int n = 0;
+    n++;          // 等于 n = n + 1
+    n++;
+    print n;      // 2
+}</code></pre>
+<p><code>+= -= *= /= %=</code> 分别对应加减乘除取余，<code>++</code> 表示加 1。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li><code>7 / 2</code> 是 <code>3</code>，不是 <code>3.5</code>。需要小数就写 <code>7 * 1.0 / 2</code> 或把其中一个写成 <code>7.0 / 2</code>。</li><li>除法的除数是 0 会触发运行时错误，程序直接停下。写除法前想清楚除数会不会是 0。</li><li><code>%</code> 的两边都应当是整数。<code>7.5 % 2</code> 这类写法不属于入门范围。</li><li><code>+</code> 用在两个字符串之间是"拼接"（第 15 课讲），用在数字之间才是加法。<code>"1" + "2"</code> 得到的是文字 <code>12</code>，不是 <code>3</code>。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>用三个变量存语文、数学、英语成绩，打印总分和平均分（保留两位小数）。</li><li>输入一个整数，打印它除以 7 的商和余数。</li><li>一个班 45 人，每 6 人一组，能分几组、还剩几人？用 <code>int</code> 算出来并打印。</li></ol>
+<p><strong>小结</strong>：<code>+ - * / %</code>；整数除法会丢小数，要小数就 <code>* 1.0</code>；<code>+=</code>、<code>++</code> 是简写。</p>
+<hr>
+<h3>第 5 课　比较与逻辑：让程序会判断真假</h3>
+<p><strong>这一课学什么</strong>：写出一个能判断对错的条件，为下一单元的分支做准备。</p>
+<p>比较两个值会得到一个 <code>bool</code>（真 <code>true</code> 或假 <code>false</code>）：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 76;
+
+    print 分数 &gt; 60;                    // true
+    print 分数 == 100;                  // false
+    print 分数 &gt;= 60 and 分数 &lt; 80;     // true
+    print 分数 &lt; 60 or 分数 &gt; 90;       // false
+    print not (分数 == 0);              // true
+
+    print true and false;               // false
+    print true or false;                // true
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li>六个比较运算符：<code>==</code>（相等）、<code>!=</code>（不等）、<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>。</li><li><strong><code>=</code> 是赋值，<code>==</code> 才是相等判断</strong>。<code>分数 = 100;</code> 是把 100 存进去；<code>分数 == 100</code> 才是"问它是不是 100"。</li><li><code>and</code>（与）要求两边都真结果才真；<code>or</code>（或）只要一边真就真；<code>not</code>（非）把真变假、假变真。</li><li>括号可以用来分组，<code>not (分数 == 0)</code> 表示先算括号里再取反。</li></ul>
+<p>比较的结果能存进 <code>bool</code> 变量，起个名字更好读：</p>
+<pre><code class="lang-cask">function main() {
+    int 温度 = 3;
+    bool 要穿外套 = 温度 &lt; 10;
+    bool 要带伞 = 温度 &lt; 5 or 温度 &gt; 30;
+
+    print "要穿外套吗？", 要穿外套;
+    print "要带伞吗？", 要带伞;
+}</code></pre>
+<p>文字和字符也能比较：</p>
+<pre><code class="lang-cask">function main() {
+    string 甲 = "abc";
+    string 乙 = "abc";
+    print 甲 == 乙;          // true
+    print 甲 == "abd";       // false
+
+    char c = 'm';
+    print c &gt;= 'a' and c &lt;= 'z';   // true，是小写字母
+}</code></pre>
+<p><strong>易错点</strong>：</p>
+<ul><li>把 <code>==</code> 写成 <code>=</code>，意思完全变了，而且往往不会报错，只是逻辑不对。</li><li><code>and</code> / <code>or</code> 两边都应当是<strong>比较结果</strong>（<code>bool</code>）。写 <code>if (分数 and 及格)</code> 这种把数字当条件的做法，编译器会提示"条件必须是比较"。想表达"分数不是 0"就写 <code>分数 != 0</code>。</li><li><code>not</code> 后面如果跟的是复杂表达式，加上括号更清楚：<code>not (a == b)</code>。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>输入一个整数，打印三行：它是否大于 0、是否为偶数、是否在 10 到 20 之间（用 <code>and</code>）。</li><li>输入一个字符，判断它是不是大写字母（提示：<code>c &gt;= 'A' and c &lt;= 'Z'</code>）。</li><li>用 <code>or</code> 写一个条件：年份是闰年的简化判断（能被 4 整除即可）。</li></ol>
+<p><strong>小结</strong>：比较得到 <code>bool</code>；<code>==</code> 判断相等，<code>=</code> 是赋值；<code>and / or / not</code> 组合条件。</p>
+<hr>
+<h3>第 6 课　现成的工具箱：数学与 Excel 函数</h3>
+<p><strong>这一课学什么</strong>：认识一批可以直接调用的函数，很多计算根本不用自己写。</p>
+<p><strong>函数调用</strong>的写法是"名字(参数)"，例如 <code>ABS(-3)</code> 里的 <code>-3</code> 就是<strong>参数</strong>，函数算完会<strong>返回</strong>一个结果。</p>
+<p>先看数学函数（小写这一套，<strong>已软弃用</strong>，编译时会提示改用大写）：</p>
+<pre><code class="lang-cask">function main() {
+    print "SIN(0.0) = ", SIN(0.0);          // 0
+    print "FLOOR(-2.7) = ", FLOOR(-2.7);    // -3，向下取整
+    print "CEILING(-2.7) = ", CEILING(-2.7); // -2，向上取整
+    print "TRUNC(-2.7) = ", TRUNC(-2.7);    // -2，向零取整
+    print "ATAN2(1.0, 1.0) = ", ATAN2(1.0, 1.0); // 0.785398...（45 度）
+    print "LOG10(1000.0) = ", LOG10(1000.0); // 3
+}</code></pre>
+<p>这些是 0.4.2 起登记的大写名字，直接写它们最清晰。</p>
+<p>再看 Excel 风格的大写函数。会用 Excel 公式，就会用它们：</p>
+<pre><code class="lang-cask">function main() {
+    print "ABS(-3) = ", ABS(-3);              // 3
+    print "MOD(-3, 10) = ", MOD(-3, 10);      // 7
+    print "ROUND(2.345, 2) = ", ROUND(2.345, 2);  // 2.35
+    print "INT(-2.7) = ", INT(-2.7);          // -3
+    print "SIGN(-5) = ", SIGN(-5);            // -1
+    print "POWER(2, 10) = ", POWER(2.0, 10.0);    // 1024
+    print "SQRT(81) = ", SQRT(81.0);          // 9
+    print "PI() = ", PI();                    // 3.14159...
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>ABS</code> 是绝对值，<code>SIGN</code> 返回符号（负数得 -1，零得 0，正数得 1）。</li><li><code>ROUND(x, 位数)</code> 四舍五入到指定小数位；只写 <code>ROUND(x)</code> 就取整。</li><li><code>INT(x)</code> 是<strong>向下取整</strong>：<code>INT(-2.7)</code> 得 <code>-3</code>，比 -2.7 还小；这和 <code>round</code> 不一样，要用对场合。</li><li><code>MOD(a, b)</code> 是 Excel 规则的取余，<strong>结果的符号跟着除数走</strong>：<code>MOD(-3, 10)</code> 是 <code>7</code>。而 <code>%</code> 是 C 规则，<code>-3 % 10</code> 是 <code>-3</code>。两个都保留，含义不同，别混用。</li><li><code>POWER(x, y)</code> 是 x 的 y 次方，<code>SQRT(x)</code> 是平方根，<code>PI()</code> 返回圆周率（它是一个函数，所以要写括号）。</li><li>小写的 <code>abs</code>、<code>sqrt</code>、<code>len</code>、<code>floor</code>、<code>ceil</code>、<code>sin</code> 等是<strong>老写法</strong>，现在仍能用，但编译器会给出蓝色"提示"，建议你改成对应的大写名字（<code>ABS</code> <code>SQRT</code> <code>LEN</code> <code>FLOOR</code> <code>CEILING</code> <code>SIN</code>…）。新代码请统一写大写。</li></ul>
+<p><strong>随机数与时间</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    print "掷一次骰子：", RANDBETWEEN(1, 6);   // 1 到 6 的随机整数，两端都算
+    print "一个随机小数：", RAND();            // 0.0 到 1.0 之间
+    print "现在的时间戳（秒）：", now();
+}</code></pre>
+<p><code>RANDBETWEEN(a, b)</code> 每次运行都可能给出不同的结果，非常适合做游戏和抽奖。</p>
+<p><strong>一次算一整列</strong>：几个汇总函数可以直接吃<strong>整个数组</strong>（数组第 13 课细讲，这里先看效果）：</p>
+<pre><code class="lang-cask">function main() {
+    int 成绩[4] = {88, 95, 72, 66};
+    print "总分 ", SUM(成绩);
+    print "平均 ", AVERAGE(成绩);
+    print "最高 ", MAX(成绩), "，最低 ", MIN(成绩);
+    print "人数 ", COUNT(成绩);
+}</code></pre>
+<p>运行结果：</p>
+<pre><code>总分 321
+平均 80.25
+最高 95，最低 66
+人数 4</code></pre>
+<p><strong>二选一的值用 <code>IF</code></strong>：<code>C*</code> 没有 <code>? :</code> 那种三元写法，改用 <code>IF(条件, 真时取值, 假时取值)</code>：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 76;
+    print IF(分数 &gt;= 60, "及格", "不及格");     // 及格
+    print IF(分数 &gt;= 90, "优秀", "还可以更好");  // 还可以更好
+    print AND(分数 &gt;= 60, 分数 &lt; 80);          // true
+    print OR(分数 &lt; 60, 分数 &gt; 90);            // false
+    print NOT(分数 == 0);                      // true
+}</code></pre>
+<p><code>IF</code> 只在需要的那一边取值，用来替代"二选一"非常自然。<code>AND / OR / NOT</code> 是大写版的与或非。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li><code>PI</code> 要写成 <code>PI()</code>，<code>RAND</code> 要写成 <code>RAND()</code>；它们是有括号的函数，不是变量。</li><li>三角函数用<strong>弧度</strong>不用角度。45 度要先换算：<code>45 * PI() / 180</code>。</li><li><code>SUM / AVERAGE / MAX / MIN / COUNT</code> 接收的是<strong>数组名</strong>，不要写成 <code>SUM(成绩[0])</code> 或带方括号。</li><li><code>INT</code> 是向下取整，不是四舍五入。想四舍五入用 <code>ROUND</code>。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>输入一个圆的半径，用 <code>PI()</code> 和 <code>SQRT</code> 打印它的面积和周长（保留两位）。</li><li>每样打印一次 <code>RANDBETWEEN(1, 100)</code> 和 <code>RAND()</code> 的平方根，观察每次运行的结果不同。</li><li>用 <code>IF</code> 和 <code>MOD</code> 判断一个整数是不是偶数，输出"偶数"或"奇数"。</li><li>用 <code>FIND("hello world", "world")</code> 找位置，用 <code>SUBSTITUTE("banana", "a", "1")</code> 做替换，各打印一次。</li></ol>
+<p><strong>小结</strong>：数学函数 <code>SIN COS TAN FLOOR CEILING TRUNC ATAN2 LOG10 SQRT ABS</code>；Excel 函数 <code>ABS MOD ROUND INT SIGN POWER SQRT PI RAND RANDBETWEEN SUM AVERAGE MAX MIN COUNT IF AND OR NOT</code>；文本函数 <code>LEN LEFT RIGHT MID UPPER LOWER TRIM CONCAT at FIND SUBSTITUTE REPT EXACT CHAR CODE</code>；<code>MOD</code> 和 <code>%</code> 规则不同；小写老写法已软弃用，请写大写。</p>
+<hr>
+<h3>单元小项目 2　圆的计算器</h3>
+<p>输入半径，算出圆的直径、周长、面积。公式：周长 <code>2 * PI() * r</code>，面积 <code>PI() * r * r</code>。</p>
+<pre><code class="lang-cask">// 圆的计算器
+function main() {
+    float 半径 = 0.0;
+
+    print "===== 圆的计算器 =====";
+    show "请输入半径：";
+    input 半径;
+
+    float 周长 = 2 * PI() * 半径;
+    float 面积 = PI() * 半径 * 半径;
+
+    print "半径 ", 半径, " 的圆：";
+    print "直径 = ", 半径 * 2;
+    print "周长 = ", ROUND(周长, 2);
+    print "面积 = ", ROUND(面积, 2);
+}</code></pre>
+<p><strong>这段程序用到了</strong>：<code>float</code> 变量（第 2 课）、<code>input</code> 输入（第 3 课）、<code>PI()</code> 和 <code>ROUND</code>（第 6 课）。</p>
+<p><strong>动手改一改</strong>：</p>
+<ol><li>再加一行"球体积"，公式是 <code>4.0 / 3.0 * PI() * r * r * r</code>。</li><li>把半径的输入改成用 <code>RANDBETWEEN(1, 10)</code> 随机生成，连跑五次。</li><li>试试把 <code>4.0 / 3.0</code> 写成 <code>4 / 3</code>，观察结果为什么不对——这正是第 4 课的整数除法坑。</li></ol>
+<hr>
+<h2>第三单元　分支</h2>
+<p>程序要会"看情况办事"。这一单元讲两种分支：简单的 <code>if / else</code>，和处理多种情况的 <code>switch</code>。</p>
+<h3>第 7 课　如果……否则……</h3>
+<p><strong>这一课学什么</strong>：用 <code>if / else if / else</code> 让程序走不同的路。</p>
+<p>最基本的分支只有两条路：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 78;
+    if (分数 &gt;= 60) {
+        print "及格";
+    } else {
+        print "不及格";
+    }
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>if (条件) { ... }</code> 的意思是"如果条件为真，就执行大括号里的语句"。</li><li><code>else { ... }</code> 是"否则"，条件为假时执行它。<code>else</code> 不是必须的，可以只写 <code>if</code>。</li><li>条件必须是一个比较结果（<code>bool</code>），比如 <code>分数 &gt;= 60</code>。</li></ul>
+<p><strong>多条路用 <code>else if</code></strong>：从上往下依次判断，<strong>第一个成立的分支执行完就跳出</strong>，后面的都不再看：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 92;
+
+    if (分数 &gt;= 90) {
+        print "优秀";
+    } else if (分数 &gt;= 60) {
+        print "及格";
+    } else {
+        print "要加油";
+    }
+}</code></pre>
+<p>把 <code>分数</code> 改成 92、75、40 各运行一次，分别得到"优秀""及格""要加油"。</p>
+<p><strong>条件可以是组合</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    int 年龄 = 13;
+    bool 有票 = true;
+
+    if (年龄 &gt;= 12 and 有票) {
+        print "可以入场";
+    } else {
+        print "不能入场";
+    }
+}</code></pre>
+<p><strong>易错点</strong>：</p>
+<ul><li>判断顺序很重要。上面若把 <code>分数 &gt;= 60</code> 写在前面，那么 92 分也会走"及格"这条路——因为它是第一个成立的。<strong>范围窄的条件写前面</strong>。</li><li><code>if</code> 后面的分号：写 <code>if (条件);</code> 会让 <code>if</code> 管到一个空语句，后面的 <code>{ }</code> 就变成了普通代码块。<strong><code>if</code> 的条件后面不要加 <code>;</code></strong>。</li><li>每个 <code>else if</code> 都是新的一次判断，写太多层会不好读；超过三四层可以考虑 <code>switch</code> 或换个思路。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>输入一个整数，打印它是正数、负数还是零。</li><li>输入年龄，判断属于"儿童（&lt;12）""少年（12~17）""成年（&gt;=18）"哪一档。</li><li>写一个登录判断：用户名是 <code>"admin"</code> 且密码是 <code>"1234"</code> 才打印"登录成功"，否则打印"用户名或密码错误"。</li></ol>
+<p><strong>小结</strong>：<code>if (条件) { } else if (条件) { } else { }</code>；从上往下第一个成立的分支说了算。</p>
+<hr>
+<h3>第 8 课　多路选择：<code>else if</code> 与 <code>switch</code></h3>
+<p><strong>这一课学什么</strong>：当情况很多、又是拿一个值去"对号入座"时，用 <code>switch</code> 更清爽。</p>
+<p><code>switch</code> 拿一个值，去和一个个 <code>case</code> 比，相等就执行那一段：</p>
+<pre><code class="lang-cask">function main() {
+    int 月 = 4;
+
+    switch (月) {
+        case 1:  print "一月"; break;
+        case 2:  print "二月"; break;
+        case 12: print "十二月"; break;
+        default: print "其它月份"; break;
+    }
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>switch (值) { ... }</code> 里的"值"通常是 <code>int</code> 或 <code>char</code>。</li><li><code>case 1:</code> 表示"值等于 1 时从这里开始执行"。</li><li>每段末尾的 <code>break;</code> 表示"跳出 switch，后面的 case 都不看了"。</li><li><code>default:</code> 是"以上都不匹配时"执行的兜底，最多写一个，也可以不写。</li></ul>
+<p><strong>几个 <code>case</code> 共用一段代码</strong>（不加 <code>break</code> 就往下掉）：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 88;
+
+    switch (分数 / 10) {
+        case 10:
+        case 9:  print "优秀"; break;
+        case 8:  print "良好"; break;
+        case 7:  print "中等"; break;
+        case 6:  print "及格"; break;
+        default: print "不及格"; break;
+    }
+}</code></pre>
+<p><code>case 10:</code> 后面没有语句也没有 <code>break</code>，就会"掉"到 <code>case 9</code>，所以 90 分和 100 分都打印"优秀"。这里 <code>分数 / 10</code> 正是整数除法，88 / 10 得 8，落到 <code>case 8</code>。</p>
+<p><strong><code>if</code> 可以嵌套</strong>：分支里面还能再写分支，用来处理层次分明的情况：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数 = 85;
+    bool 交作业 = true;
+
+    if (分数 &gt;= 60) {
+        if (交作业) {
+            print "通过";
+        } else {
+            print "及格了，但要补交作业";
+        }
+    } else {
+        print "没通过";
+    }
+}</code></pre>
+<p><strong>易错点</strong>：</p>
+<ul><li>忘记写 <code>break;</code> 会"往下掉"，执行到下面不相干的 <code>case</code>。不是故意共用时，每个 <code>case</code> 都要写 <code>break;</code>。</li><li><code>case</code> 后面的值必须是一个<strong>固定的常量</strong>（数字、字符、或 <code>constant</code> 声明的常量），不能是变量或算式。写 <code>case 分数:</code> 会报错。</li><li><code>switch</code> 只适合"一个值对多个固定格子"。如果条件是范围（如 <code>&gt;= 60</code>），还是用 <code>if</code>。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>输入 1 到 7 的整数，用 <code>switch</code> 打印对应星期几。</li><li>输入一个字符，判断是运算符号 <code>+ - * /</code> 中的哪一个，并打印它的中文名。</li><li>用 <code>switch</code> 做简易计算器：输入两个数和运算符，打印结果（<code>/</code> 时注意第 4 课的整数除法）。</li></ol>
+<p><strong>小结</strong>：<code>switch (值) { case 常量: ... break; default: ... }</code>；<code>break</code> 决定要不要往下掉。</p>
+<hr>
+<h3>单元小项目 3　成绩等级器</h3>
+<p>输入一个 0 到 100 的成绩，先检查范围是否合法，再给出等级和评语。</p>
+<pre><code class="lang-cask">// 成绩等级器
+function main() {
+    int 分数 = 0;
+
+    print "===== 成绩等级器 =====";
+    show "请输入成绩（0~100）：";
+    input 分数;
+
+    if (分数 &lt; 0 or 分数 &gt; 100) {
+        print "输入的分数不在 0~100 之间，请重新运行程序。";
+    } else {
+        switch (分数 / 10) {
+            case 10:
+            case 9:  print "等级：优秀"; break;
+            case 8:  print "等级：良好"; break;
+            case 7:  print "等级：中等"; break;
+            case 6:  print "等级：及格"; break;
+            default: print "等级：不及格"; break;
+        }
+
+        if (分数 &gt;= 90) {
+            print "评语：太棒了，继续保持！";
+        } else if (分数 &gt;= 60) {
+            print "评语：还可以，继续努力。";
+        } else {
+            print "评语：别放弃，一点一点来。";
+        }
+    }
+}</code></pre>
+<p><strong>这段程序用到了</strong>：<code>or</code> 组合条件（第 5 课）、<code>if / else</code>（第 7 课）、<code>switch</code> 与整数除法（第 8 课）、<code>input</code>（第 3 课）。</p>
+<p><strong>动手改一改</strong>：</p>
+<ol><li>给"良好"和"中等"也各写一句评语，让每档都有话说。</li><li>加一个"作弊"检查：如果分数是 0 或 100，额外打印一句提示。</li><li>把 <code>switch</code> 那一段改写成等价的 <code>if / else if</code> 版本，比较两种写法哪个更好读。</li></ol>
+<hr>
+<h2>第四单元　循环</h2>
+<p>让程序重复做同一件事。这一单元讲五种循环写法，以及两种跳转。</p>
+<h3>第 9 课　重复做事：<code>while</code> 与 <code>for</code></h3>
+<p><strong>这一课学什么</strong>：用 <code>while</code> 和 <code>for</code> 让一段代码重复执行。</p>
+<p><code>while</code> 的规则是"条件为真就一直做"：</p>
+<pre><code class="lang-cask">function main() {
+    int i = 1;
+    while (i &lt;= 5) {
+        print i;
+        i++;          // 千万别忘了这一句
+    }
+}</code></pre>
+<p>运行结果是一列 1 到 5。</p>
+<p><strong>逐行解释</strong>：</p>
+<ul><li>先判断 <code>i &lt;= 5</code>，成立就进循环体；循环体做完再回来判断，直到条件不成立才往下走。</li><li><code>i++;</code> 让 <code>i</code> 每次加 1，这样条件迟早会变成假，循环才会结束。<strong>忘了它，程序就会永远转下去</strong>（叫死循环，按 <code>Esc</code> 或关窗口才能停下）。</li></ul>
+<p><code>for</code> 把"计数变量的初始化、条件、变化"三件事写在一行，最适合"重复固定次数"：</p>
+<pre><code class="lang-cask">function main() {
+    for (int i = 1; i &lt;= 5; i++) {
+        print i;
+    }
+}</code></pre>
+<p><strong>逐行解释</strong>：<code>for (int i = 1; i &lt;= 5; i++)</code> 读作"让 <code>i</code> 从 1 开始；只要 <code>i &lt;= 5</code> 就继续；每轮结束 <code>i</code> 加 1"。三段用分号隔开，顺序就是：初始化 → 判断 → 执行体 → 变化 → 再判断。</p>
+<p>用循环做累加很常见：</p>
+<pre><code class="lang-cask">function main() {
+    int 和 = 0;
+    for (int i = 1; i &lt;= 100; i++) {
+        和 += i;
+    }
+    print "1 加到 100 = ", 和;      // 5050
+}</code></pre>
+<p><strong>该选哪个</strong>：循环次数已知，用 <code>for</code>（一眼看清转多少圈）；只有一个"停下来的条件"，用 <code>while</code>。反过来用也能跑，但读起来别扭。</p>
+<p><strong>易错点（很重要）</strong>：在 <code>C*</code> 里，<code>for</code> 开头声明的计数变量属于<strong>它外面那一层</strong>。所以<strong>同一个函数里，两个并列的 <code>for</code> 不能都写 <code>int i</code></strong>，第二个会报 <code>'i' 在这里已经声明过了</code>。解决办法有两个：要么先声明一次（<code>int i;</code>）然后在两个循环里复用，要么第二个循环换个名字。看下面的对比：</p>
+<pre><code class="lang-cask">function main() {
+    int i;                       // 先声明一次
+    for (i = 0; i &lt; 3; i++) { show i, " "; }
+    print "";
+    for (i = 0; i &lt; 3; i++) { show i, " "; }   // 复用同一个 i
+    print "";
+}</code></pre>
+<pre><code class="lang-cask">function main() {
+    for (int i = 0; i &lt; 3; i++) { show i, " "; }
+    print "";
+    for (int k = 0; k &lt; 3; k++) { show k, " "; }   // 换个名字 k
+    print "";
+}</code></pre>
+<p><strong>其他易错点</strong>：</p>
+<ul><li>循环条件永远为真（比如忘了 <code>i++</code>），会变成死循环。</li><li><code>for</code> 的条件写成 <code>i &lt;= 5</code>；写成 <code>i &lt; 5</code> 就只转 4 次，差一错误很隐蔽，运行前先数一数。</li><li>累加变量一定要在循环<strong>外面</strong>先赋 0，写在循环里面每次都会被清零。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>用 <code>for</code> 打印 10、9、8……直到 1。</li><li>用 <code>while</code> 求 1 到 50 里所有偶数的和。</li><li>输入一个整数 n，打印 n 的乘法口诀表前 5 行（如 n=3 时打印 <code>3×1=3</code> 到 <code>3×5=15</code>）。</li></ol>
+<p><strong>小结</strong>：<code>while (条件) { }</code> 条件为真就重复；<code>for (初始化; 条件; 变化) { }</code> 适合计数；同一个函数里 <code>for (int i ...)</code> 只能出现一次。</p>
+<hr>
+<h3>第 10 课　更多循环：<code>do…while</code>、<code>until</code>、<code>foreach</code> 与跳转</h3>
+<p><strong>这一课学什么</strong>：另外三种循环写法，以及 <code>break</code>、<code>continue</code> 两个"提前结束/跳过"的工具。</p>
+<p><strong><code>do…while</code>：先做一遍，再问要不要继续</strong>。它的循环体<strong>至少执行一次</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    int n = 1;
+    do {
+        print n;
+        n = n + 1;
+    } while (n &lt;= 3);
+}</code></pre>
+<p>先打印 <code>1</code> 再判断，所以打印 1、2、3。<code>while</code> 是先判断后做，<code>do…while</code> 是先做后判断，只在"至少要试一次"的场合才需要它（比如读输入直到正确）。</p>
+<p><strong><code>until</code>：做到条件成立为止</strong>。它和 <code>while</code> 正好相反——<strong>条件一旦为真就停</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    int n = 1;
+    until (n &gt; 3) {
+        print n;
+        n = n + 1;
+    }
+}</code></pre>
+<p><code>until (n &gt; 3)</code> 读作"一直做，直到 n 大于 3"。效果是打印 1、2、3。<code>while (not 条件)</code> 和 <code>until (条件)</code> 是一回事，<code>until</code> 只是让句子读起来更顺。</p>
+<p><strong><code>foreach</code>：把数组里的每个元素轮流拿出来</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数[4] = {90, 80, 70, 60};
+    foreach (x in 分数) {
+        print x;
+    }
+}</code></pre>
+<p><code>x</code> 是循环变量，不用写类型，程序会自动让 <code>x</code> 依次等于数组里的每个元素。<code>foreach</code> 只处理<strong>一维数组</strong>，好处是不用管下标、不会越界。</p>
+<p><strong><code>break</code> 和 <code>continue</code></strong>：<code>break</code> 是"整个循环不做了，直接出去"；<code>continue</code> 是"这一轮到此为止，跳到下一轮"：</p>
+<pre><code class="lang-cask">function main() {
+    for (int i = 1; i &lt;= 10; i++) {
+        if (i == 5) { continue; }   // 跳过 5
+        if (i &gt; 8) { break; }       // 到 9 就整个停下
+        show i, " ";
+    }
+    print "";
+}</code></pre>
+<p>运行结果：<code>1 2 3 4 6 7 8 </code>。<code>5</code> 被跳过，<code>9</code> 和 <code>10</code> 因为 <code>break</code> 根本没执行。</p>
+<p><strong>什么时候用哪个</strong>：</p>
+<table>
+<thead><tr><th>写法</th><th>判断时机</th><th>适合</th></tr></thead>
+<tbody>
+<tr><td><code>while</code></td><td>先判断</td><td>次数不定、可能一次都不做</td></tr>
+<tr><td><code>for</code></td><td>先判断</td><td>次数已知</td></tr>
+<tr><td><code>do…while</code></td><td>后判断</td><td>至少要做一次</td></tr>
+<tr><td><code>until</code></td><td>后判断</td><td>"做到某条件成立为止"</td></tr>
+<tr><td><code>foreach</code></td><td>—</td><td>逐个处理一维数组</td></tr>
+</tbody></table>
+<p><strong>易错点</strong>：</p>
+<ul><li><code>do…while</code> 末尾那个 <code>while (条件);</code> <strong>一定要有分号</strong>，这是唯一带分号的循环结尾。</li><li><code>foreach</code> 里的循环变量名不用声明，但也不能和外面的名字撞车，起个清楚的名字（如 <code>foreach (成绩 in 全班)</code>）。</li><li><code>break</code> 只跳出<strong>当前这一层</strong>循环；两层嵌套时，它不会连着外层一起跳出来。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>用 <code>until</code> 打印 5 到 1 的倒计时。</li><li>用 <code>foreach</code> 求一个数组的总分和平均分。</li><li>让用户不断输入数字，输入 0 时用 <code>break</code> 结束，然后打印刚才所有数字的和。（提示：<code>while (true)</code> 配 <code>break</code>。）</li></ol>
+<p><strong>小结</strong>：<code>do…while</code> 至少执行一次；<code>until</code> 条件为真就停；<code>foreach</code> 遍历一维数组；<code>break</code> 跳出、<code>continue</code> 跳过本轮。</p>
+<hr>
+<h3>单元小项目 4　九九乘法表</h3>
+<p>用两层 <code>for</code> 打印九九乘法表。外层 <code>i</code> 管行，内层 <code>j</code> 管这一行里的每一列。</p>
+<pre><code class="lang-cask">// 九九乘法表
+function main() {
+    print "===== 九九乘法表 =====";
+    for (int i = 1; i &lt;= 9; i++) {
+        for (int j = 1; j &lt;= i; j++) {
+            show i, "×", j, "=", i * j, "  ";
+        }
+        print "";
+    }
+}</code></pre>
+<p><strong>运行结果（前几行）</strong>：</p>
+<pre><code>===== 九九乘法表 =====
+1×1=1  
+2×1=2  2×2=4  
+3×1=3  3×2=6  3×3=9  
+...</code></pre>
+<p>注意内层条件 <code>j &lt;= i</code>：第 <code>i</code> 行只打印 <code>i</code> 个算式，所以是三角形的乘法表。外层每转完一圈用 <code>print "";</code> 换行。</p>
+<p><strong>再练一个：猜数字</strong>。这个程序需要你亲手输入，把输入、随机、循环、分支全用上了：</p>
+<pre><code class="lang-cask">// 猜数字
+function main() {
+    int 秘密 = RANDBETWEEN(1, 100);
+    int 猜 = 0;
+    int 次数 = 0;
+
+    print "我想了一个 1 到 100 的数，来猜猜看。";
+
+    while (猜 != 秘密) {
+        show "你猜：";
+        input 猜;
+        次数++;
+        if (猜 &lt; 秘密) {
+            print "小了";
+        } else if (猜 &gt; 秘密) {
+            print "大了";
+        }
+    }
+
+    print "猜对了！你一共猜了 ", 次数, " 次。";
+    if (次数 &lt;= 7) {
+        print "厉害，用了二分法吧！";
+    } else {
+        print "试试每次都猜剩下的中间那个数，会更快。";
+    }
+}</code></pre>
+<p><strong>为什么 7 次以内算厉害</strong>：每次猜中间的数，范围就砍掉一半，1 到 100 最多 7 步就能确定（第 17 课会亲手验证这件事）。</p>
+<p><strong>动手改一改</strong>：</p>
+<ol><li>给猜数字加上限：最多猜 8 次，超过就打印答案并结束。</li><li>把乘法表改成倒三角（内层条件改成 <code>j &lt;= 10 - i</code>）。</li><li>给乘法表每一项后面加一个制表感更强的分隔（比如把两个空格换成 <code>" | "</code>）。</li></ol>
+<hr>
+<h2>第五单元　函数</h2>
+<p>程序一长大，就得把工作拆成一块块。函数就是"起个名字的一段代码"。</p>
+<h3>第 11 课　把一段工作包成函数</h3>
+<p><strong>这一课学什么</strong>：定义自己的函数、传参数进去、用 <code>return</code> 把结果交出来。</p>
+<p>函数的基本写法是"<strong>返回类型</strong> 名字(参数) { ... }"，返回类型写在<strong>最前面</strong>：</p>
+<pre><code class="lang-cask">int 平方(int x) {
+    return x * x;
+}
+
+function main() {
+    print 平方(4);       // 16
+    print 平方(10);      // 100
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>int 平方(int x)</code> 说明这个函数<strong>返回一个 <code>int</code></strong>，需要一个 <code>int</code> 类型的<strong>参数</strong> <code>x</code>。</li><li><code>return x * x;</code> 把算出来的结果交回给调用它的地方，同时<strong>立刻结束函数</strong>。</li><li><code>平方(4)</code> 是一次<strong>调用</strong>：把 4 传进去，得到 16。</li></ul>
+<p><strong>不返回结果的函数</strong>，返回类型写 <code>none</code>：</p>
+<pre><code class="lang-cask">none 问候(string 谁) {
+    print "你好，", 谁, "！";
+}
+
+function main() {
+    问候("小明");
+    问候("小红");
+}</code></pre>
+<p><code>none</code> 就是"不交答案"。调用它时只写 <code>问候("小明");</code>，像一条语句那样用。</p>
+<p><strong>返回不止一种类型</strong>。想返回文字就把返回类型写成 <code>string</code>：</p>
+<pre><code class="lang-cask">string 称呼(int 年龄) {
+    if (年龄 &lt; 12) { return "小朋友"; }
+    if (年龄 &lt; 18) { return "同学"; }
+    return "大人";
+}
+
+function main() {
+    print "10 岁被叫作：", 称呼(10);
+    print "14 岁被叫作：", 称呼(14);
+    print "30 岁被叫作：", 称呼(30);
+}</code></pre>
+<p>注意这里出现了三个 <code>return</code>：<strong>哪个先被执行，函数就在哪里结束</strong>，所以三个只会走一个。最后一个 <code>return</code> 是不带条件的兜底。</p>
+<p><strong>参数是"复印"过去的</strong>（叫<strong>按值传递</strong>）。函数拿到的是参数的一份拷贝，在函数里改动它，<strong>不会影响外面原来的变量</strong>：</p>
+<pre><code class="lang-cask">none 改一改(int x) {
+    x = x * 10;
+    print "函数里面：x = ", x;
+}
+
+function main() {
+    int n = 5;
+    print "调用前：n = ", n;
+    改一改(n);
+    print "调用后：n = ", n;      // 还是 5
+}</code></pre>
+<p>运行结果：</p>
+<pre><code>调用前：n = 5
+函数里面：x = 50
+调用后：n = 5</code></pre>
+<p>想让函数真的改变外面某个值，就别靠参数——可以让函数 <code>return</code> 新值再接住（<code>n = 改一改(n);</code>），或者用下一课的全局变量。</p>
+<p><strong>参数可以有多个</strong>，也可以一个都没有，写成 <code>none 打招呼() { ... }</code> 调用时写 <code>打招呼();</code>。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li>把返回类型写在函数名<strong>后面</strong>（像别的语言那样）是错的，<code>C*</code> 要求写在前面：<code>int 平方(...)</code>。</li><li>声明了返回 <code>int</code>，就一定要走 <code>return</code> 交出一个整数。忘了写，编译器会在末尾补一个 <code>return 0</code>，但真实结果可能就不是你想要的。</li><li><code>none</code> 函数里不要写 <code>return 值;</code>；想提前结束，写一个空的 <code>return;</code>。</li><li>函数名不要和变量名、内置函数名重复。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>写 <code>int 立方(int x)</code> 返回 x 的三次方，打印 1 到 5 的立方。</li><li>写 <code>string 奇偶(int n)</code> 返回"偶数"或"奇数"。</li><li>写 <code>float 面积(float 长, float 宽)</code> 返回长方形面积，算 3 个不同长方形的面积。</li></ol>
+<p><strong>小结</strong>：<code>返回类型 名字(参数) { return ...; }</code>；不返回写 <code>none</code>；参数按值传递，改不动外面。</p>
+<hr>
+<h3>第 12 课　作用域、先用后定义与递归</h3>
+<p><strong>这一课学什么</strong>：搞清变量的"势力范围"，以及函数里最神奇的一种玩法——自己调用自己。</p>
+<p><strong>作用域</strong>就是"变量在哪些地方有效"。规则很简单：<strong>变量只在自己所在的那对大括号 <code>{ }</code> 里活着</strong>，出了大括号就消失：</p>
+<pre><code class="lang-cask">function main() {
+    int 外层 = 1;
+    print "外层 = ", 外层;
+
+    if (外层 &gt; 0) {
+        int 里层 = 2;
+        print "里层 = ", 里层;      // 里层在这里有效
+    }
+    // print 里层;                 // 写成这样会报"未定义的名字"
+}</code></pre>
+<p>内层的块还可以起和外层一样的名字，把外层的暂时"遮住"，这叫<strong>遮蔽</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    int x = 10;
+    {
+        int x = 20;
+        print "里面的 x = ", x;     // 20
+    }
+    print "外面的 x = ", x;         // 10
+}</code></pre>
+<p><strong>全局变量</strong>写在所有函数<strong>外面</strong>，任何函数都能读写：</p>
+<pre><code class="lang-cask">int 计数 = 0;
+
+none 加一() {
+    计数 += 1;
+}
+
+function main() {
+    加一();
+    加一();
+    加一();
+    print 计数;      // 3
+}</code></pre>
+<p>数组也可以放在外面当全局数组，这是 <code>C*</code> 里让多个函数共用一份数据的常用办法（第 14、16 课会大量使用）。</p>
+<p><strong>先用后定义没关系</strong>。<code>C*</code> 编译时会先把整个文件扫一遍，所以函数可以写在调用它的地方<strong>后面</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    print 打招呼("C*");
+}
+
+string 打招呼(string 谁) {
+    return "你好，" + 谁 + "！";
+}</code></pre>
+<p><strong>递归：函数自己调用自己</strong>。写递归一定要有一个"停下来的条件"，叫做<strong>出口</strong>：</p>
+<pre><code class="lang-cask">int 阶乘(int n) {
+    if (n &lt;= 1) { return 1; }        // 出口
+    return n * 阶乘(n - 1);          // 自己叫自己
+}
+
+function main() {
+    print "5! = ", 阶乘(5);          // 120
+    print "10! = ", 阶乘(10);        // 3628800
+}</code></pre>
+<p><code>阶乘(5)</code> 展开来就是 <code>5 * 阶乘(4)</code>，而 <code>阶乘(4)</code> 又是 <code>4 * 阶乘(3)</code>……一路到 <code>阶乘(1)</code> 返回 1，再一层层乘回来，得到 120。</p>
+<p>再看一个有名的例子——斐波那契数列：前两个数是 0 和 1，之后每个数等于前两个数之和（0, 1, 1, 2, 3, 5, 8, …）：</p>
+<pre><code class="lang-cask">int fib(int n) {
+    if (n &lt; 2) { return n; }          // 出口：fib(0)=0，fib(1)=1
+    return fib(n - 1) + fib(n - 2);
+}
+
+function main() {
+    for (int i = 0; i &lt;= 15; i++) {
+        show fib(i), " ";
+    }
+    print "";
+}</code></pre>
+<p>运行结果：<code>0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610</code>。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li>递归忘了写出口（或者出口的条件永远不成立），会一层层套下去直到出错。<strong>先想清楚"什么时候停"</strong>。</li><li>递归虽然好写，但不一定快：<code>fib(20)</code> 秒出，<code>fib(35)</code> 就要等好几秒，因为它把同一段计算重复做了很多遍。用循环写会快得多。</li><li>全局变量好用但也危险：任何函数都能改它，程序一大就不容易查。能用参数和 <code>return</code> 解决的就别用全局。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>写一个递归函数 <code>int 求和(int n)</code>，返回 1 加到 n 的结果，再用循环写一版，比一比。</li><li>用递归求 <code>n</code> 的幂：<code>int 幂(int 底, int 次)</code>，出口是 <code>次 == 0</code> 时返回 1。</li><li>写一个 <code>int 走法(int n)</code> 算上楼梯问题：每次可迈 1 级或 2 级，出口是 <code>走法(1)=1</code>、<code>走法(2)=2</code>。</li></ol>
+<p><strong>小结</strong>：变量只在它所在的 <code>{ }</code> 里有效；内层可同名遮蔽；全局变量所有函数共用；递归必须有出口，好写但可能慢。</p>
+<hr>
+<h3>单元小项目 5　数学小工具箱</h3>
+<p>写一组小函数，每人都只干一件事，最后在 <code>main</code> 里逐个演示。</p>
+<pre><code class="lang-cask">// 数学小工具箱
+
+int 最大值(int a, int b) {
+    if (a &gt; b) { return a; }
+    return b;
+}
+
+int 阶乘(int n) {
+    int 结果 = 1;
+    for (int i = 2; i &lt;= n; i++) {
+        结果 *= i;
+    }
+    return 结果;
+}
+
+bool 是素数(int n) {
+    if (n &lt; 2) { return false; }
+    for (int i = 2; i * i &lt;= n; i++) {
+        if (n % i == 0) { return false; }
+    }
+    return true;
+}
+
+int 各位之和(int n) {
+    int 和 = 0;
+    while (n &gt; 0) {
+        和 += n % 10;
+        n /= 10;
+    }
+    return 和;
+}
+
+function main() {
+    print "3 和 9 里更大的是：", 最大值(3, 9);
+    print "5! = ", 阶乘(5);
+    print "29 是素数吗？", 是素数(29);
+    print "91 是素数吗？", 是素数(91);
+    print "1234 各位数字之和 = ", 各位之和(1234);
+}</code></pre>
+<p>运行结果：</p>
+<pre><code>3 和 9 里更大的是：9
+5! = 120
+29 是素数吗？true
+91 是素数吗？false
+1234 各位数字之和 = 10</code></pre>
+<p><strong>每个函数都在干什么</strong>：</p>
+<ul><li><code>最大值</code> 用一次比较，返回较大的那个。</li><li><code>阶乘</code> 用循环连乘 2 到 n。</li><li><code>是素数</code> 只需检查到 <code>i * i &lt;= n</code>：如果 n 有因数，必定有一个不超过它的平方根，所以不用一直试到 n。</li><li><code>各位之和</code> 用 <code>n % 10</code> 取末位、<code>n /= 10</code> 去掉末位，反复直到 n 变成 0。</li></ul>
+<p><strong>动手改一改</strong>：</p>
+<ol><li>给工具箱加 <code>int 最小值(int a, int b)</code> 和 <code>int 三者最大(int a, int b, int c)</code>（后者可以调用前者）。</li><li>加一个 <code>int 反转数字(int n)</code>，把 1234 变成 4321。</li><li>加一个 <code>int 最大公约数(int a, int b)</code>，用辗转相除：反复做 <code>a % b</code>，直到余数为 0。</li></ol>
+<hr>
+<h2>第六单元　数组与文本</h2>
+<p>一个变量只能装一个数。要装一排数、一张表、一段文字，就需要数组和字符串。</p>
+<h3>第 13 课　一排格子：数组</h3>
+<p><strong>这一课学什么</strong>：声明数组、用下标读写格子、把一整列数据交给汇总函数。</p>
+<p>数组就是<strong>一排有编号的格子</strong>。声明时在名字后面写上方括号和格子数：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数[5] = {90, 80, 70, 60, 50};
+
+    print 分数[0];        // 90，第 1 个格子
+    print 分数[4];        // 50，最后一个格子
+
+    分数[1] = 85;         // 改第 2 个格子的内容
+    print 分数[1];        // 85
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>int 分数[5];</code> 声明了 5 个 <code>int</code> 格子。<strong>下标从 0 开始数</strong>：5 个格子的编号是 0、1、2、3、4。</li><li><code>= {90, 80, 70, 60, 50}</code> 是<strong>初始化</strong>，把 5 个值一次填进去，顺序对应下标 0 到 4。</li><li>和普通变量一样，格子可以读也可以写：<code>分数[1] = 85;</code>。</li><li>不写初始化时，所有格子自动是 0：<code>int 空格子[4];</code> 里 4 个格子都是 0。</li></ul>
+<p><strong>用循环配合下标遍历是最常用的套路</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数[5] = {55, 72, 91, 48, 83};
+    int 总分 = 0;
+
+    for (int i = 0; i &lt; 5; i++) {
+        总分 += 分数[i];
+    }
+
+    print "总分：", 总分;                        // 349
+    print "平均：", ROUND(总分 * 1.0 / 5, 2);    // 69.8
+}</code></pre>
+<p>注意循环条件是 <code>i &lt; 5</code> 而不是 <code>i &lt;= 5</code>：下标最大是 4，写成 <code>i &lt;= 5</code> 会去读不存在的 <code>分数[5]</code>。</p>
+<p><strong>一行顶一堆：汇总函数</strong>。<code>SUM / AVERAGE / MAX / MIN / COUNT</code> 直接吃<strong>数组名</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数[6] = {55, 72, 91, 48, 83, 66};
+    print "总分 ", SUM(分数);
+    print "平均 ", AVERAGE(分数);
+    print "最高 ", MAX(分数), "，最低 ", MIN(分数);
+    print "一共 ", COUNT(分数), " 个成绩";
+}</code></pre>
+<p><strong>易错点</strong>：</p>
+<ul><li>下标从 0 开始。5 个格子的合法下标是 0 到 4，<strong>没有 <code>分数[5]</code></strong>。越界访问会让程序立刻停下并报"数组下标超出范围"。</li><li>数组长度必须是固定值（整数或 <code>constant</code> 常量），不能用运行中会变的变量。</li><li><code>SUM</code> 这类函数传的是<strong>数组名</strong>，写成 <code>SUM(分数)</code>，不要带括号或下标。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>把 7 天的最高气温存进数组，打印总和、最高和最低。</li><li>建一个 10 个格子的数组，用循环填入 1 到 10，再把它们倒序打印。</li><li>建一个数组存 5 个分数并全部加 5 分（超过 100 的按 100 算），打印加分后的结果。</li></ol>
+<p><strong>小结</strong>：<code>类型 名字[长度]</code>；下标从 0 开始；<code>= {…}</code> 初始化；<code>SUM/AVERAGE/MAX/MIN/COUNT</code> 传数组名。</p>
+<hr>
+<h3>第 14 课　表格：二维数组与统计套路</h3>
+<p><strong>这一课学什么</strong>：用二维数组表示一张表，并掌握统计里最常见的三种套路：求和、打擂台、计数。</p>
+<p><strong>二维数组 = 行 × 列的表格</strong>。声明时写两层方括号，访问时写 <code>表[行][列]</code>：</p>
+<pre><code class="lang-cask">constant int 行数 = 3;
+constant int 列数 = 4;
+
+function main() {
+    int 表[行数][列数];
+    int i, j;
+
+    for (i = 0; i &lt; 行数; i++) {
+        for (j = 0; j &lt; 列数; j++) {
+            表[i][j] = i * 列数 + j;
+        }
+    }
+
+    for (i = 0; i &lt; 行数; i++) {
+        show "第 ", i + 1, " 行：";
+        for (j = 0; j &lt; 列数; j++) {
+            show 表[i][j], " ";
+        }
+        print "";
+    }
+}</code></pre>
+<p>运行结果：</p>
+<pre><code>第 1 行：0 1 2 3
+第 2 行：4 5 6 7
+第 3 行：8 9 10 11</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>int 表[行数][列数];</code> 是一张 3 行 4 列的表，行列都从 0 开始，所以行号 0~2、列号 0~3。</li><li>两层嵌套 <code>for</code> 是填表的固定套路：外层走行，内层走列。</li><li>表长用 <code>constant</code> 写，改一个数字整张表跟着变，不会漏改。<code>int i, j;</code> 一次声明两个循环变量，后面依次复用。</li></ul>
+<p>二维数组也能整块初始化：</p>
+<pre><code class="lang-cask">constant int 人数 = 3;
+constant int 科目 = 3;
+
+function main() {
+    int 分数[人数][科目] = {
+        {88, 92, 79},
+        {75, 68, 90},
+        {100, 85, 95}
+    };
+    int i, j;
+
+    for (i = 0; i &lt; 人数; i++) {
+        int 总分 = 0;
+        for (j = 0; j &lt; 科目; j++) {
+            总分 += 分数[i][j];
+        }
+        print "第 ", i + 1, " 位：总分 ", 总分, "，平均 ", ROUND(总分 * 1.0 / 科目, 1);
+    }
+}</code></pre>
+<p>一对花括号代表一行。</p>
+<p><strong>三个统计套路</strong>。下面这段程序走一趟数组，同时算出最高、最低和及格人数：</p>
+<pre><code class="lang-cask">function main() {
+    int 成绩[7] = {66, 88, 72, 95, 55, 41, 90};
+    int 最高 = 成绩[0];      // 打擂台：先让第 0 个当擂主
+    int 最低 = 成绩[0];
+    int 及格人数 = 0;
+
+    for (int i = 0; i &lt; 7; i++) {
+        if (成绩[i] &gt; 最高) { 最高 = 成绩[i]; }
+        if (成绩[i] &lt; 最低) { 最低 = 成绩[i]; }
+        if (成绩[i] &gt;= 60) { 及格人数++; }
+    }
+
+    print "最高 ", 最高, "，最低 ", 最低, "，及格 ", 及格人数, " 人";
+}</code></pre>
+<p>运行结果：<code>最高 95，最低 41，及格 5 人</code>。</p>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><strong>打擂台</strong>：先把擂主设成第 0 个元素，然后每个数上来比一比，赢了就换人。经过一整轮，留下的就是最大（或最小）的那个。</li><li><strong>计数器</strong>：<code>及格人数++</code> 每遇到一个符合条件的就加 1。</li><li>这三种套路（累加、打擂台、计数）几乎出现在所有统计程序里，走一遍数组就能同时完成。</li></ul>
+<p><strong>易错点</strong>：</p>
+<ul><li>擂主初值一定要取 <code>成绩[0]</code>，<strong>不能取 0</strong>。如果所有成绩都是负数，取 0 当擂主会让"最高"错成 0。</li><li>二维数组别把行列顺序写反：<code>分数[人][课]</code> 和 <code>分数[课][人]</code> 是两张不同的表。</li><li>二维数组用 <code>AVERAGE(表)</code> 这类函数不适用，得用循环自己算。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>做一个 4×4 的乘法表：<code>表[i][j] = (i + 1) * (j + 1)</code>，一行一行打印。</li><li>给上面的成绩数组加上"不及格人数"和"90 分以上人数"两个计数器。</li><li>做一个 3×3 的表，算出<strong>每一列</strong>的和（提示：交换内外层循环的顺序）。</li></ol>
+<p><strong>小结</strong>：二维数组 <code>表[行][列]</code>，行列从 0 开始，用双层循环填写或遍历；统计三套路是累加、打擂台、计数。</p>
+<hr>
+<h3>第 15 课　和文字打交道</h3>
+<p><strong>这一课学什么</strong>：量长度、取字符、拼接、比较，以及一套和 Excel 同名的文本函数。</p>
+<p><strong>长度、取字符、拼接、比较</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    string 名 = "C Asterisk";
+    print "长度：", len(名);              // 10
+    print "第 0 个字符：", at(名, 0);     // C
+    print "第 4 个字符：", at(名, 4);     // t
+
+    string 一 = "你好";
+    string 二 = "世界";
+    print 一 + "，" + 二;                 // 你好，世界
+    print 一 == "你好";                   // true
+    print 一 == 二;                       // false
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>len(文字)</code> 量长度，<code>at(文字, i)</code> 取第 i 个字符，<strong>都从 0 开始数</strong>，和数组下标一致。</li><li><code>+</code> 把两段文字接成一段新的；<code>==</code> <code>!=</code> 比较两段文字是不是一样。</li><li><code>string</code> <strong>不能就地改某一个字</strong>（没有 <code>名[0] = 'X';</code> 这种写法）。想改就拼一段新的：<code>名 = 前半段 + "X" + 后半段</code>。</li></ul>
+<p><strong>逐字处理</strong>：配合 <code>for</code> 可以一个字一个字地看：</p>
+<pre><code class="lang-cask">function main() {
+    string 句子 = "programming is fun";
+    int 元音 = 0;
+
+    for (int i = 0; i &lt; len(句子); i++) {
+        char c = at(句子, i);
+        if (c == 'a' or c == 'e' or c == 'i' or c == 'o' or c == 'u') {
+            元音++;
+        }
+    }
+
+    print "元音有 ", 元音, " 个";        // 5
+}</code></pre>
+<p><code>at(句子, i)</code> 每次取出一个 <code>char</code>，再和五个元音字母比较，是就计数加一。<strong>逐字扫描加打标记</strong>是处理文字最常用的手法。</p>
+<p><strong>Excel 文本函数（位置从 1 开始）</strong>：</p>
+<pre><code class="lang-cask">function main() {
+    string t = "  hello, world  ";
+    print "LEN:   ", LEN(t);
+    print "LEFT:  ", LEFT(t, 7);
+    print "RIGHT: ", RIGHT(t, 5);
+    print "MID:   ", MID(t, 3, 5);
+    print "UPPER: ", UPPER("abc");
+    print "LOWER: ", LOWER("MiXeD");
+    print "TRIM:  [", TRIM(t), "]";
+    print "CONCAT: ", CONCAT("你好，", UPPER("world"), "！");
+}</code></pre>
+<table>
+<thead><tr><th>函数</th><th>干什么</th><th>位置从几开始</th></tr></thead>
+<tbody>
+<tr><td><code>len</code> / <code>LEN</code></td><td>长度</td><td>—</td></tr>
+<tr><td><code>at(文字, i)</code></td><td>第 i 个字符</td><td><strong>0</strong></td></tr>
+<tr><td><code>LEFT(文字, n)</code></td><td>左边 n 个字</td><td><strong>1</strong></td></tr>
+<tr><td><code>RIGHT(文字, n)</code></td><td>右边 n 个字</td><td><strong>1</strong></td></tr>
+<tr><td><code>MID(文字, 从几, 几个)</code></td><td>中间取一段</td><td><strong>1</strong></td></tr>
+<tr><td><code>UPPER</code> / <code>LOWER</code> / <code>TRIM</code></td><td>变大写 / 变小写 / 去掉两端空格</td><td>—</td></tr>
+<tr><td><code>CONCAT(a, b, …)</code></td><td>拼成一段（数字也能拼）</td><td>—</td></tr>
+</tbody></table>
+<p><strong>易错点</strong>：</p>
+<ul><li><code>at</code> 从 <strong>0</strong> 开始，<code>LEFT / RIGHT / MID</code> 从 <strong>1</strong> 开始，两套编号千万别混。</li><li><code>len</code> 数的是<strong>字节</strong>。英文字母 1 个字节，一个汉字通常占 3 个字节，所以逐字用 <code>at</code> 遍历只对纯英文可靠；要按汉字切，用 <code>LEFT / MID / RIGHT</code> 更稳。</li><li>用 <code>at</code> 时要保证下标不越界，<code>i</code> 从 0 到 <code>len(文字) - 1</code>。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>统计一段英文里大写字母的个数（提示：<code>c &gt;= 'A' and c &lt;= 'Z'</code>）。</li><li>判断一段文字是不是以 <code>"http"</code> 开头（提示：<code>LEFT(s, 4) == "http"</code>）。</li><li>把 <code>"alice"</code> 变成 <code>"A-L-I-C-E"</code>（循环取字符、用 <code>-</code> 拼起来，最后去掉多余的横线或用 <code>UPPER</code> 先转大写）。</li></ol>
+<p><strong>小结</strong>：<code>len</code> / <code>at</code> 从 0 开始；<code>LEFT / RIGHT / MID</code> 从 1 开始；<code>string</code> 不能就地改，只能拼接；逐字扫描配打标记是最常用的套路。</p>
+<hr>
+<h3>单元小项目 6　成绩统计器</h3>
+<p>问人数、逐个问成绩，最后给一份统计报告。</p>
+<pre><code class="lang-cask">// 成绩统计器（最多 30 人）
+function main() {
+    int 分数[30];
+    int 人数 = 0;
+
+    print "===== 成绩统计器（最多 30 人）=====";
+    show "请输入人数：";
+    input 人数;
+
+    if (人数 &lt; 1) { 人数 = 1; }
+    if (人数 &gt; 30) { 人数 = 30; }
+
+    int 总分 = 0;
+    int i;
+    for (i = 0; i &lt; 人数; i++) {
+        show "第 ", i + 1, " 个成绩：";
+        input 分数[i];
+        总分 += 分数[i];
+    }
+
+    int 最高 = 分数[0];
+    int 最低 = 分数[0];
+    int 及格人数 = 0;
+    for (i = 0; i &lt; 人数; i++) {
+        if (分数[i] &gt; 最高) { 最高 = 分数[i]; }
+        if (分数[i] &lt; 最低) { 最低 = 分数[i]; }
+        if (分数[i] &gt;= 60) { 及格人数++; }
+    }
+
+    print "---------- 统计结果 ----------";
+    print "人数：", 人数;
+    print "总分：", 总分;
+    print "平均：", ROUND(总分 * 1.0 / 人数, 2);
+    print "最高：", 最高, "，最低：", 最低;
+    print "及格：", 及格人数, " 人";
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>int 分数[30];</code> 先开 30 个格子，最多装 30 个人。</li><li><code>if (人数 &lt; 1) { 人数 = 1; }</code> 和 <code>if (人数 &gt; 30) { 人数 = 30; }</code> 是<strong>防呆</strong>：先把可能越界的输入夹到合法范围里，程序才可靠。</li><li><code>int i;</code> 在循环外声明一次，两个 <code>for</code> 复用它，正好避开第 9 课说的"同名冲突"。</li><li>平均分用 <code>总分 * 1.0 / 人数</code> 保证是小数，再 <code>ROUND(..., 2)</code> 保留两位。</li></ul>
+<p><strong>动手改一改</strong>：</p>
+<ol><li>加一行"中位数"：把分数排好序（下一单元）后取中间那个。</li><li>加一个"优秀人数（90 分及以上）"的计数器。</li><li>加打印每个分数对应的等级（写个 <code>string 等级(int 分)</code> 函数）。</li></ol>
+<hr>
+<h2>第七单元　项目实战</h2>
+<p>这一单元把前面的零件装起来，讲排序、查找，以及"怎么把一个大程序拆开、怎么调错"。</p>
+<h3>第 16 课　让数据排好队：排序</h3>
+<p><strong>这一课学什么</strong>：两个经典排序——冒泡排序和选择排序。它们都用全局数组，方便写成函数。</p>
+<p><strong>冒泡排序</strong>：相邻两个比一比，大的往后"冒"。每一轮把当前最大的顶到最后，下一轮就不用管它了。</p>
+<pre><code class="lang-cask">int 数据[6] = {42, 7, 19, 3, 88, 25};
+
+none 冒泡排序() {
+    for (int i = 0; i &lt; 5; i++) {           // 一共要冒 5 轮
+        for (int j = 0; j &lt; 5 - i; j++) {   // 每轮少比一个（末尾已排好）
+            if (数据[j] &gt; 数据[j + 1]) {
+                int 临时 = 数据[j];
+                数据[j] = 数据[j + 1];
+                数据[j + 1] = 临时;
+            }
+        }
+    }
+}
+
+none 显示() {
+    for (int i = 0; i &lt; 6; i++) { show 数据[i], " "; }
+    print "";
+}
+
+function main() {
+    print "排序前：";
+    显示();
+    冒泡排序();
+    print "排序后：";
+    显示();
+}</code></pre>
+<p>运行结果：</p>
+<pre><code>排序前：
+42 7 19 3 88 25
+排序后：
+3 7 19 25 42 88</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li>交换两个格子要借助一个临时变量：先把 <code>数据[j]</code> 存进 <code>临时</code>，再把 <code>数据[j+1]</code> 搬到 <code>数据[j]</code>，最后把 <code>临时</code> 放回 <code>数据[j+1]</code>。少写一步就会把数据"擦掉"。</li><li>外层的 <code>i</code> 表示第几轮；每冒完一轮，末尾就多一个好元素，所以内层条件写成 <code>j &lt; 5 - i</code>。</li><li><code>数据</code> 声明在所有函数<strong>外面</strong>（全局数组），<code>冒泡排序</code> 和 <code>显示</code> 才能直接用它。</li></ul>
+<p>看第一轮怎么冒（<code>{42, 7, 19, 3, 88, 25}</code>）：42 和 7 交换，42 和 19 交换，42 和 3 交换，42 和 88 不换，88 和 25 交换——一轮下来 88 冒到了最后。</p>
+<p><strong>选择排序</strong>：每一轮从还没排好的部分里<strong>找出最小的</strong>，和这一轮开头交换。它做的交换次数更少。</p>
+<pre><code class="lang-cask">int 成绩[7] = {77, 3, 99, 12, 55, 88, 40};
+
+none 选择排序() {
+    for (int i = 0; i &lt; 6; i++) {
+        int 最小位置 = i;                    // 先假设开头最小
+        for (int j = i + 1; j &lt; 7; j++) {    // 到后面找真正最小的
+            if (成绩[j] &lt; 成绩[最小位置]) {
+                最小位置 = j;
+            }
+        }
+        int 临时 = 成绩[i];                  // 把最小的换到位置 i
+        成绩[i] = 成绩[最小位置];
+        成绩[最小位置] = 临时;
+    }
+}
+
+function main() {
+    int i;
+    print "排序前：";
+    for (i = 0; i &lt; 7; i++) { show 成绩[i], " "; }
+    print "";
+    选择排序();
+    print "排序后：";
+    for (i = 0; i &lt; 7; i++) { show 成绩[i], " "; }
+    print "";
+}</code></pre>
+<p><strong>排榜时"连人带分"一起换</strong>：成绩动了，名字要跟着动，那就准备两个数组，交换时同步换：</p>
+<pre><code class="lang-cask">int 分数[5] = {88, 95, 72, 66, 100};
+string 名字[5] = {"小明", "小红", "小刚", "小丽", "小强"};
+
+function main() {
+    int i, j;
+    for (i = 0; i &lt; 4; i++) {
+        for (j = 0; j &lt; 4 - i; j++) {
+            if (分数[j] &lt; 分数[j + 1]) {     // 从高到低排
+                int 临时分 = 分数[j];
+                分数[j] = 分数[j + 1];
+                分数[j + 1] = 临时分;
+
+                string 临时名 = 名字[j];
+                名字[j] = 名字[j + 1];
+                名字[j + 1] = 临时名;
+            }
+        }
+    }
+
+    for (i = 0; i &lt; 5; i++) {
+        print "第 ", i + 1, " 名：", 名字[i], "，", 分数[i], " 分";
+    }
+}</code></pre>
+<p><strong>易错点</strong>：</p>
+<ul><li>交换时忘了临时变量，或者三句的顺序写错，会直接丢失数据。记牢"存走一个、搬一个、放回来"。</li><li>内层循环的边界写错（比如写成 <code>j &lt; 6</code> 却访问了 <code>数据[j+1]</code>），会越界报错。边界要留出 <code>+1</code> 的位置。</li><li>两个数组交换时，<strong>必须两个都换</strong>。只换一个，名字和分数就对不上了。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>把冒泡排序改成从大到小。</li><li>给选择排序加一个"比较次数"计数器，和冒泡比一比谁比较得少。</li><li>用选择排序重写"名次表"，思路和冒泡一样，都在交换时带上名字。</li></ol>
+<p><strong>小结</strong>：冒泡比相邻、大的后冒；选择每轮找最小再交换；交换要借临时变量；连人带分要有两个数组同步换。</p>
+<hr>
+<h3>第 17 课　在一堆数里找东西：查找</h3>
+<p><strong>这一课学什么</strong>：最朴素的顺序查找，和快得多的二分查找。</p>
+<p><strong>顺序查找</strong>：从头一个个看过去，看到目标就停下：</p>
+<pre><code class="lang-cask">function main() {
+    int 名单[6] = {35, 82, 7, 64, 51, 90};
+    int 目标 = 64;
+    int 位置 = -1;                 // -1 表示"还没找到"
+
+    for (int i = 0; i &lt; 6; i++) {
+        if (名单[i] == 目标) {
+            位置 = i;
+            break;                 // 找到就不再往下看
+        }
+    }
+
+    if (位置 &gt;= 0) {
+        print "找到了，在第 ", 位置 + 1, " 个";
+    } else {
+        print "没找到";
+    }
+}</code></pre>
+<p>用 <code>-1</code> 当"没找到"的<strong>哨兵值</strong>，是最常见的写法：下标都是从 0 开始的，负数就一定是"没有"。</p>
+<p>顺序查找简单可靠，不要求数组排过序；缺点是数一多就要一个个比，1000 个数最坏要比 1000 次。</p>
+<p><strong>二分查找</strong>：<strong>前提是数组已经排好序</strong>。每次看中间那个数：目标更大就到右半边找，更小就到左半边找。每看一次，范围就砍掉一半。</p>
+<pre><code class="lang-cask">constant int N = 10;
+
+function main() {
+    int 表[N] = {2, 5, 8, 12, 16, 23, 38, 56, 72, 91};   // 已经是升序
+    int 目标 = 23;
+    int 左 = 0;
+    int 右 = N - 1;
+    int 答案 = -1;
+    int 步数 = 0;
+
+    while (左 &lt;= 右) {
+        步数++;
+        int 中间 = (左 + 右) / 2;
+        if (表[中间] == 目标) {
+            答案 = 中间;
+            break;
+        } else if (表[中间] &lt; 目标) {
+            左 = 中间 + 1;             // 目标在右半边
+        } else {
+            右 = 中间 - 1;             // 目标在左半边
+        }
+    }
+
+    if (答案 &gt;= 0) {
+        print "找到了，下标是 ", 答案, "，用了 ", 步数, " 步";
+    } else {
+        print "没找到，用了 ", 步数, " 步";
+    }
+}</code></pre>
+<p>跟着走一遍（找 23）：</p>
+<ul><li><code>左=0, 右=9</code> → <code>中间=4</code>，<code>表[4]=16</code>，16 &lt; 23 → <code>左=5</code></li><li><code>左=5, 右=9</code> → <code>中间=7</code>，<code>表[7]=38</code>，38 &gt; 23 → <code>右=6</code></li><li><code>左=5, 右=6</code> → <code>中间=5</code>，<code>表[5]=23</code>，找到了，<strong>只用 3 步</strong></li></ul>
+<p>顺序查找要走 6 步，二分只用 3 步。数据越多，差距越大。</p>
+<p><strong>把"在不在"包成函数</strong>（用全局数组）：</p>
+<pre><code class="lang-cask">int 抽奖号[5] = {13, 27, 42, 58, 91};
+
+bool 在名单里(int 目标) {
+    for (int i = 0; i &lt; 5; i++) {
+        if (抽奖号[i] == 目标) { return true; }
+    }
+    return false;
+}
+
+function main() {
+    print 在名单里(42);      // true
+    print 在名单里(99);      // false
+}</code></pre>
+<p><strong>易错点</strong>：</p>
+<ul><li>二分查找<strong>必须先排好序</strong>。对乱序数组用二分，结果时对时错，最难查。</li><li><code>中间</code> 要写成 <code>(左 + 右) / 2</code>，整数除法正好取到中间偏左的位置，够用。</li><li><code>while (左 &lt;= 右)</code> 的等号别漏。漏了等号，只剩一个元素时会被跳过。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>把目标改成 99，看二分用了几步、找到没有。</li><li>写一个"电话簿"：名字数组排好序，输入一个名字，用二分找到位置并打印号码。（提示：字符串也能比较大小，用 <code>名字[中间] &lt; 目标</code>。）</li><li>用顺序查找写一个"统计目标出现几次"的函数。</li></ol>
+<p><strong>小结</strong>：顺序查找不要求有序但慢；二分查找每次砍一半、但必须先排好序；"没找到"常用 <code>-1</code> 或 <code>false</code> 表示。</p>
+<hr>
+<h3>第 18 课　把程序拆开：自顶向下与调试</h3>
+<p><strong>这一课学什么</strong>：两个让大程序变简单的方法——先规划再写，以及出错时怎么找。</p>
+<p><strong>自顶向下</strong>：不要一上来就想代码。先问自己"这个程序要做成几件事"，每件事安排一个函数。以"成绩报告"为例，先列清单：打印标题、显示每个人的明细、算总分、算平均、找最高分。然后一件事写一个函数，<code>main</code> 只负责按顺序叫它们：</p>
+<pre><code class="lang-cask">int 全班[5] = {88, 95, 72, 66, 100};
+string 名字[5] = {"小明", "小红", "小刚", "小丽", "小强"};
+
+string 等级(int 分) {
+    if (分 &gt;= 90) { return "优秀"; }
+    if (分 &gt;= 60) { return "及格"; }
+    return "加油";
+}
+
+none 显示明细() {
+    for (int i = 0; i &lt; 5; i++) {
+        print "  ", 名字[i], "：", 全班[i], " 分（", 等级(全班[i]), "）";
+    }
+}
+
+int 总分() {
+    int s = 0;
+    for (int i = 0; i &lt; 5; i++) { s += 全班[i]; }
+    return s;
+}
+
+int 最高分() {
+    int 最高 = 全班[0];
+    for (int i = 1; i &lt; 5; i++) {
+        if (全班[i] &gt; 最高) { 最高 = 全班[i]; }
+    }
+    return 最高;
+}
+
+function main() {
+    print "========== 成绩报告 ==========";
+    显示明细();
+    print "总分：", 总分();
+    print "平均：", ROUND(总分() * 1.0 / 5, 2);
+    print "最高：", 最高分();
+}</code></pre>
+<p>看 <code>main</code>：短短几行，一眼就能读懂整个程序在干什么。以后想把明细改成表格样式，只动 <code>显示明细</code> 一个函数，别的都不用碰。</p>
+<p><strong>先跑通最小版本，再慢慢长大</strong>。别一口气把所有功能写完——先让一个最简单的版本跑起来，每加一点就运行一次。这样一旦出错，你就知道是<strong>刚加的那一步</strong>有问题。</p>
+<p><strong>出了错怎么找</strong>。程序出错分三种，对号入座。</p>
+<p>第一种，<strong>编译错</strong>：程序还没开始跑就报错，格式是 <code>文件名:行号:列号: 错误: 说明</code>，在编辑器里点一下那一条就跳到出错行。常见的就是少分号、括号不配对、名字拼错。</p>
+<p>第二种，<strong>运行时错</strong>：程序跑到一半停下。<code>C*</code> 默认打开安全检查，出错时会告诉你<strong>哪一行</strong>。下面这个程序请你亲手运行、故意输一个越界的号码试试：</p>
+<pre><code class="lang-cask">function main() {
+    int 成绩[5] = {88, 95, 72, 66, 100};
+    int i = 0;
+    print "请输入一个 0~4 的号码：";
+    input i;
+    print "成绩是：", 成绩[i];       // 输入 5 或 -1 看看报什么
+}</code></pre>
+<p>输入 5，程序停下并打印类似：</p>
+<pre><code>C* 运行错误: 数组下标越界
+  位置 demo.cask:6</code></pre>
+<p><code>C*</code> 故意"宁可停下也不乱算"，就是为了让你一眼看到出错的那一行。常见的运行时错还有：除数为 0、整数算得太大放不下。</p>
+<p>第三种，<strong>结果不对</strong>：程序跑完了，答案却不对。这时用<strong>打印探针法</strong>——怀疑哪一段，就在哪一段里 <code>print</code> 出中间结果看一看：</p>
+<pre><code class="lang-cask">function main() {
+    int 成绩[5] = {55, 72, 91, 48, 83};
+    int 总分 = 0;
+    for (int i = 0; i &lt; 5; i++) {
+        总分 += 成绩[i];
+        print "调试：加完第 ", i, " 个，总分 = ", 总分;   // 探针
+    }
+    print "平均分 = ", 总分 / 5;
+}</code></pre>
+<p>看到中间值是 <code>55, 127, 218, 266, 349</code> 就能确认每一步都对。调完记得把探针删掉或注释掉。</p>
+<p><strong>两个习惯</strong>：一次只改一样东西；改完立刻重新编译运行。这样一旦出问题，原因一定是你刚改的那一处。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li>别急着优化。先让它跑对，再考虑让它跑快。程序没调通之前，不要用 <code>--fast</code>（它会关掉安全检查，出错时行为不再保证）。</li><li>探针别留在正式版本里，否则输出会很乱。</li><li>函数拆得太碎也不好。一个函数最好只干一件事，名字念出来就是它的全部工作。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>把第 16 课的名次表重构成函数版：<code>排序()</code>、<code>打印名次()</code>，各干一件事。</li><li>给成绩报告加一个 <code>最低分()</code> 函数。</li><li>故意在 <code>显示明细</code> 里写一行错的代码，体会"只跑新增的部分就能定位错误"。</li></ol>
+<p><strong>小结</strong>：先列清单再写代码，一事一函数；先跑通最小版本；编译错看行号、运行时错看停在哪一行、结果不对用打印探针。</p>
+<hr>
+<h3>单元小项目 7　班级成绩榜</h3>
+<p>把排序、全局数组和函数合起来：给 5 位同学的成绩排名次。</p>
+<pre><code class="lang-cask">// 班级成绩榜
+int 分数[5] = {72, 95, 60, 88, 100};
+string 名字[5] = {"小明", "小红", "小刚", "小丽", "小强"};
+
+none 排名次() {
+    for (int i = 0; i &lt; 4; i++) {
+        for (int j = 0; j &lt; 4 - i; j++) {
+            if (分数[j] &lt; 分数[j + 1]) {
+                int 临时分 = 分数[j];
+                分数[j] = 分数[j + 1];
+                分数[j + 1] = 临时分;
+
+                string 临时名 = 名字[j];
+                名字[j] = 名字[j + 1];
+                名字[j + 1] = 临时名;
+            }
+        }
+    }
+}
+
+function main() {
+    排名次();
+
+    print "===== 班级成绩榜 =====";
+    for (int i = 0; i &lt; 5; i++) {
+        print "第 ", i + 1, " 名：", 名字[i], "，", 分数[i], " 分";
+    }
+    print "最高分：", 分数[0], "，由 ", 名字[0], " 拿下。";
+    print "总分 ", SUM(分数), "，平均 ", ROUND(AVERAGE(分数), 2);
+}</code></pre>
+<p>运行结果：</p>
+<pre><code>===== 班级成绩榜 =====
+第 1 名：小强，100 分
+第 2 名：小红，95 分
+第 3 名：小丽，88 分
+第 4 名：小明，72 分
+第 5 名：小刚，60 分
+最高分：100，由 小强 拿下。
+总分 415，平均 83</code></pre>
+<p>排好序后，第 0 个就是最高的，所以直接读 <code>分数[0]</code> 和 <code>名字[0]</code> 就行。</p>
+<p><strong>动手改一改</strong>：</p>
+<ol><li>把成绩改成从键盘一个个输入（用第 13、14 课的办法）。</li><li>加上"及格人数"和"不及格名单"。</li><li>把名次榜改成只打印前 3 名，并加一句"恭喜上榜"。</li></ol>
+<hr>
+<h2>第八单元　窗口程序</h2>
+<p>前面所有程序都在黑底白字的控制台里跑。<code>C*</code> 0.4.2 可以直接做出<strong>带窗口、按钮、输入框</strong>的程序。这个单元用三课讲清楚。</p>
+<h3>第 19 课　第一个窗口</h3>
+<p><strong>这一课学什么</strong>：用 <code>C*</code> 自己的窗口函数做出一个能点的窗口。</p>
+<p>窗口程序的第一行必须是这一句：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";</code></pre>
+<p>它打开的是 C / C++ / Win32 的世界：常用的头文件都替你包含好了，窗口要用的库也自动连上，你<strong>不用再写任何 <code>include</code></strong>。</p>
+<p>下面是最小的窗口程序：</p>
+<pre><code class="lang-cask">// 第一个窗口
+use "C_OPED.cash";
+
+function main() {
+    int 窗口 = window("我的第一个窗口", 460, 260);      // 标题, 宽, 高
+    label("你好，C*！点一下按钮看看：", 24, 24, 400, 24);  // 文字, x, y, 宽, 高
+    button("点我", 24, 100, 140, 34);
+    run();                                              // 显示窗口并进入事件循环
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>use "C_OPED.cash";</code> 引入窗口工具包。必须在程序最前面。</li><li><code>window(标题, 宽, 高)</code> 建一个窗口，返回一个<strong>控件编号</strong>（一个整数），存进 <code>窗口</code> 里备用。</li><li><code>label(...)</code> 放一段静态文字；<code>button(...)</code> 放一个按钮。它们的参数都是"文字, x, y, 宽, 高"，<code>x, y</code> 是相对窗口左上角的坐标，单位是像素。</li><li><code>run()</code> 让窗口显示出来，并<strong>进入事件循环</strong>：程序停在这里，等你点按钮、关窗口。窗口关闭后 <code>run()</code> 才返回，程序结束。</li></ul>
+<p><strong>怎么运行</strong>：窗口程序其实是先翻译成 C，再编译成 exe。和别的程序一样：</p>
+<pre><code class="lang-bat">bin\caskc.exe 程序.cask --run</code></pre>
+<p>窗口程序默认<strong>不带黑窗口</strong>。开发时如果想同时看到控制台里 <code>print</code> 的内容，加一个 <code>--console</code>：</p>
+<pre><code class="lang-bat">bin\caskc.exe 程序.cask --run --console</code></pre>
+<p><strong>易错点</strong>：</p>
+<ul><li><code>use "C_OPED.cash";</code> 必须写在第一行附近，不能塞在函数里面。</li><li>坐标和尺寸的单位是像素。写完先跑起来看，位置不合适就改数字，不用一次算准。</li><li><code>run()</code> 会一直等窗口关闭，所以它之后的代码要等窗口关了才执行。事件循环里的事交给事件函数处理（下一课）。</li><li><code>C*</code> 只打开 C 和 C++ 的世界。<strong>C# 没有 C 头文件，不能用</strong>。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>把窗口标题改成你的名字，把按钮上的字改成"开始"。</li><li>在窗口里再放一个 <code>label</code>，显示一句你喜欢的格言。</li><li>试着把窗口尺寸改成 <code>800, 600</code>，看看按钮的位置变成了哪里。</li></ol>
+<p><strong>小结</strong>：<code>use "C_OPED.cash";</code> 开头；<code>window / label / button</code> 建控件；<code>run()</code> 显示窗口并等待。</p>
+<hr>
+<h3>第 20 课　输入控件与事件</h3>
+<p><strong>这一课学什么</strong>：加输入框、多行文本、勾选框、列表、进度条，并让程序对点击、输入做出反应。</p>
+<p>事件函数是"控件动了一下时，<code>C*</code> 自动替你调用"的函数。最常用的有：</p>
+<table>
+<thead><tr><th>事件函数</th><th>什么时候被调用</th></tr></thead>
+<tbody>
+<tr><td><code>function on_click(int 控件)</code></td><td>有按钮被点击</td></tr>
+<tr><td><code>function on_change(int 控件)</code></td><td>输入框内容改了、列表换了选项</td></tr>
+<tr><td><code>function on_close()</code></td><td>窗口正要关闭</td></tr>
+</tbody></table>
+<p>参数 <code>控件</code> 是被操作的那个控件的编号。你可以把它和之前存下的编号比一比，判断是哪一个控件出了事。</p>
+<p>下面是一个"按钮计数器"：</p>
+<pre><code class="lang-cask">// 按钮计数器
+use "C_OPED.cash";
+
+int 结果框;
+int 次数 = 0;
+
+function on_click(int 控件) {
+    次数 = 次数 + 1;
+    settext(结果框, "第 " + 次数 + " 次点击");
+}
+
+function main() {
+    int 窗口 = window("按钮计数器", 480, 300);
+    结果框 = label("还没点过", 24, 24, 400, 24);
+    button("点我", 24, 100, 140, 34);
+    run();
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>int 结果框;</code> 和 <code>int 次数 = 0;</code> 是<strong>全局变量</strong>。为什么放外面？因为 <code>on_click</code> 和 <code>main</code> 都要用它俩：<code>main</code> 里把控件编号存进 <code>结果框</code>，<code>on_click</code> 里再拿出来用。</li><li><code>on_click</code> 里 <code>settext(结果框, ...)</code> 把标签上的文字换掉。</li><li><code>"第 " + 次数 + " 次点击"</code> 把文字和数字拼起来。<code>+</code> 只要有一边是字符串，就会做拼接。</li></ul>
+<p><strong>读写控件的常用函数</strong>：</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>settext(控件, "文字")</code></td><td>设置控件上的文字</td></tr>
+<tr><td><code>string s = readtext(控件)</code></td><td>读出输入框里的文字</td></tr>
+<tr><td><code>settitle(控件, "标题")</code></td><td>改控件的标题</td></tr>
+<tr><td><code>additem(列表, "一项")</code></td><td>往列表里加一项</td></tr>
+<tr><td><code>checked(勾选框)</code></td><td>返回 1（勾上）或 0（没勾）</td></tr>
+<tr><td><code>setchecked(勾选框, 1)</code></td><td>设置勾选状态</td></tr>
+<tr><td><code>setvalue(进度条, 50)</code> / <code>getvalue(进度条)</code></td><td>设置 / 读取进度</td></tr>
+<tr><td><code>destroy(控件)</code></td><td>删掉一个控件</td></tr>
+</tbody></table>
+<p><strong>输入框与 <code>on_change</code></strong>，做一个"回声窗口"：</p>
+<pre><code class="lang-cask">// 回声窗口
+use "C_OPED.cash";
+
+int 输入框;
+int 结果框;
+
+function on_change(int 控件) {
+    string 内容 = readtext(输入框);
+    settext(结果框, "你输入了：" + 内容);
+}
+
+function main() {
+    int 窗口 = window("回声窗口", 480, 240);
+    输入框 = textbox("", 24, 24, 400, 24);
+    结果框 = label("（还没有输入）", 24, 70, 400, 24);
+    run();
+}</code></pre>
+<p><code>textbox</code> 是单行输入框，<code>memo</code> 是多行文本框。</p>
+<p><strong>几个控件一起用</strong>：</p>
+<pre><code class="lang-cask">// 控件演示
+use "C_OPED.cash";
+
+int 列表;
+int 进度;
+int 勾选;
+
+function on_click(int 控件) {
+    additem(列表, "新任务 " + getvalue(进度));
+    setvalue(进度, getvalue(进度) + 20);
+    if (checked(勾选) == 1) {
+        settext(控件, "已勾选");
+    } else {
+        settext(控件, "添加");
+    }
+}
+
+function main() {
+    int 窗口 = window("控件演示", 480, 340);
+    勾选 = checkbox("允许添加", 24, 24, 140, 24);
+    setchecked(勾选, 1);
+    列表 = listbox(24, 60, 220, 140);
+    additem(列表, "第一项");
+    进度 = progress(24, 220, 400, 20);
+    setvalue(进度, 40);
+    button("添加", 280, 24, 140, 34);
+    run();
+}</code></pre>
+<p><strong>窗口关闭时做点收尾</strong>：<code>function on_close()</code> 会在窗口正要关闭时被调用，可以在这里提示或保存。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li><code>on_click</code> / <code>on_change</code> / <code>on_close</code> 都是<strong>可选</strong>的，但名字必须一模一样，参数也要对。写错名字，<code>C*</code> 就认不出来，控件点了没反应。</li><li>事件函数没有返回值。想提前结束，写 <code>return;</code>。</li><li>条件里不要直接拿 <code>checked(...)</code> 当 <code>bool</code> 用，写成 <code>checked(勾选) == 1</code> 更清楚（条件要求是比较）。</li><li>主函数里 <code>main</code> 里定义的局部变量，事件函数<strong>看不到</strong>，所以要在事件里用到的控件编号，得用全局变量存。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>给按钮计数器再加一个"清零"按钮：点它把次数改回 0。</li><li>用 <code>textbox</code> 和 <code>memo</code> 做一个便签：在输入框里打字，按按钮把内容追加到多行文本框里。</li><li>做一个待办清单：<code>listbox</code> 加两项、一个 <code>checkbox</code>，勾上以后按钮文字变成"已完成"。</li></ol>
+<p><strong>小结</strong>：控件用 <code>label / button / textbox / memo / checkbox / listbox / progress</code> 创建；事件用 <code>on_click / on_change / on_close</code>；读写用 <code>settext / readtext / additem / checked</code> 等；事件函数要用到的控件编号存进全局变量。</p>
+<hr>
+<h3>第 21 课　对话框、计时与直通 C</h3>
+<p><strong>这一课学什么</strong>：用现成的对话框问话、报信；用系统时钟计时；以及直接调用 C / Win32 的函数。</p>
+<p><strong>三种对话框</strong>：</p>
+<table>
+<thead><tr><th>函数</th><th>干什么</th><th>返回值</th></tr></thead>
+<tbody>
+<tr><td><code>alert("内容")</code></td><td>弹一个提示框</td><td>—</td></tr>
+<tr><td><code>msgbox("内容", "标题")</code></td><td>带标题的消息框</td><td>—</td></tr>
+<tr><td><code>ask("问题？", "标题")</code></td><td>问是/否</td><td>1 = 是，0 = 否</td></tr>
+</tbody></table>
+<pre><code class="lang-cask">// 对话框演示
+use "C_OPED.cash";
+
+function main() {
+    int 窗口 = window("对话框演示", 420, 220);
+
+    if (ask("要开始吗？", "询问") == 1) {
+        alert("好，开始！");
+    } else {
+        alert("那先等等。");
+    }
+
+    msgbox("这是内容，上面那行是标题。", "这是标题");
+    run();
+}</code></pre>
+<p>注意 <code>ask</code> 返回的是数字，所以判断写成 <code>ask(...) == 1</code>。</p>
+<p><strong>计时与延时</strong>：<code>sleep(毫秒)</code> 让程序暂停一会儿；<code>GetTickCount()</code> 返回系统启动以来经过的毫秒数，两个一减就是经过的时间。这些是直接从 C / Win32 世界拿来的函数，因为开了 <code>C_OPED.cash</code>，<strong>不用写 include 就能调用</strong>。</p>
+<pre><code class="lang-cask">// 计时器
+use "C_OPED.cash";
+
+int 标签;
+int 起点;
+
+function on_click(int 控件) {
+    int 现在 = GetTickCount();
+    settext(标签, "距打开已经过了 " + (现在 - 起点) / 1000 + " 秒");
+}
+
+function main() {
+    int 窗口 = window("计时器", 440, 220);
+    标签 = label("点按钮看看过了多久", 24, 24, 380, 24);
+    button("看时间", 24, 80, 140, 34);
+    起点 = GetTickCount();
+    run();
+}</code></pre>
+<p><strong>直通 C / Win32</strong>：引了 <code>C_OPED.cash</code> 之后，头文件里的函数都能直接调。比如弹一个 Win32 原生的消息框：</p>
+<pre><code class="lang-cask">// 直接调用 Win32
+use "C_OPED.cash";
+
+function main() {
+    int 窗口 = window("直通 C", 400, 200);
+    MessageBoxA(0, "你好，这是 Win32 原生弹窗。", "标题", 0);
+    run();
+}</code></pre>
+<p><code>MessageBoxA</code> 是 Win32 自带的函数，这里没有额外声明就直接用了。<code>GetTickCount</code>、<code>printf</code> 这些也一样。再提醒一次：<strong>只有 C 和 C++ 的头文件能用，C# 不行</strong>。</p>
+<p><strong>易错点</strong>：</p>
+<ul><li><code>sleep</code> 的参数是<strong>毫秒</strong>，<code>sleep(1000)</code> 才是 1 秒。</li><li><code>ask</code> 返回数字，务必用 <code>== 1</code> 或 <code>== 0</code> 判断，别直接当条件。</li><li>直通 C 函数时，参数个数和类型要对得上，写错了会编译不过或者运行时出错。不熟的函数先查 C 的帮助文档。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>做一个"关机确认"窗口：点按钮弹 <code>ask</code>，选"是"就 <code>alert("已确认")</code>，选"否"什么都不做。</li><li>用 <code>GetTickCount</code> 做一个秒表：点一下开始计时，再点一下显示经过了多少秒。</li><li>用 <code>MessageBoxA</code> 替掉上面的 <code>alert</code>，对比两者的样子有什么不同。</li></ol>
+<p><strong>小结</strong>：<code>alert / msgbox / ask</code> 是现成对话框；<code>sleep(毫秒)</code> 暂停；<code>GetTickCount()</code> 取毫秒时钟；开了 <code>C_OPED.cash</code> 就能直接调用 C / Win32 函数。</p>
+<hr>
+<h3>单元小项目 8　待办便签</h3>
+<p>做一个能加待办的窗口：上面一个输入框，点"添加"就把内容加进下面的清单。</p>
+<pre><code class="lang-cask">// 待办便签
+use "C_OPED.cash";
+
+int 输入框;
+int 列表;
+int 条数 = 0;
+
+function on_click(int 控件) {
+    string 任务 = readtext(输入框);
+
+    if (LEN(任务) == 0) {
+        alert("请先写一件要做的事。");
+        return;
+    }
+
+    条数 = 条数 + 1;
+    additem(列表, 条数 + ". " + 任务);
+    settext(输入框, "");      // 清空输入框，方便接着写
+}
+
+function main() {
+    int 窗口 = window("我的待办清单", 520, 360);
+    label("写一件事，点“添加”：", 24, 20, 400, 24);
+    输入框 = textbox("", 24, 50, 340, 26);
+    button("添加", 380, 50, 110, 30);
+    列表 = listbox(24, 100, 466, 220);
+    run();
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>输入框</code>、<code>列表</code>、<code>条数</code> 都是全局变量：<code>main</code> 里创建控件并保存编号，<code>on_click</code> 里使用它们。</li><li><code>readtext(输入框)</code> 读出用户写的文字。</li><li><code>if (LEN(任务) == 0) { alert(...); return; }</code>：空内容就提示一下，然后 <code>return;</code> 提前结束这次点击处理。</li><li><code>additem(列表, 条数 + ". " + 任务)</code> 把编号和内容拼成一项加进清单。</li><li><code>settext(输入框, "")</code> 把输入框清空。</li></ul>
+<p><strong>动手改一改</strong>：</p>
+<ol><li>加一个"清空清单"按钮。（提示：<code>listbox</code> 的项不好逐个删，简单办法是记下内容，重建一个新列表。）</li><li>给每条待办前面加上 <code>[ ]</code>，完成一项就在输入框里写编号、点"完成"改成 <code>[x]</code>。</li><li>加一个 <code>progress</code> 显示"今天完成了百分之几"。</li></ol>
+<hr>
+<h2>附录 A　语法速查表</h2>
+<p><strong>六种类型</strong>：</p>
+<table>
+<thead><tr><th>类型</th><th>装什么</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><code>int</code></td><td>整数</td><td><code>int 分数 = 90;</code></td></tr>
+<tr><td><code>float</code></td><td>小数</td><td><code>float 价格 = 3.5;</code></td></tr>
+<tr><td><code>string</code></td><td>一串文字（双引号）</td><td><code>string 名字 = "小明";</code></td></tr>
+<tr><td><code>char</code></td><td>单个字符（单引号）</td><td><code>char 字母 = 'A';</code></td></tr>
+<tr><td><code>bool</code></td><td>真或假</td><td><code>bool 及格 = true;</code></td></tr>
+<tr><td><code>none</code></td><td>不返回值的函数用</td><td><code>none 问候() { ... }</code></td></tr>
+</tbody></table>
+<p><strong>旧名字（软弃用别名，仍能编译，编辑器给"提示"）</strong>：</p>
+<table>
+<thead><tr><th>老写法</th><th>新写法</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>number</code></td><td><code>int</code></td><td>整数</td></tr>
+<tr><td><code>real</code></td><td><code>float</code></td><td>小数</td></tr>
+<tr><td><code>text</code></td><td><code>string</code></td><td>文字</td></tr>
+<tr><td><code>letter</code></td><td><code>char</code></td><td>字符</td></tr>
+<tr><td><code>start { }</code></td><td><code>function main() { }</code></td><td>程序入口</td></tr>
+<tr><td><code>say</code></td><td><code>print</code></td><td>打印并换行</td></tr>
+<tr><td><code>func</code></td><td><code>function</code></td><td>定义函数</td></tr>
+<tr><td><code>const</code></td><td><code>constant</code></td><td>常量</td></tr>
+<tr><td><code>void</code></td><td><code>none</code></td><td>无返回值</td></tr>
+<tr><td><code>&amp;&amp;</code>、<code>!</code> 等符号写法</td><td><code>and</code> <code>or</code> <code>not</code></td><td>逻辑运算</td></tr>
+</tbody></table>
+<p><strong>运算符</strong>：</p>
+<table>
+<thead><tr><th>类别</th><th>运算符</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>算术</td><td><code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>%</code></td><td>整数除法会丢小数，<code>%</code> 是取余</td></tr>
+<tr><td>比较</td><td><code>==</code> <code>!=</code> <code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code></td><td>结果是 <code>bool</code>；<code>==</code> 才是相等</td></tr>
+<tr><td>逻辑</td><td><code>and</code> <code>or</code> <code>not</code></td><td>与、或、非</td></tr>
+<tr><td>赋值</td><td><code>=</code> <code>+=</code> <code>-=</code> <code>*=</code> <code>/=</code> <code>%=</code></td><td><code>=</code> 是赋值，不是相等</td></tr>
+<tr><td>自增自减</td><td><code>++</code> <code>--</code></td><td>加 1 / 减 1</td></tr>
+<tr><td>位运算</td><td><code>&amp;</code> <code>｜</code> <code>^</code> <code>~</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code></td><td>进阶用法，初学可以跳过</td></tr>
+</tbody></table>
+<p><strong>常用内置函数</strong>：</p>
+<table>
+<thead><tr><th>类别</th><th>函数</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>数学（0.4.2 大写）</td><td><code>SIN</code> <code>COS</code> <code>TAN</code> <code>ASIN</code> <code>ACOS</code> <code>ATAN</code></td><td>三角 / 反三角（弧度）</td></tr>
+<tr><td>数学（0.4.2 大写）</td><td><code>FLOOR</code> <code>CEILING</code> <code>TRUNC</code></td><td>向下取整 / 向上取整 / 向零取整（<code>TRUNC(-2.7)=-2</code>）</td></tr>
+<tr><td>数学（0.4.2 大写）</td><td><code>LOG10</code> <code>ATAN2(y, x)</code></td><td>常用对数 / 两参反切</td></tr>
+<tr><td>Excel 数学</td><td><code>ABS</code> <code>SIGN</code> <code>MOD</code> <code>ROUND</code> <code>INT</code> <code>SQRT</code> <code>POWER</code> <code>PI()</code></td><td><code>MOD(-3,10)=7</code>，<code>INT(-2.7)=-3</code></td></tr>
+<tr><td>随机时间</td><td><code>RAND()</code> <code>RANDBETWEEN(a,b)</code> <code>now()</code></td><td>随机小数、随机整数、时间戳</td></tr>
+<tr><td>汇总</td><td><code>SUM</code> <code>AVERAGE</code> <code>MAX</code> <code>MIN</code> <code>COUNT</code></td><td>传<strong>数组名</strong></td></tr>
+<tr><td>文本</td><td><code>LEN</code> <code>at</code> <code>LEFT</code> <code>RIGHT</code> <code>MID</code> <code>UPPER</code> <code>LOWER</code> <code>TRIM</code> <code>CONCAT</code></td><td><code>at</code> 从 0 数，<code>LEFT/MID/RIGHT</code> 从 1 数</td></tr>
+<tr><td>文本（0.4.2 新增）</td><td><code>FIND(文字, 要找的)</code> <code>SUBSTITUTE(文字, 旧, 新)</code> <code>REPT(文字, 次数)</code> <code>EXACT(甲, 乙)</code> <code>CHAR(码)</code> <code>CODE(文字)</code></td><td>查找 / 替换 / 重复 / 逐字节相等 / 码互转</td></tr>
+<tr><td>逻辑</td><td><code>IF</code> <code>AND</code> <code>OR</code> <code>NOT</code></td><td><code>IF(条件, 真值, 假值)</code></td></tr>
+<tr><td>彩蛋</td><td><code>rcl()</code> <code>rcl(235)</code> <code>rcl("FC235")</code></td><td>空参结束整个程序；对上暗号回一句话（见文末彩蛋）</td></tr>
+</tbody></table>
+<p>小写的 <code>abs</code> <code>sqrt</code> <code>pow</code> <code>floor</code> <code>ceil</code> <code>round</code> <code>len</code> <code>sin</code> 等老写法<strong>已软弃用</strong>：还能编译，但会收到蓝色"提示"，建议改用对应大写名字。</p>
+<p><strong>关键字</strong>：</p>
+<table>
+<thead><tr><th>类别</th><th>关键字</th></tr></thead>
+<tbody>
+<tr><td>程序</td><td><code>function</code> <code>main</code> <code>use</code> <code>constant</code> <code>return</code></td></tr>
+<tr><td>类型</td><td><code>int</code> <code>float</code> <code>string</code> <code>char</code> <code>bool</code> <code>none</code></td></tr>
+<tr><td>输入输出</td><td><code>print</code> <code>show</code> <code>input</code></td></tr>
+<tr><td>分支</td><td><code>if</code> <code>else</code> <code>switch</code> <code>case</code> <code>default</code></td></tr>
+<tr><td>循环</td><td><code>while</code> <code>for</code> <code>do</code> <code>until</code> <code>foreach</code> <code>in</code> <code>break</code> <code>continue</code></td></tr>
+<tr><td>逻辑</td><td><code>and</code> <code>or</code> <code>not</code> <code>true</code> <code>false</code></td></tr>
+</tbody></table>
+<p><strong>窗口程序速查</strong>：</p>
+<table>
+<thead><tr><th>用途</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>引入窗口工具包</td><td><code>use "C_OPED.cash";</code></td></tr>
+<tr><td>窗口 / 控件</td><td><code>window(标题,宽,高)</code> <code>label(文字,x,y,宽,高)</code> <code>button(...)</code> <code>textbox(...)</code> <code>memo(...)</code> <code>checkbox(...)</code> <code>listbox(x,y,宽,高)</code> <code>progress(x,y,宽,高)</code></td></tr>
+<tr><td>读写控件</td><td><code>settext</code> <code>readtext</code> <code>settitle</code> <code>additem</code> <code>checked</code> <code>setchecked</code> <code>setvalue</code> <code>getvalue</code> <code>destroy</code></td></tr>
+<tr><td>对话框与时间</td><td><code>alert</code> <code>msgbox</code> <code>ask</code> <code>sleep(毫秒)</code></td></tr>
+<tr><td>事件循环</td><td><code>run()</code></td></tr>
+<tr><td>事件函数</td><td><code>on_click(int 控件)</code> <code>on_change(int 控件)</code> <code>on_close()</code></td></tr>
+</tbody></table>
+<hr>
+<h2>附录 B　常见错误与四级提示</h2>
+<p>编辑器在状态栏给出四个计数，每个数字对应一个问题级别：</p>
+<table>
+<thead><tr><th>级别</th><th>命令行标记</th><th>含义</th><th>要不要改</th></tr></thead>
+<tbody>
+<tr><td><strong>严重</strong></td><td><code>E</code></td><td>程序跑不起来。名字没定义、类型不符这类问题</td><td>必须改</td></tr>
+<tr><td><strong>语法</strong></td><td><code>S</code></td><td>写法不对。少了分号、括号不配对之类。编译器会跳过错处继续查，一次报好几条</td><td>必须改</td></tr>
+<tr><td><strong>拼写</strong></td><td><code>P</code></td><td>名字打错了，会附一句"是不是想写 ×××"的建议</td><td>必须改</td></tr>
+<tr><td><strong>提示</strong></td><td><code>H</code></td><td>只是建议，比如你还在用 <code>say</code>、<code>number</code> 这类老写法</td><td>可改可不改</td></tr>
+</tbody></table>
+<p><strong>编译错误的读法</strong>：格式永远是 <code>文件名:行号:列号: 错误: 说明</code>。比如少写分号：</p>
+<pre><code class="lang-cask">int 分数 = 85
+if (分数 &gt;= 60) {
+    print 及格;
+}</code></pre>
+<p>编译器会报类似这样：</p>
+<pre><code>demo.cask:2:1: 错误: 这里要写 ';'，它给这条声明收尾，但是碰到了 'if'</code></pre>
+<p>读法是："第 2 行第 1 列，声明后面少了一个 <code>;</code>，那里却是 <code>if</code>"。后面可能还跟着几条连锁错误，<strong>看第一条就好</strong>，它指的才是根子。</p>
+<p><strong>新手最常见的十个错</strong>：</p>
+<table>
+<thead><tr><th>现象</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>少分号 / 括号不配对</td><td>语法错，看行号改</td></tr>
+<tr><td><code>未定义的名字</code></td><td>变量没声明就用了，或名字拼错</td></tr>
+<tr><td><code>条件必须是比较</code></td><td>把数字当条件了，改成 <code>n != 0</code> 这种</td></tr>
+<tr><td><code>'i' 在这里已经声明过了</code></td><td>同一函数里两个 <code>for</code> 都写了 <code>int i</code></td></tr>
+<tr><td><code>类型不符</code></td><td><code>int</code> 装了小数，或字符串用了单引号</td></tr>
+<tr><td>运行到一半停下</td><td>下标越界、除数为 0、整数溢出，看它指的行</td></tr>
+<tr><td>结果小数丢了</td><td>两个 <code>int</code> 相除，忘了 <code>* 1.0</code></td></tr>
+<tr><td>死循环</td><td><code>while</code> 里忘了改条件变量</td></tr>
+<tr><td>数组越界</td><td>下标从 0 开始，最后一个格子是 <code>长度 - 1</code></td></tr>
+<tr><td>中文变乱码</td><td>文件没存成 UTF-8</td></tr>
+</tbody></table>
+<p><strong>运行时检查</strong>：<code>C*</code> 默认打开三层检查——数组越界、除零、整数溢出（还有字符范围）。出错就停下并指出<strong>哪一行</strong>。想追求速度可以加 <code>--fast</code> 关掉它们，但<strong>程序没调通之前千万别用</strong>。</p>
+<hr>
+<h2>附录 C　练习参考答案</h2>
+<p>答案不是唯一，能跑出正确结果就行。下面按课给出参考代码。</p>
+<p><strong>第 2 课 练习 2</strong>（用常量声明年龄，算出明年几岁）：</p>
+<pre><code class="lang-cask">constant int 我的年龄 = 14;
+
+function main() {
+    int 明年 = 我的年龄 + 1;
+    print "我明年 ", 明年, " 岁。";
+}</code></pre>
+<p><strong>第 4 课 练习 1</strong>（三科总分和平均分）：</p>
+<pre><code class="lang-cask">function main() {
+    int 语文 = 88;
+    int 数学 = 95;
+    int 英语 = 79;
+    int 总分 = 语文 + 数学 + 英语;
+    print "总分 ", 总分, "，平均 ", ROUND(总分 * 1.0 / 3, 2);
+}</code></pre>
+<p><strong>第 5 课 练习 1</strong>（整数三个判断）：</p>
+<pre><code class="lang-cask">function main() {
+    int n = 12;
+    print "大于 0：", n &gt; 0;
+    print "是偶数：", n % 2 == 0;
+    print "在 10 到 20 之间：", n &gt;= 10 and n &lt;= 20;
+}</code></pre>
+<p><strong>第 6 课 练习 3</strong>（用 <code>IF</code> 和 <code>MOD</code> 判断奇偶）：</p>
+<pre><code class="lang-cask">function main() {
+    int n = 17;
+    print IF(MOD(n, 2) == 0, "偶数", "奇数");
+}</code></pre>
+<p><strong>第 7 课 练习 1</strong>（判断正数、负数还是零）：</p>
+<pre><code class="lang-cask">function main() {
+    int n = -3;
+    if (n &gt; 0) {
+        print "正数";
+    } else if (n &lt; 0) {
+        print "负数";
+    } else {
+        print "零";
+    }
+}</code></pre>
+<p><strong>第 9 课 练习 2</strong>（用 <code>while</code> 求偶数之和）：</p>
+<pre><code class="lang-cask">function main() {
+    int 和 = 0;
+    int i = 2;
+    while (i &lt;= 50) {
+        和 += i;
+        i += 2;
+    }
+    print "1 到 50 里所有偶数的和 = ", 和;      // 650
+}</code></pre>
+<p><strong>第 10 课 练习 2</strong>（用 <code>foreach</code> 求总分和平均）：</p>
+<pre><code class="lang-cask">function main() {
+    int 分数[5] = {90, 80, 70, 60, 100};
+    int 总分 = 0;
+    foreach (s in 分数) {
+        总分 += s;
+    }
+    print "总分 ", 总分, "，平均 ", AVERAGE(分数);
+}</code></pre>
+<p><strong>第 11 课 练习 2</strong>（返回文字的奇偶函数）：</p>
+<pre><code class="lang-cask">string 奇偶(int n) {
+    if (n % 2 == 0) { return "偶数"; }
+    return "奇数";
+}
+
+function main() {
+    print 奇偶(4), " ", 奇偶(7);
+}</code></pre>
+<p><strong>第 13 课 练习 2</strong>（填 1 到 10 再倒序打印）：</p>
+<pre><code class="lang-cask">function main() {
+    int 数[10];
+    int i;
+    for (i = 0; i &lt; 10; i++) {
+        数[i] = i + 1;
+    }
+    for (i = 9; i &gt;= 0; i--) {
+        show 数[i], " ";
+    }
+    print "";
+}</code></pre>
+<p><strong>第 15 课 练习 3</strong>（把 <code>alice</code> 变成 <code>A-L-I-C-E</code>）：</p>
+<pre><code class="lang-cask">function main() {
+    string 名 = "alice";
+    string 结果 = "";
+    for (int i = 0; i &lt; len(名); i++) {
+        结果 = 结果 + UPPER(MID(名, i + 1, 1));   // MID 从 1 开始数
+        if (i &lt; len(名) - 1) { 结果 = 结果 + "-"; }
+    }
+    print 结果;
+}</code></pre>
+<p><strong>第 17 课 练习 3</strong>（统计目标出现次数）：</p>
+<pre><code class="lang-cask">function main() {
+    int 数[8] = {3, 5, 3, 7, 3, 9, 5, 3};
+    int 目标 = 3;
+    int 次数 = 0;
+    for (int i = 0; i &lt; 8; i++) {
+        if (数[i] == 目标) { 次数++; }
+    }
+    print 目标, " 出现了 ", 次数, " 次";
+}</code></pre>
+<p><strong>第 19 课 练习 1</strong>（改标题和按钮文字）：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+
+function main() {
+    int 窗口 = window("欢迎来到 C*", 500, 300);
+    label("这是一个窗口程序。", 24, 24, 400, 24);
+    button("开始", 24, 100, 160, 34);
+    run();
+}</code></pre>
+<hr>
+<h2>彩蛋时间：<code>rcl</code></h2>
+<p><code>C*</code> 里藏着一个内置函数 <code>rcl</code>：不用 <code>use</code>、不用写函数体，直接调用。</p>
+<ul><li><code>rcl(235);</code>、<code>rcl("FC235");</code> 等对上暗号时，打印 <code>方程235 爱 rcl</code>，程序继续往下走。</li><li><code>rcl("rcl");</code> 打印 <code>rcl，方程235永远爱你！</code>。</li><li>空参 <code>rcl();</code> 打印 <code>方程235永远爱rcl！</code>，然后<strong>立刻结束整个程序</strong>——后面的语句一句都不执行。可以当"急停"用，哪怕它写在被调用的函数里也一样。</li><li>其它值（<code>rcl(1);</code>、<code>rcl("hello");</code>）什么都不做，程序照常跑。</li></ul>
+<p>它认的字符串暗号（不分大小写）：<code>235</code>、<code>方程235</code>、<code>FangCheng235</code>、<code>ZFC235</code>、<code>JF235</code>、<code>JF</code>、<code>FC235</code>、<code>FC</code>、<code>ZFC</code>、<code>FangCheng</code>。数字 <code>235</code>（或 <code>235.0</code>）也认。</p>
+<p>试试看：给第 20 课的输入控件加一行 <code>if (口令 == "FC235") { rcl(235); }</code>，藏一个只有你知道的小开关。</p>
+<hr>
+<h2>学完以后</h2>
+<p>你已经把 <code>C*</code> 的主要功能走了一遍。想继续往前走，可以从这几件事入手：</p>
+<ol><li><strong>通读手册</strong>：<code>docs\CStar手册.md</code> 里有本书没细讲的细节，比如位运算、<code>use</code> 引入自定义头文件、积木视图。</li><li><strong>读别人的程序</strong>：<code>examples\</code> 目录里有 <code>hello</code> <code>fizzbuzz</code> <code>guess</code> <code>primes</code> <code>excel</code> <code>win_hello</code> 六个示例，<code>tests\</code> 里还有一批小测试程序，都是很好的练习材料。改一改、跑一跑。</li><li><strong>自己出题</strong>：把身边的事写成程序——班费账本、单词卡片、复习计划。有用就是好程序。</li><li><strong>走向 C 语言</strong>：<code>C*</code> 的语法和 C 几乎一样。以后学 C / C++ 时，<code>if</code>、<code>for</code>、<code>while</code>、数组、函数都还是这个样子，只需要学新类型和新库。</li></ol>
+<hr>
+<p><em>初中版教程 · <code>C*</code> 语言（0.4.2）。配套速查手册见 <code>docs\CStar手册.md</code>。检查本书里的例子能否编译：<code>python docs\check_doc_code.py docs\初中版教程.md</code>。</em></p>
+<hr>
+<p style="color:#888;font-size:0.9em;">由 docs/md2html.py 从 初中版教程.md 生成</p>
+</body>
+</html>

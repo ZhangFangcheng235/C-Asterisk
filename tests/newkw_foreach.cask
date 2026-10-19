@@ -1,0 +1,34 @@
+function main() {
+    number scores[4];
+    scores[0] = 90;
+    scores[1] = 70;
+    scores[2] = 85;
+    scores[3] = 60;
+    number total = 0;
+    foreach (s in scores) {
+        total = total + s;
+    }
+    print total;
+
+    text words[3];
+    words[0] = "a";
+    words[1] = "b";
+    words[2] = "c";
+    foreach (w in words) {
+        show(w);
+    }
+    print "";
+
+    // nested foreach: each loop gets its own counter
+    number a[3];
+    a[0] = 1; a[1] = 2; a[2] = 3;
+    number b[3];
+    b[0] = 4; b[1] = 5; b[2] = 6;
+    number grand = 0;
+    foreach (v in a) {
+        foreach (v2 in b) {
+            grand = grand + v + v2;
+        }
+    }
+    print grand;
+}

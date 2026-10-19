@@ -1,0 +1,2 @@
+// cerr_ternary.cask -- the ? : operator is replaced by IF()
+start { number x = 1; number y = x > 0 ? 5 : 6; say y; }

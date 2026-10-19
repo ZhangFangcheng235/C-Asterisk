@@ -1,0 +1,1 @@
+tests\cerr_foreach.cask:3:0: 错误: 'foreach' 后面要跟一个数组，例如  foreach (score in scores) { ... }

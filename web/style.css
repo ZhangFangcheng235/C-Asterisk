@@ -1,0 +1,598 @@
+/* C* Studio 0.4.2 -- Visual Studio 2026 (Dark) 界面。
+ *
+ * 颜色令牌集中在下面 :root 的 "VS Dark 颜色令牌" 一段里；
+ * 语法高亮的 .c-* 类名由 editor.js 决定，此处只改颜色。
+ */
+
+:root {
+  /* ---------- VS Dark 颜色令牌 ---------- */
+  --win:        #2d2d30;   /* 窗口 / 工具窗口底 */
+  --win2:       #252526;   /* 更深的侧栏 / 工具窗口内容底 */
+  --editor:     #1e1e1e;   /* 编辑器底 */
+  --line:       #3f3f46;   /* 边框 */
+  --line-dark:  #1b1b1c;   /* 面板之间的分隔 */
+  --fg:         #f1f1f1;   /* 正文 */
+  --fg-dim:     #a0a0a0;   /* 次要文字 */
+  --fg-mute:    #cccccc;   /* 菜单 / 状态文字 */
+  --hover:      #3e3e42;   /* 悬停 */
+  --sel:        #094771;   /* 选中 */
+  --accent:     #007acc;   /* 强调 / 焦点 / 状态栏 */
+  --accent2:    #0e639c;   /* 强调（按钮） */
+
+  /* 语法高亮：和积木箱一一对应的九个分类。
+   * 0.4.2 起改用 Visual Studio 2026 深色风格的令牌配色，
+   * 并新增一档"变量色"，让代码扫一眼就能读。 */
+  --t-out:  #4ec9b0;   /* 输出输入：print show input —— 青（VS 内置/控制台） */
+  --t-var:  #569cd6;   /* 变量数据：int float string … —— 蓝（VS 类型） */
+  --t-math: #b5cea8;   /* 运算：SUM ABS MOD、数字 —— 浅绿（VS 数字） */
+  --t-if:   #c586c0;   /* 判断：if else switch … —— 紫粉（VS 控制关键字） */
+  --t-loop: #d7ba7d;   /* 循环：while for foreach … —— 黄褐 */
+  --t-fn:   #dcdcaa;   /* 函数：function return 自己写的函数 —— 黄（VS 函数） */
+  --t-text: #ce9178;   /* 字符串与数组：LEN at "…" —— 橙（VS 字符串） */
+  --t-win:  #4fc1ff;   /* 窗口程序：use window button … —— 天蓝 */
+  --t-css:  #ab7dff;   /* CSS 美化：cstext csbg csfont … —— 紫 */
+  --t-misc: #9aa3b5;   /* 其它 */
+  --t-var2: #9cdcfe;   /* 变量（不是关键字也不是函数名的名字）—— 亮蓝 */
+  --com:    #6a9955;   /* 注释 */
+  --txt:    #d4d4d4;   /* 普通文本 */
+
+  /* 问题级别 */
+  --err:     #f48771;
+  --warn:    #dcdcaa;
+  --tip:     #89d185;
+  --info:    #75beff;
+
+  --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
+  --sans: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+/* the hidden attribute must win over any display: below */
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--win);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+body { display: flex; flex-direction: column; }
+
+/* ---------------- buttons ---------------- */
+
+button {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--fg);
+  background: #333337;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+button:hover { background: var(--hover); border-color: #54545a; }
+button:active { background: #2a2a2c; }
+button:disabled { color: #6b6b6b; background: #2d2d30; border-color: #3a3a3e; cursor: default; }
+button.primary { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+button.primary:hover { background: var(--accent); border-color: var(--accent); }
+button.danger { background: #5a2f2d; border-color: #7a3d3a; }
+button.danger:hover { background: #a1260d; border-color: #a1260d; color: #fff; }
+button.toggle.on { background: var(--sel); border-color: var(--accent); color: #fff; }
+
+/* ---------------- menu bar ---------------- */
+
+#menubar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  height: 26px;
+  padding: 0 6px;
+  background: var(--win);
+  border-bottom: 1px solid var(--line-dark);
+  user-select: none;
+}
+#menubar .brand {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-mute);
+  margin: 0 12px 0 2px;
+}
+#menubar .brand .star { color: var(--accent); }
+#menubar .m-item {
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--fg-mute);
+  border-radius: 2px;
+  cursor: pointer;
+}
+#menubar .m-item:hover { background: var(--hover); color: #fff; }
+
+/* ---------------- toolbar ---------------- */
+
+#toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 30px;
+  padding: 0 6px;
+  background: var(--win);
+  border-bottom: 1px solid var(--line-dark);
+  user-select: none;
+}
+#toolbar .sep { width: 1px; height: 16px; background: #454549; margin: 0 4px; }
+#toolbar .spacer { flex: 1; }
+#runstate { color: var(--fg-dim); font-size: 12px; padding-right: 6px; }
+#runstate.busy { color: var(--warn); }
+
+/* ---------------- main layout ---------------- */
+
+#main { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--editor); }
+
+#left { flex: 1; min-height: 0; position: relative; display: flex; }
+
+/* ---------------- document tab ---------------- */
+
+#docbar {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  height: 28px;
+  padding-left: 4px;
+  background: var(--win);
+  border-bottom: 1px solid var(--line-dark);
+  user-select: none;
+}
+.doc-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 14px;
+  background: var(--editor);
+  color: var(--fg);
+  font-size: 12px;
+  border: 1px solid var(--line-dark);
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+}
+.doc-icon {
+  position: relative;
+  width: 12px;
+  height: 14px;
+  background: var(--editor);
+  border: 1px solid #6a9955;
+  border-radius: 1px;
+}
+.doc-icon::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  border-top: 4px solid #6a9955;
+  border-left: 4px solid transparent;
+}
+
+/* ---------------- code editor ---------------- */
+
+#editor-wrap { flex: 1; display: flex; min-height: 0; overflow: hidden; background: var(--editor); }
+
+#gutter {
+  flex: none;
+  width: 52px;
+  background: var(--editor);
+  border-right: 1px solid #2b2b2b;
+  color: #858585;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 21px;
+  text-align: right;
+  padding: 8px 10px 8px 0;
+  overflow: hidden;
+  white-space: pre;
+}
+#gutter .gl { display: block; height: 21px; }
+#gutter .gl.cur { color: var(--fg); }                       /* 光标所在行：行号变白 */
+#gutter .gl.err { color: var(--err); background: rgba(244, 135, 113, .16); }
+#gutter .gl.warn { color: var(--warn); }
+
+#editor { flex: 1; position: relative; min-width: 0; background: var(--editor); overflow: hidden; }
+
+#hl, #code {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border: 0;
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 21px;
+  tab-size: 4;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  overflow-y: auto;
+  letter-spacing: 0;
+}
+#hl {
+  pointer-events: none;
+  color: var(--txt);
+  overflow: hidden;               /* 不显示滚动条，只跟着代码框的 scrollTop / scrollLeft 走 */
+  background: transparent;
+}
+#code {
+  background: transparent;
+  color: transparent;
+  caret-color: #aeafad;
+  resize: none;
+  outline: none;
+}
+/* 选中的底色要透一点，不然高亮层的彩色字会被整块盖住 */
+#code::selection { background: rgba(38, 79, 120, .45); }
+
+/* 语法颜色：类名由 editor.js 按语法表（syntax.js）挑，这里只管颜色 */
+.t-out  { color: var(--t-out); }
+.t-var  { color: var(--t-var); }
+.t-math { color: var(--t-math); }
+.t-if   { color: var(--t-if); }
+.t-loop { color: var(--t-loop); }
+.t-fn   { color: var(--t-fn); }
+.t-text { color: var(--t-text); }
+.t-win  { color: var(--t-win); }
+.t-css  { color: var(--t-css); }
+.t-misc { color: var(--t-misc); }
+/* 字面量跟着分类走：字符串归"字符串与数组"，数字归"运算" */
+.c-str { color: var(--t-text); }
+.c-num { color: var(--t-math); }
+.c-com { color: var(--com); font-style: italic; }
+/* 变量名（既不是关键字也不是函数）：亮蓝，和 VS 一样 */
+.c-var2 { color: var(--t-var2); }
+/* 配对的括号：灰底描边，一眼看到哪两个是配对的 */
+.c-bmatch { color: var(--txt); background: #3a3a3a; border-radius: 2px; }
+/* 兜底：万一语法表没加载上 */
+.c-kw { color: #569cd6; }
+
+/* 光标所在行：一条淡蓝横条，跟着滚动走（editor.js 建） */
+#line-mark, #linemark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 21px;
+  background: rgba(38, 79, 120, .18);
+  border-radius: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 鼠标停在词上的小卡片（editor.js 建、这里上色） */
+#tip {
+  position: absolute;
+  z-index: 30;
+  max-width: 380px;
+  padding: 6px 10px 7px 10px;
+  background: #2b2b2b;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 3px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 18px;
+}
+#tip .tip-sig {
+  font-family: var(--mono);
+  color: #dcdcaa;
+  white-space: pre-wrap;
+}
+#tip .tip-note { color: var(--fg-dim); margin-top: 2px; }
+
+/* ---------------- blocks view ---------------- */
+
+#blocks-wrap { flex: 1; display: flex; min-width: 0; min-height: 0; background: var(--editor); }
+
+/* palette box itself is sized here; blocks.js brings its own .pal styles */
+#blocks-palette {
+  flex: none;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: var(--win2);
+  border-right: 1px solid var(--line);
+}
+/* a tool-window title so it reads like the Solution Explorer */
+#blocks-palette::before {
+  content: "积木箱";
+  flex: none;
+  padding: 3px 10px;
+  background: var(--win);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line-dark);
+}
+/* higher-specificity overrides of blocks.js's own .pal-* painting */
+#blocks-palette .pal {
+  flex: 1;
+  height: auto;
+  background: var(--win2);
+  color: var(--fg-mute);
+  font-family: var(--sans);
+  font-size: 12px;
+}
+#blocks-palette .pal-cat-h {
+  padding: 4px 8px;
+  background: var(--win);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 600;
+  border-top: 1px solid #333337;
+  border-bottom: 1px solid var(--line-dark);
+}
+#blocks-palette .pal-cat-h .arrow { color: var(--fg-dim); font-size: 9px; }
+#blocks-palette .pal-item { padding: 3px 8px 3px 18px; color: var(--fg-mute); font-size: 12px; }
+#blocks-palette .pal-item:hover { background: #2a2d2e; }
+#blocks-palette .pal-dot { width: 10px; height: 10px; border-radius: 2px; }
+#blocks-palette .pal-hint { color: #8a8a8a; font-size: 11px; }
+
+#blocks-canvas {
+  flex: 1;
+  overflow: auto;
+  background: var(--editor);
+  color: var(--txt);
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 12px 16px 80px 16px;
+}
+#blocks-canvas .blk-tip {
+  margin: 8px 10px;
+  padding: 6px 10px;
+  background: var(--win2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--fg-dim);
+  font-size: 12px;
+}
+
+/* yellow slots: the boxes blocks.js paints itself; keep them flat */
+.slot {
+  display: inline-block;
+  min-width: 24px;
+  margin: 0 2px;
+  padding: 0 6px;
+  border-radius: 2px;
+  background: #ffe9a8;
+  color: #241f0e;
+  font-weight: 600;
+  cursor: text;
+  text-align: center;
+}
+.slot.empty { opacity: .5; font-style: italic; }
+.slot input {
+  font: inherit;
+  width: 100%;
+  border: 0;
+  border-radius: 2px;
+  padding: 0 4px;
+  background: #fff;
+  color: #111;
+  outline: none;
+}
+
+/* ---------------- docked tool windows (输出 / 问题) ---------------- */
+
+.panel {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--win2);
+  border-top: 1px solid var(--line);
+}
+.panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 6px 0 10px;
+  background: var(--win);
+  border-bottom: 1px solid var(--line-dark);
+  font-size: 12px;
+  color: var(--fg-mute);
+  user-select: none;
+}
+.panel-title { font-weight: 600; color: var(--fg); }
+.panel-head button {
+  padding: 1px 8px;
+  font-size: 11px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--fg-mute);
+}
+.panel-head button:hover { background: var(--hover); border-color: var(--line); color: #fff; }
+.panel-head .spacer { flex: 1; }
+
+#output { height: 190px; }
+#output.collapsed { height: 25px; }
+#output.collapsed #output-text, #output.collapsed #output-input-row { display: none; }
+#output-text {
+  flex: 1;
+  margin: 0;
+  padding: 4px 12px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: pre-wrap;
+  color: var(--fg-mute);
+}
+#output-text .dim { color: var(--fg-dim); }
+#output-text .err { color: var(--err); }
+#output-input-row {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 10px;
+  border-top: 1px solid var(--line);
+  color: var(--fg-dim);
+  font-size: 12px;
+}
+#output-input {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--editor);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 3px 6px;
+  outline: none;
+}
+#output-input:focus { border-color: var(--accent); }
+
+#problems { max-height: 150px; }
+#problems.collapsed { max-height: 25px; }
+#problems.collapsed #problems-list { display: none; }
+#problems-list { flex: 1; overflow: auto; padding: 0; }
+.p-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 1px solid #2b2b2b;
+}
+.p-row:hover { background: #2a2d2e; }
+.p-row .p-where { color: var(--fg-dim); font-family: var(--mono); font-size: 12px; flex: none; }
+.p-row .p-msg { flex: 1; }
+.p-tag {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 6px;
+  border-radius: 2px;
+}
+.p-E .p-tag { background: #5a1d1d; color: var(--err); }
+.p-S .p-tag { background: #5a4a1d; color: var(--warn); }
+.p-P .p-tag { background: #1d4a2b; color: var(--tip); }
+.p-H .p-tag { background: #1d3a5a; color: var(--info); }
+
+/* ---------------- status bar ---------------- */
+
+#statusbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  background: var(--accent);
+  border-top: 1px solid var(--accent2);
+  font-size: 12px;
+  color: #fff;
+  user-select: none;
+}
+#statusbar > span { padding: 0 6px; }
+#statusbar .spacer { flex: 1; }
+#statusbar .sep { width: 1px; height: 12px; padding: 0; margin: 0 8px; background: rgba(255, 255, 255, .35); }
+#st-path { max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip { padding: 0 6px; border-radius: 2px; font-weight: 600; }
+.chip.sev { color: #ffd7d2; }
+.chip.syn { color: #ffe9c2; }
+.chip.spell { color: #c8f5d2; }
+.chip.hint { color: #cfe6ff; }
+.chip.zero { color: rgba(255, 255, 255, .7); font-weight: 400; }
+.dirty-mark { color: #ffcc66; }
+
+/* ---------------- menus / overlays ---------------- */
+
+.menu {
+  position: fixed;
+  z-index: 50;
+  background: #1b1b1c;
+  border: 1px solid #454549;
+  border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .5);
+  padding: 3px;
+  min-width: 180px;
+}
+.menu div { padding: 4px 24px 4px 10px; border-radius: 0; cursor: pointer; font-size: 12px; color: var(--fg); white-space: nowrap; }
+.menu div:hover { background: var(--sel); }
+
+#help {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#help .card {
+  width: 620px;
+  max-height: 80%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--win2);
+  border: 1px solid #454549;
+  border-radius: 2px;
+}
+#help .titlebar {
+  flex: none;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--win);
+  border-bottom: 1px solid #454549;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+}
+#help .body { overflow: auto; padding: 12px 16px; }
+#help table { border-collapse: collapse; width: 100%; margin: 0 0 12px; }
+#help td { padding: 2px 8px; border-bottom: 1px solid var(--line); font-size: 12px; }
+#help td:first-child { width: 150px; color: var(--info); font-family: var(--mono); }
+#help p { font-size: 12px; color: var(--fg-dim); line-height: 1.7; margin: 0; }
+#help .foot {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px;
+  background: var(--win);
+  border-top: 1px solid var(--line);
+}
+
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  z-index: 200;
+  background: var(--win);
+  border: 1px solid #454549;
+  color: var(--fg);
+  border-radius: 2px;
+  padding: 6px 14px;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .5);
+  opacity: 0;
+  transition: opacity .15s;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-thumb { background: #424242; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #5a5a5a; background-clip: content-box; border: 3px solid transparent; }
+::-webkit-scrollbar-track { background: var(--editor); }
+::-webkit-scrollbar-corner { background: var(--editor); }

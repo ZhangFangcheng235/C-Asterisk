@@ -1,0 +1,302 @@
+/* ============================================================
+ *  C_CSS.cash -- the C* CSS-styling header  (C* 0.4.2)
+ *
+ *  紧跟在 use "C_OPED.cash"; 后面再写一行
+ *
+ *      use "C_CSS.cash";
+ *
+ *  就打开了一套 CSS 式的界面美化工具箱（作用在 C_OPED.cash
+ *  创建的那些控件上）：
+ *
+ *    csswindow();                 开一个样式作用域（写一次即可）
+ *    cstext(控件, 颜色)           文字颜色；颜色写 "#RRGGBB" 或
+ *                                  CSS 颜色名（"red" "gold" …）
+ *    csbg(控件, 颜色)             背景颜色
+ *    csfont(控件, 字号, 加粗)     字号（磅），加粗写 1
+ *    csradius(控件, 像素)         圆角（Linux 生效，Windows 忽略）
+ *    csshadow(控件, 0 或 1)       投影（Linux 生效，Windows 忽略）
+ *    cshide(控件) / csshow(控件)  隐藏 / 显示
+ *    cspass(控件)                 输入框打码（密码模式）
+ *    cscolor(名字, 颜色)          给一个颜色起个名字
+ *    csapply(名字, 控件)          把起好名字的颜色涂到控件上
+ *
+ *  颜色一律写 "#RRGGBB"、"RRGGBB" 或 CSS 颜色名，和 CSS 一致。
+ *  本文件依赖 C_OPED.cash：它直接 include 进来，保证 cask_op_*
+ *  那些控件访问函数一定可用。
+ * ============================================================ */
+#ifndef CASK_CSS_CASH
+#define CASK_CSS_CASH
+
+/* 依赖 C_OPED.cash（cask_op_get / cask_op_index_of / cask_css_fg /
+ * cask_css_bg …）：程序里要先写 use "C_OPED.cash"; 再写本文件，
+ * 编译器会强制这个顺序，所以这里不再重复 include。 */
+
+/* ---------------- 颜色解析（两个平台共用） ---------------- */
+/* CSS 常用颜色名表（够教学用；够不着就按 "#RRGGBB" 解析） */
+static const char *cask_css_names[][2] = {
+    { "black",   "000000" }, { "white",    "FFFFFF" }, { "red",     "FF0000" },
+    { "green",   "008000" }, { "blue",     "0000FF" }, { "yellow",  "FFFF00" },
+    { "cyan",    "00FFFF" }, { "magenta",  "FF00FF" }, { "orange",  "FFA500" },
+    { "purple",  "800080" }, { "pink",     "FFC0CB" }, { "gold",    "FFD700" },
+    { "silver",  "C0C0C0" }, { "gray",     "808080" }, { "grey",    "808080" },
+    { "navy",    "000080" }, { "olive",    "808000" }, { "teal",    "008080" },
+    { "maroon",  "800000" }, { "coral",    "FF7F50" }, { "salmon",  "FA8072" },
+    { "lime",    "00FF00" }, { "indigo",   "4B0082" }, { "crimson", "DC143C" },
+    { "chocolate", "D2691E" }, { "tomato",  "FF6347" }, { NULL, NULL }
+};
+/* 把 "#RRGGBB"/"RRGGBB"/"blue" 解析成 0xRRGGBB（都认不出来时给 0） */
+static unsigned long cask_css_rgb(const char *s)
+{
+    int i;
+    char t[8];
+    unsigned long v = 0;
+    if (!s || !*s) return 0;
+    /* 先按 CSS 颜色名查 */
+    for (i = 0; cask_css_names[i][0]; i++)
+        if (!strcmp(s, cask_css_names[i][0]))
+            return (unsigned long)strtoul(cask_css_names[i][1], NULL, 16);
+    /* 再按 #RRGGBB / RRGGBB */
+    if (*s == '#') s++;
+    if (strlen(s) < 6) return 0;
+    memcpy(t, s, 6);
+    t[6] = 0;
+    v = (unsigned long)strtoul(t, NULL, 16);
+    return v & 0xFFFFFFu;
+}
+
+#if defined(_WIN32)
+
+/* Win32：文字/背景色要 C_OPED.cash 的窗口过程在 WM_CTLCOLOR* 里配合。
+ * 两个头文件在同一个生成的 C 文件里，C_OPED.cash 的静态数组
+ * cask_css_fg[] / cask_css_bg[] 这里直接可见，写完再刷新控件。 */
+static void cask_css_repaint(HWND h)
+{
+    RECT r;
+    if (GetClientRect(h, &r)) {
+        InvalidateRect(h, 0, TRUE);
+        UpdateWindow(h);
+    }
+}
+static long long cstext(long long id, const char *color)
+{
+    HWND h = cask_op_get(id);
+    int ci = cask_op_index_of(h);
+    unsigned long c;
+    if (ci < 0) return 0;
+    c = cask_css_rgb(color);
+    if (!c) c = 0x303030;               /* 认不出来就用深灰，别弄黑屏 */
+    cask_css_fg[ci] = (COLORREF)c;
+    cask_css_repaint(h);
+    return 0;
+}
+static long long csbg(long long id, const char *color)
+{
+    HWND h = cask_op_get(id);
+    int ci = cask_op_index_of(h);
+    unsigned long c;
+    if (ci < 0) return 0;
+    c = cask_css_rgb(color);
+    if (!c) c = 0xEFEFEF;
+    /* 背景色要一块实体画刷，由 C_OPED.cash 的窗口过程返回 */
+    if (cask_css_bg[ci]) { DeleteObject(cask_css_bg[ci]); cask_css_bg[ci] = 0; }
+    cask_css_bg[ci] = CreateSolidBrush((COLORREF)c);
+    cask_css_repaint(h);
+    return 0;
+}
+static long long csfont(long long id, long long pt, long long bold)
+{
+    HWND h = cask_op_get(id);
+    if (!h) return 0;
+    if (pt < 4)  pt = 12;
+    if (pt > 72) pt = 72;
+    {
+        HFONT f = CreateFontW((int)(-pt * 20), 0, 0, 0,
+            bold ? FW_BOLD : FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET,
+            OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+            DEFAULT_PITCH | FF_DONTCARE, L"Microsoft YaHei UI");
+        SendMessageW(h, WM_SETFONT, (WPARAM)f, TRUE);
+    }
+    return 0;
+}
+/* 圆角 / 投影：Win32 子控件做不了，安全地当作没写 */
+static long long csradius(long long id, long long px) { (void)id; (void)px; return 0; }
+static long long csshadow(long long id, long long on) { (void)id; (void)on; return 0; }
+static long long cshide(long long id)
+{
+    HWND h = cask_op_get(id);
+    if (h) ShowWindow(h, SW_HIDE);
+    return 0;
+}
+static long long csshow(long long id)
+{
+    HWND h = cask_op_get(id);
+    if (h) ShowWindow(h, SW_SHOWNORMAL);
+    return 0;
+}
+/* 把编辑控件变成密码框（打码） */
+static long long cspass(long long id)
+{
+    HWND h = cask_op_get(id);
+    LONG st;
+    if (!h) return 0;
+    st = GetWindowLongW(h, GWL_STYLE);
+    SetWindowLongW(h, GWL_STYLE, st | ES_PASSWORD);
+    return 0;
+}
+/* 给颜色起个名字，之后 csapply 可以复用 */
+#define CASK_CSS_NAMES 16
+static struct { char name[32]; unsigned long rgb; } cask_css_named[CASK_CSS_NAMES];
+static int cask_css_nnamed = 0;
+static long long cscolor(const char *name, const char *color)
+{
+    if (!name || !*name) return 0;
+    if (cask_css_nnamed >= CASK_CSS_NAMES) cask_css_nnamed = 0;
+    {
+        int i = cask_css_nnamed++;
+        strncpy(cask_css_named[i].name, name, 31);
+        cask_css_named[i].name[31] = 0;
+        cask_css_named[i].rgb = cask_css_rgb(color);
+    }
+    return 0;
+}
+static long long csapply(const char *name, long long id)
+{
+    int i, ci;
+    for (i = 0; i < cask_css_nnamed; i++)
+        if (!strcmp(cask_css_named[i].name, name ? name : "")) {
+            ci = cask_op_index_of(cask_op_get(id));
+            if (ci >= 0 && cask_css_named[i].rgb)
+                cask_css_fg[ci] = (COLORREF)cask_css_named[i].rgb;
+            break;
+        }
+    return 0;
+}
+static long long csswindow(void) { return 0; }   /* Win32 没有“作用域”概念 */
+
+#else
+
+/* ============================ Linux / GTK3 ============================ */
+
+#include <gtk/gtk.h>
+
+/* GTK3 用动态 CSS 规则给控件上色。控件在 C_OPED.cash 里被命名为
+ * "csk_<编号>"，这里按编号生成一条规则，实时追加。 */
+static char cask_css_buf[8192];
+static int  cask_css_len = 0;
+
+static void cask_css_push(const char *rule)
+{
+    GtkCssProvider *p;
+    int n = (int)strlen(cask_css_buf);
+    if (n + (int)strlen(rule) + 2 > 8192) return;
+    strcpy(cask_css_buf + n, rule);
+    cask_css_len = (int)strlen(cask_css_buf);
+    p = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(p, cask_css_buf, cask_css_len, NULL);
+    gtk_style_context_add_provider_for_screen(
+        gdk_screen_get_default(), GTK_STYLE_PROVIDER(p),
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    g_object_unref(p);
+}
+/* 追加一条 “#csk_<id> { <prop> }” */
+static void cask_css_rule(long long id, const char *prop, const char *val)
+{
+    char r[256];
+    snprintf(r, sizeof r, "#csk_%lld {%s:%s; }", id, prop, val);
+    cask_css_push(r);
+}
+static void cask_css_col(const char *s, char *out, size_t cap)
+{
+    unsigned long c = cask_css_rgb(s);
+    if (c) snprintf(out, cap, "#%06lX", c);
+    else strcpy(out, "#303030");
+}
+
+static long long cstext(long long id, const char *color)
+{
+    char c[16];
+    cask_css_col(color, c, sizeof c);
+    cask_css_rule(id, "color", c);
+    return 0;
+}
+static long long csbg(long long id, const char *color)
+{
+    char c[16];
+    cask_css_col(color, c, sizeof c);
+    cask_css_rule(id, "background-color", c);
+    return 0;
+}
+static long long csfont(long long id, long long pt, long long bold)
+{
+    char r[128];
+    snprintf(r, sizeof r, "#csk_%lld { font: %lldpx sans-serif%s; }",
+             id, pt, bold ? " bold" : "");
+    cask_css_push(r);
+    return 0;
+}
+static long long csradius(long long id, long long px)
+{
+    char r[96];
+    snprintf(r, sizeof r, "#csk_%lld { border-radius: %lldpx; }", id, px);
+    cask_css_push(r);
+    return 0;
+}
+static long long csshadow(long long id, long long on)
+{
+    char r[96];
+    snprintf(r, sizeof r,
+        "#csk_%lld { box-shadow: 0 %s; }", id, on ? "2px 2px 6px rgba(0,0,0,.5)" : "none");
+    cask_css_push(r);
+    return 0;
+}
+static long long cshide(long long id)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (w) gtk_widget_hide(w);
+    return 0;
+}
+static long long csshow(long long id)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (w) gtk_widget_show(w);
+    return 0;
+}
+static long long cspass(long long id)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (w && GTK_IS_ENTRY(w)) {
+        gtk_entry_set_visibility(GTK_ENTRY(w), FALSE);
+        gtk_entry_set_invisible_char(GTK_ENTRY(w), 183);   /* 中间点 • */
+    }
+    return 0;
+}
+#define CASK_CSS_NAMES 16
+static struct { char name[32]; char col[16]; } cask_css_named[CASK_CSS_NAMES];
+static int cask_css_nnamed = 0;
+static long long cscolor(const char *name, const char *color)
+{
+    if (!name || !*name) return 0;
+    if (cask_css_nnamed >= CASK_CSS_NAMES) cask_css_nnamed = 0;
+    {
+        int i = cask_css_nnamed++;
+        strncpy(cask_css_named[i].name, name, 31);
+        cask_css_named[i].name[31] = 0;
+        cask_css_col(color, cask_css_named[i].col, sizeof cask_css_named[i].col);
+    }
+    return 0;
+}
+static long long csapply(const char *name, long long id)
+{
+    int i;
+    for (i = 0; i < cask_css_nnamed; i++)
+        if (!strcmp(cask_css_named[i].name, name ? name : "")) {
+            cask_css_rule(id, "color", cask_css_named[i].col);
+            break;
+        }
+    return 0;
+}
+static long long csswindow(void) { return 0; }
+
+#endif /* _WIN32 / GTK3 */
+
+#endif /* CASK_CSS_CASH */

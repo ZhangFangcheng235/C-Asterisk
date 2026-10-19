@@ -1,0 +1,31 @@
+// array.cask -- arrays, 2-D arrays, index safety
+constant number ROWS = 3;
+constant number COLS = 4;
+
+start {
+    number scores[5] = {10, 20, 30, 40, 50};
+    number total = 0;
+    number i;
+
+    for (i = 0; i < 5; i++) { total += scores[i]; }
+    say "total = ", total;
+    say "average = ", total / 5;
+
+    number table[ROWS][COLS];
+    for (i = 0; i < ROWS; i++) {
+        for (number j = 0; j < COLS; j++) {
+            table[i][j] = i * COLS + j;
+        }
+    }
+    for (i = 0; i < ROWS; i++) {
+        show "row ", i, ":";
+        for (number j = 0; j < COLS; j++) { show " ", table[i][j]; }
+        say "";
+    }
+
+    text names[3] = {"ann", "bob", "cat"};
+    say "first name: ", names[0];
+
+    // out-of-range access is caught at run time:
+    // say scores[99];
+}

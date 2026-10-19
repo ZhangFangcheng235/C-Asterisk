@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,"><!-- 免得 WebView2 去要 favicon.ico（本地小服务器没有这个文件） -->
+<title>C* Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ---------------- 顶部菜单栏（文件 编辑 视图 生成 调试 帮助） ---------------- -->
+<div id="menubar">
+  <div class="brand">C<span class="star">*</span> Studio</div>
+  <div class="m-item" id="menu-file" role="button" tabindex="0">文件</div>
+  <div class="m-item" id="menu-edit" role="button" tabindex="0">编辑</div>
+  <div class="m-item" id="menu-view" role="button" tabindex="0">视图</div>
+  <div class="m-item" id="menu-build" role="button" tabindex="0">生成</div>
+  <div class="m-item" id="menu-debug" role="button" tabindex="0">调试</div>
+  <div class="m-item" id="menu-help" role="button" tabindex="0">帮助</div>
+</div>
+
+<!-- ---------------- 工具栏 ---------------- -->
+<div id="toolbar">
+  <button id="btn-new" title="新建 (Ctrl+N)">新建</button>
+  <button id="btn-open" title="打开 (Ctrl+O)">打开</button>
+  <button id="btn-save" title="保存 (Ctrl+S)">保存</button>
+  <button id="btn-saveas" title="另存为 (Ctrl+Shift+S)">另存为</button>
+  <div class="sep"></div>
+  <button id="btn-run" class="primary" title="编译并运行 (F5)">▶ 运行</button>
+  <button id="btn-fast" class="toggle on" title="快速编译：优先 tcc／-O0，编译更快；关掉走 gcc -O2 最高运行性能">⚡ 快编</button>
+  <button id="btn-stop" title="停止程序 (Esc)" disabled>■ 停止</button>
+  <div class="sep"></div>
+  <button id="btn-view-code" class="toggle on" title="代码视图">代码</button>
+  <button id="btn-view-blocks" class="toggle" title="积木视图">积木</button>
+  <div class="sep"></div>
+  <button id="btn-format" title="自动理清缩进，一句一行">格式化</button>
+  <button id="btn-enc" title="文件编码">编码 ▾</button>
+  <button id="btn-help" title="帮助 (F1)">帮助</button>
+  <div class="spacer"></div>
+  <div id="runstate"></div>
+</div>
+
+<div id="main">
+  <div id="docbar">
+    <div class="doc-tab">
+      <span class="doc-icon" aria-hidden="true"></span>
+      <span class="doc-name">C* 程序</span>
+    </div>
+  </div>
+
+  <div id="left">
+    <div id="editor-wrap">
+      <div id="gutter"></div>
+      <div id="editor">
+        <pre id="hl"></pre>
+        <textarea id="code" spellcheck="false" wrap="off" autocomplete="off"></textarea>
+      </div>
+    </div>
+
+    <div id="blocks-wrap" hidden>
+      <div id="blocks-palette"></div>
+      <div id="blocks-canvas"></div>
+    </div>
+
+  </div>
+
+  <div id="output" class="panel">
+    <div class="panel-head">
+      <span class="panel-title">输出</span>
+      <span class="spacer"></span>
+      <button id="btn-clear">清空</button>
+      <button id="btn-hide-output">收起</button>
+    </div>
+    <pre id="output-text"></pre>
+    <div id="output-input-row" hidden>
+      <span>输入 &gt;</span>
+      <input id="output-input" autocomplete="off">
+    </div>
+  </div>
+</div>
+
+<div id="problems" class="panel">
+  <div class="panel-head">
+    <span class="panel-title">问题</span>
+    <span id="problems-count"></span>
+    <span class="spacer"></span>
+    <button id="btn-hide-problems">收起</button>
+  </div>
+  <div id="problems-list"></div>
+</div>
+
+<div id="statusbar">
+  <span id="st-path">未命名</span>
+  <span id="st-enc">UTF-8</span>
+  <span class="sep"></span>
+  <span id="st-pos">行 1，列 1</span>
+  <span class="spacer"></span>
+  <span class="chip sev zero" id="st-severe">严重 0</span>
+  <span class="chip syn zero" id="st-syntax">语法 0</span>
+  <span class="chip spell zero" id="st-spell">拼写 0</span>
+  <span class="chip hint zero" id="st-hint">提示 0</span>
+  <span class="spacer"></span>
+  <span id="st-ver">C* Studio 0.4.2</span>
+</div>
+
+<div id="help" hidden>
+  <div class="card">
+    <div class="titlebar">C* Studio 帮助</div>
+    <div class="body">
+      <table>
+        <tr><td>F5</td><td>编译并运行（等价于点「运行」）</td></tr>
+        <tr><td>Esc</td><td>停止正在跑的程序</td></tr>
+        <tr><td>F1</td><td>打开本帮助</td></tr>
+        <tr><td>Ctrl+S</td><td>保存（第一次会问存在哪里）</td></tr>
+        <tr><td>Ctrl+Shift+S</td><td>另存为</td></tr>
+        <tr><td>Ctrl+O / Ctrl+N</td><td>打开 / 新建</td></tr>
+        <tr><td>Ctrl+C / Ctrl+V / Ctrl+X</td><td>复制 / 粘贴 / 剪切（代码和积木都通用）</td></tr>
+        <tr><td>Ctrl+Z / Ctrl+Y</td><td>撤销 / 重做（代码视图；积木视图在点上积木后按）</td></tr>
+        <tr><td>Tab</td><td>缩进四格</td></tr>
+        <tr><td>Delete</td><td>积木视图里删除选中的积木</td></tr>
+        <tr><td>「⚡ 快编」按钮</td><td>快速编译开关：开着走 tcc／-O0（编译快），关掉走 gcc -O2（运行最快）</td></tr>
+        <tr><td>「格式化」按钮</td><td>自动理清缩进、一句一行</td></tr>
+        <tr><td>「代码 / 积木」按钮</td><td>两种看法随时切换，改哪边都算</td></tr>
+      </table>
+      <p>
+        程序写完按 <b>运行</b>：有问题会列在下面「问题」里，点一条就跳到出错的那一行。<br>
+        底部的四个小圆点分别是<b>严重</b>（程序跑不起来）、<b>语法</b>（写法不对）、<b>拼写</b>（名字打错了，会告诉你像哪个）、<b>提示</b>（只是建议，不算错）。<br>
+        代码视图里：颜色按分类分（和积木箱的十类一一对应），<b>鼠标停在词上</b>会弹出它的用法和写法；选中的文字是半透明的，不挡字。<br>
+        积木视图里：左边分类点开挑一块，点它就加到程序里；拖动积木换位置；点黄色小格子改名字，鼠标停上去会说明这一格填什么；
+        括号里的 <b>＋</b> 用来加参数（空括号里的 ＋ 能新建参数）；选中一块积木后，<b>Ctrl+C/X 复制剪切、Ctrl+V 粘贴、Ctrl+Z/Y 撤销重做</b>都能用。
+      </p>
+    </div>
+    <div class="foot"><button id="help-close" class="primary">知道了</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="syntax.js"></script>
+<script src="editor.js"></script>
+<script src="blocks.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

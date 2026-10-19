@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C*（C Asterisk）编程语言 · 使用说明书</title>
+<style>
+  body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+         line-height: 1.7; color: #222; background: #fafafa;
+         max-width: 920px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { border-bottom: 3px solid #2b6cb0; padding-bottom: 8px; }
+  h2 { border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 2em; }
+  a { color: #2b6cb0; }
+  code { background: #eef1f5; padding: 1px 6px; border-radius: 4px;
+          font-family: Consolas, "Courier New", monospace; font-size: 0.95em; }
+  pre { background: #1e2430; color: #e6e6e6; padding: 14px 16px;
+         border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  img { max-width: 100%; border: 1px solid #ccd; border-radius: 6px;
+         margin: 10px 0; }
+  table { border-collapse: collapse; margin: 1em 0; width: 100%; }
+  th, td { border: 1px solid #ccd; padding: 7px 10px; text-align: left; }
+  th { background: #eef1f5; }
+  blockquote { border-left: 4px solid #2b6cb0; margin: 1em 0;
+                padding: 4px 16px; color: #444; background: #f0f4f8; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2.5em 0; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<h1>C*（C Asterisk）编程语言 · 使用说明书</h1>
+<blockquote><p>版本 <strong>0.4.2</strong> — 一门语法像 C、关键字贴近初中英语词汇的小语言。
+源文件后缀：<code>.cask</code>　编译器：<code>bin\caskc.exe</code>　编辑器：<code>bin\caskide.exe</code>
+
+本文件是<strong>速查手册</strong>，把语言的每一处细节都列清楚。想跟着课学，选一本：
+
+| 教材 | 文件 | 适合谁 |
+|------|------|--------|
+| C* 小学版教程 | <code>docs\小学版教程.md</code> | 小学高年级，第一次学编程 |
+| C* 初中版教程 | <code>docs\初中版教程.md</code> | 初中，把语言系统学一遍 |
+| C* 语言 必修一 | <code>docs\普高教材必修一.md</code> | 普通高中信息技术课 |
+| C* 语言 选修一 | <code>docs\普高选修一.md</code> | 高中选修：算法与窗口程序进阶 |
+| C* 语言基础 | <code>docs\高职教程CStar语言基础.md</code> | 高职，面向就业 |
+
+<strong>0.4.2 相对 0.3 的变化</strong>
+
+* 类型的规范名字改成 C 风格的 <code>int</code> / <code>float</code> / <code>string</code> / <code>char</code>；老名字
+<code>number</code> / <code>real</code> / <code>text</code> / <code>letter</code> 仍然能用（<strong>软弃用</strong>，只是提示你换新名）。
+* 新增 <code>use "C_OPED.cash";</code>：一行打开 C / C++ / Win32 世界，可以写<strong>窗口式程序</strong>（第 5 章）。
+* 新增 <code>use "C_CSS.cash";</code>：一行打开 CSS 式<strong>美化工具箱</strong>（给窗口控件上色、改字号、
+圆角、投影、密码打码），要配 <code>C_OPED.cash</code> 一起用（见 5.6）。
+* 积木视图：「窗口程序」「CSS 美化」两类积木做成<strong>头文件插件</strong>——程序里 <code>use</code> 了对应
+<code>.cash</code> 才出现，没 <code>use</code> 就不显示；注释行变成可编辑的绿色积木；<code>use</code> 积木会拉一条线
+连到画布右侧的头文件概述卡片（见 3.4）。
+* 示例新增 <code>examples\calc.cask</code>：用 C_OPED＋C_CSS 做的一台桌面整数计算器（见 5.6）。
+* 新增 <code>VALUE("42")</code>（= Excel 的 <code>VALUE</code>）：把一段文字变成整数。
+* 编辑器工具栏新增「<strong>⚡ 快编</strong>」开关（默认开）：走 tcc／<code>-O0</code> 编译更快，关掉走
+gcc <code>-O2</code> 运行最快。编译器加了<strong>构建缓存</strong>——程序没改动时直接复用上次的
+exe、跳过 C 编译器；也修了 <code>--fast</code> 模式下 <code>MOD</code>／<code>%</code> 取余生成 C 丢 <code>%</code> 的 bug。
+* 常用快捷键全通：代码视图 <code>Ctrl+C/V/X/Z/Y</code>（复制/粘贴/剪切/撤销/重做）原生可用；
+积木视图选中一块积木后 <code>Ctrl+C/X/V/Z/Y</code> 也能用（见 3.4）。
+* 编辑器换成 <strong>Visual Studio 2026 深色风格</strong>的外观与布局。</p></blockquote>
+<hr>
+<h2>1. C* 是什么</h2>
+<p>C*（读作 "C Asterisk"）是一门<strong>入门友好</strong>的编程语言：</p>
+<table>
+<thead><tr><th>目标</th><th>怎么做到的</th></tr></thead>
+<tbody>
+<tr><td>像 C，好迁移</td><td>大括号、分号、运算符都和 C 一样</td></tr>
+<tr><td>关键字看得懂</td><td><code>print</code> 打印、<code>int</code> 整数、<code>function main()</code> 主程序、<code>if/for/while</code> 照旧</td></tr>
+<tr><td>两种写法，从简到繁</td><td><strong>代码视图</strong>写 <code>.cask</code>，<strong>积木视图</strong>拖积木，两个视图随时切换（见 3.4）</td></tr>
+<tr><td>运行安全</td><td>溢出、除零、数组越界都会<strong>报错并指出出错行</strong>，而不是乱算或崩溃</td></tr>
+<tr><td>整洁易懂</td><td>局部变量自动初始化为 <code>0</code> / 空，先用后赋不会读到垃圾值</td></tr>
+<tr><td>名字好写</td><td>变量名、函数名<strong>可以用中文</strong>（<code>number 苹果 = 3;</code>）</td></tr>
+<tr><td>跑得快</td><td><code>.cask</code> 先翻译成 C，再由 gcc 编译成原生 exe</td></tr>
+</tbody></table>
+<p>一个完整的例子：</p>
+<pre><code class="lang-cask">// guess.cask -- 猜数字
+function main() {
+    int secret = now() % 100 + 1;
+    int guess = 0;
+    print "我想了一个 1 到 100 的数，猜吧！";
+    while (guess != secret) {
+        input guess;
+        if (guess &lt; secret) { print "小了"; }
+        else if (guess &gt; secret) { print "大了"; }
+    }
+    print "猜对了！";
+}</code></pre>
+<hr>
+<h2>2. 安装与目录</h2>
+<h3>2.1 需要什么</h3>
+<ul><li>Windows 10/11（也支持 Linux/macOS，路径按 <code>/</code> 处理）</li><li><strong>gcc</strong>（MinGW-w64：Dev-C++、MSYS2、w64devkit、Strawberry Perl 里的 gcc 都行），要能在命令行输入 <code>gcc --version</code> 看到版本</li><li>可选：Python 3（只在重新生成网页版说明书时需要）</li></ul>
+<h3>2.2 目录结构</h3>
+<pre><code>C_AS\
+├─ compiler\
+│   ├─ caskc.c        编译器源码（C 语言写成）
+│   ├─ cask_rt.h      运行时（生成的程序会 #include 它）
+│   └─ C_OPED.cash    窗口程序头（use "C_OPED.cash"; 打开 C / Win32 世界）
+├─ editor\
+│   ├─ webide.c       C* Studio 编辑器宿主（原生窗口 + 本机网页服务 + 编译运行桥）
+│   ├─ wv2.cpp        WebView2 接入层（把网页放进原生窗口里）
+│   └─ webview2\      WebView2 SDK（头文件和 WebView2Loader.dll）
+├─ web\               编辑器界面（网页：index.html / style.css / editor.js / app.js / blocks.js）
+├─ docs\              说明书与教材（Markdown 是正文，html 由脚本生成）
+│   ├─ CStar手册.md   速查手册（本文件）→ manual.html
+│   ├─ 小学版教程.md / 初中版教程.md / 普高教材必修一.md
+│   ├─ 普高选修一.md / 高职教程CStar语言基础.md
+│   ├─ md2html.py     把上面的 .md 转成同名 .html
+│   ├─ check_doc_code.py   把教材里每个完整例子真编译一遍
+│   └─ images\        文档里的截图
+├─ examples\          示例程序
+├─ tests\             测试程序 + 期望输出
+├─ vscode-ext\        VS Code 插件（让 .cask 有高亮和补全）
+├─ dist\              打包好的发行文件（zip / vsix）
+├─ bin\               build.bat 生成：caskc.exe、caskide.exe、cask_rt.h、C_OPED.cash、web\、WebView2Loader.dll
+├─ build.bat          一键构建整个工具链
+├─ run_tests.bat      跑全部测试
+└─ README.md</code></pre>
+<h3>2.3 构建</h3>
+<pre><code class="lang-bat">build.bat</code></pre>
+<p>会依次生成 <code>bin\caskc.exe</code>（编译器）、<code>bin\caskide.exe</code>（编辑器），把 <code>cask_rt.h</code> 和
+编辑器界面（<code>web\</code> → <code>bin\web\</code>、<code>WebView2Loader.dll</code>）复制进 <code>bin\</code>。
+需要 <code>gcc</code> 和 <code>g++</code> 两个都在 PATH 里（它们本来就是同一个安装包里的）。
+运行测试用：</p>
+<pre><code class="lang-bat">run_tests.bat</code></pre>
+<p>重新生成网页版说明书（需要 Python 3）：</p>
+<pre><code class="lang-bat">python docs\md2html.py</code></pre>
+<p>它会把 <code>docs\</code> 下的每一本 <code>.md</code> 都生成同名的 <code>.html</code>（手册固定叫 <code>manual.html</code>）：
+小学版教程、初中版教程、普高教材必修一、普高选修一、高职教程，一次全部更新。
+想检查教材里每个完整例子是否都能编译（<strong>窗口程序只编译、不运行</strong>，免得弹出窗口），可以跑：</p>
+<pre><code class="lang-bat">python docs\check_doc_code.py docs\小学版教程.md</code></pre>
+<p><code>build.bat</code> 还会把 <code>cask_rt.h</code> 和 <code>C_OPED.cash</code> 复制到 <code>bin\</code>，
+这两个文件必须和 <code>caskc.exe</code> 放在一起，编译出来的程序才跑得起来。</p>
+<hr>
+<h2>3. 快速上手</h2>
+<h3>3.1 第一个程序</h3>
+<p>新建文件 <code>hello.cask</code>：</p>
+<pre><code class="lang-cask">function main() {
+    print "Hello, world!";
+}</code></pre>
+<p>命令行编译并运行：</p>
+<pre><code class="lang-bat">bin\caskc.exe hello.cask --run</code></pre>
+<p>看到 <code>Hello, world!</code> 就成功了。<code>--run</code> 会先编译再运行；不加 <code>--run</code> 则只编译出 <code>hello.exe</code>。</p>
+<blockquote><p>老写法 <code>start { say "Hello, world!"; }</code> 效果完全一样，<code>say</code> = <code>print</code>、<code>start { }</code> = <code>function main() { }</code>。</p></blockquote>
+<h3>3.2 编译器常用命令</h3>
+<pre><code class="lang-bat">bin\caskc.exe 程序.cask              :: 编译成 程序.exe（默认 -O2）
+bin\caskc.exe 程序.cask --run        :: 编译完立刻运行
+bin\caskc.exe 程序.cask --console    :: 窗口程序里保留黑色控制台（方便 print 调试）
+bin\caskc.exe 程序.cask -o 我的.exe  :: 指定输出文件名
+bin\caskc.exe 程序.cask --emit-c     :: 只生成 C 代码（程序.cask.c），不编译
+bin\caskc.exe 程序.cask --keep       :: 编译成功后保留生成的 C 文件
+bin\caskc.exe 程序.cask --fast       :: 关闭运行时检查（更快，但不安全）
+bin\caskc.exe 程序.cask -g           :: 调试版（-O0 -g）
+bin\caskc.exe 程序.cask -v           :: 显示内部执行的 gcc 命令
+bin\caskc.exe 程序.cask --check      :: 只检查不编译（不留下任何文件），有错退出码非 0
+bin\caskc.exe 程序.cask --check --diag :: 再把每条问题按 P|行|列|信息 打出来</code></pre>
+<p><code>--diag</code> 是给编辑器看的机器格式，一条问题一行，行首一个字母分级别：</p>
+<table>
+<thead><tr><th>字母</th><th>级别</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td><code>E</code></td><td><strong>严重</strong></td><td>程序跑不起来（语义错误：未定义的名字、类型不符……）</td></tr>
+<tr><td><code>S</code></td><td><strong>语法</strong></td><td>写法不对（少分号、括号不配对……），多数会自动"跳过错的地方"继续检查，<strong>一次报多条</strong></td></tr>
+<tr><td><code>P</code></td><td><strong>拼写</strong></td><td>名字打错了，后面附"是不是想写 ×××"的建议（只在明显像的时候给）</td></tr>
+<tr><td><code>H</code></td><td>提示</td><td>老写法的提醒（比如还在用 <code>say</code>），不算错误</td></tr>
+</tbody></table>
+<h3>3.3 C* Studio 编辑器</h3>
+<p>双击 <code>bin\caskide.exe</code> 就打开编辑器（也可以把 <code>.cask</code> 文件名跟在后面：<code>bin\caskide.exe 我的.cask</code>）。
+界面是 <strong>Visual Studio 2026 深色风格</strong>：顶部菜单栏（文件 / 编辑 / 视图 / 生成 / 调试 / 帮助）、
+工具栏、文档标签页、下面停靠的「输出」「问题」工具窗口、底部蓝色状态栏——位置和 VS 一样，上手不费劲。
+编辑器界面是一页网页，但它<strong>装在一个真正的 Windows 窗口里</strong>——程序在本机自己起了个小服务
+（只认 127.0.0.1，不连外网），把 <code>bin\web\</code> 里的页面喂给窗口，所以既好看又好用。
+万一 Windows 缺少 WebView2 组件（一般都自带），它会提示你，并改用默认浏览器打开同一界面，功能一样。</p>
+<p><img src="images/studio.png" alt="C* Studio 编辑器"></p>
+<table>
+<thead><tr><th>操作</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>Ctrl+N</code> / <code>Ctrl+O</code> / <code>Ctrl+S</code></td><td>新建 / 打开 / 保存</td></tr>
+<tr><td><code>Ctrl+Shift+S</code></td><td>另存为（第一次保存也会问存哪）</td></tr>
+<tr><td><code>F5</code></td><td>编译并运行</td></tr>
+<tr><td><code>Esc</code></td><td>停止正在运行的程序</td></tr>
+<tr><td><code>Tab</code></td><td>缩进四格</td></tr>
+<tr><td><code>F1</code></td><td>帮助（快捷键小抄）</td></tr>
+<tr><td>工具栏「代码 / 积木」</td><td>两种视图来回切换（见 3.4）</td></tr>
+<tr><td>工具栏「格式化」</td><td>自动理清缩进、一句一行</td></tr>
+<tr><td>工具栏「编码 ▾」</td><td>把当前文件转成 UTF-8 或 GBK 保存</td></tr>
+<tr><td>点「问题」面板里的一条</td><td>光标跳到出错的那一行</td></tr>
+</tbody></table>
+<p><strong>边写边查</strong>：停下打字约半秒，编辑器就在后台悄悄跑一遍 <code>--check</code>，
+底下「问题」面板列出每一条，行号栏上标出错的行；顶部四个小圆点实时计数：</p>
+<ul><li><strong>严重</strong>（红）——程序跑不起来的问题</li><li><strong>语法</strong>（橙）——写法不对；编译器会自动跳过错的地方，<strong>一次给你看多条</strong></li><li><strong>拼写</strong>（绿）——名字打错了，会附"是不是想写 ×××"</li><li><strong>提示</strong>（蓝）——只是建议（比如你还在用老写法 <code>say</code>），不算错误</li></ul>
+<p><strong>运行</strong>：按 F5 → 下面出现「输出」面板。编译有问题就停在问题面板；没问题就跑起来，
+程序 <code>input</code> 的时候面板里出现输入框，打字按回车喂给程序；结束时显示 <code>[结束，退出码 0]</code>。
+状态栏右侧依次是：文件名（改过会亮一个 ●）、编码、当前<strong>行列</strong>、四个计数、版本号。</p>
+<p>保存编码放在菜单栏「<strong>编辑</strong>」里的 <strong>转成 UTF-8（推荐） / 转成 GBK（给老环境）</strong> 两项，
+用来<strong>立刻换一种编码保存</strong>当前文件（例如把别人给的 GBK 文件转成 UTF-8，
+好让中文变量名能被编译器接受）。工具栏上的「编码 ▾」按钮做的是同一件事。</p>
+<p><strong>语法颜色按分类来</strong>，和积木箱的十类一一对应，扫一眼就知道这个词是干什么的。
+配色沿用 <strong>Visual Studio 2026 深色主题</strong> 的标记色（像 VS 里写代码的样子），
+并额外给"变量名"上一档<strong>亮蓝</strong>——代码扫一眼就能分清关键字、函数、变量：</p>
+<table>
+<thead><tr><th>颜色</th><th>分类</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td>青</td><td>输出输入</td><td><code>print</code> <code>show</code> <code>input</code></td></tr>
+<tr><td>蓝</td><td>变量数据</td><td><code>int</code> <code>float</code> <code>string</code> <code>char</code> <code>bool</code> <code>constant</code></td></tr>
+<tr><td>浅绿</td><td>运算</td><td><code>SUM</code> <code>ABS</code> <code>MOD</code> <code>ROUND</code> <code>ATAN2</code>，还有数字本身</td></tr>
+<tr><td>紫粉</td><td>判断</td><td><code>if</code> <code>else</code> <code>switch</code> <code>case</code> <code>true</code> <code>false</code> <code>and</code> <code>or</code> <code>not</code></td></tr>
+<tr><td>黄褐</td><td>循环</td><td><code>while</code> <code>for</code> <code>foreach</code> <code>break</code> <code>continue</code></td></tr>
+<tr><td>黄</td><td>函数</td><td><code>function</code> <code>return</code>，以及你自己定义、自己调用的函数名</td></tr>
+<tr><td>橙</td><td>字符串与数组</td><td><code>LEN</code> <code>FIND</code> <code>SUBSTITUTE</code> <code>CONCAT</code>，还有字符串字面量</td></tr>
+<tr><td>天蓝</td><td>窗口程序</td><td><code>use</code>、<code>window</code> <code>button</code> <code>label</code> <code>settext</code> 这些（见第 5 章）</td></tr>
+<tr><td>紫</td><td>CSS 美化</td><td><code>cstext</code> <code>csbg</code> <code>csfont</code> <code>csapply</code> <code>cspass</code> …（见 5.6，要 <code>use "C_CSS.cash";</code>）</td></tr>
+<tr><td>灰</td><td>其它</td><td>积木箱里「其它」那一类的积木；代码里暂时没有归到这一类的词</td></tr>
+</tbody></table>
+<p><strong>变量名是亮蓝</strong>（不是上面任何一类）；当前所在行有一道<strong>淡蓝横条</strong>；
+光标停在某个括号上时，<strong>配对的括号会一起描灰边</strong>——这几个和 Visual Studio 一样。</p>
+<p>注释（<code>// …</code> 和 <code>/* … */</code>）用 VS Code 那样的<strong>绿色斜体</strong>，在积木视图里也是一块能点改的绿色积木。</p>
+<p><strong>鼠标停在词上会告诉你它是干什么的</strong>：旁边冒出一张小卡片，上排是这个函数的写法，
+下排是说明。停在 <code>print</code> 上是 <code>print 值1, 值2 …;</code>——"打印这些值，打印完换行"；
+停在 <code>LEN</code> 上是 <code>LEN(文字)</code>——"文字长度。按字节算，一个汉字算 3"。
+忘了哪个函数怎么用，鼠标停一下就行。</p>
+<p>选中的文字用<strong>半透明的蓝底</strong>，底下的彩色文字照样看得清；左边行号栏上出错的行标红。
+Tab 缩进、回车自动对齐空位（上一行有 <code>{</code> 会自动多缩一层）。
+UTF-8 和系统编码（如 GBK）保存的 <code>.cask</code> 都能正确打开和保存。</p>
+<h3>3.4 积木视图（Blocks）</h3>
+<p>点工具栏「<strong>积木</strong>」（或按 F1 里的快捷说明切换）就能在<strong>代码</strong>和<strong>积木</strong>之间切换：</p>
+<p><img src="images/blocks.png" alt="积木视图"></p>
+<ul><li>左边是<strong>积木箱</strong>，分成 10 类：输出输入、变量数据、运算、判断、循环、函数、</li></ul>
+<p>字符串与数组、<strong>窗口程序</strong>、<strong>CSS 美化</strong>、其它；每类默认收起，点一下展开。判断/循环类里有
+<code>if</code>、<code>while</code>、<code>for</code>、<code>until</code>、<code>do…while</code>、<code>foreach</code>、<code>switch/case/default</code> 这些新老积木；
+「窗口程序」「CSS 美化」这两类是<strong>头文件插件</strong>：程序里 <code>use</code> 了 <code>C_OPED.cash</code> /
+<code>C_CSS.cash</code> 它们才出现，没 <code>use</code> 就不显示（像没装的插件；「其它」里有
+"安装窗口插件""安装 CSS 插件" 两个入口积木，点了对应分类才装上）。</p>
+<ul><li><strong>加入</strong>：点一块积木就插进程序里（插在当前选中的积木后面，没选就插在末尾）；</li></ul>
+<p>也可以直接把它<strong>拖到画布</strong>上想要的位置松开。</p>
+<ul><li><strong>移动</strong>：拖动画布里的积木换位置——拖动时有一个半透明<strong>影子</strong>跟着鼠标走，</li></ul>
+<p>落点处亮一条黄色<strong>插入线</strong>，松开后积木带一个短暂的落位动画。</p>
+<ul><li><strong>修改</strong>：积木上的黄色小格子（变量名、数字、字符串、条件……）<strong>点一下</strong>就地变成输入框，</li></ul>
+<p>回车确定、<code>Esc</code> 取消；提交后代码立刻改写。<strong>鼠标停在小格子上会说明这一格填什么</strong>：
+比如停在 <code>button("确定", 20, 20, 100, 30)</code> 的第 4 个格子上，卡片会写「宽」；
+停在 <code>int count = 0;</code> 的两个格子上，分别写「变量名」和「初始值」。</p>
+<ul><li><strong>往括号里加东西</strong>：括号里那个小小的黄色 <strong>＋</strong> 就是干这个的。空括号里点它</li></ul>
+<p>（比如 <code>function 打招呼()</code>），敲 <code>string 名字</code> 回车，就成了 <code>function 打招呼(string 名字)</code>；
+已经有内容的括号末尾也有一个 ＋，点它再敲一个参数，逗号会自动补上：
+接着敲 <code>int 年龄</code>，就成了 <code>function 打招呼(string 名字, int 年龄)</code>。
+入口 <code>function main()</code> 的括号例外——<code>main</code> 不能带参数，所以那里没有 ＋（见 4.7 与第 6 章）。</p>
+<ul><li><strong>删除</strong>：单击选中（黄边），按 <code>Delete</code>。带 <code>{ }</code> 的积木连同里面的一起删。</li><li><strong>复制 / 粘贴 / 剪切</strong>：选中一块积木，<code>Ctrl+C</code> 复制、<code>Ctrl+X</code> 剪切（复制后原积木还在，</li></ul>
+<p>剪切则移除）、<code>Ctrl+V</code> 粘贴到选中积木后面（没选中就进 <code>main</code> 里）。</p>
+<ul><li><strong>撤销 / 重做</strong>：<code>Ctrl+Z</code> 撤销上一步、<code>Ctrl+Y</code>（或 <code>Ctrl+Shift+Z</code>）重做；积木视图里每次</li></ul>
+<p>增删、改格子、拖放都记进历史，可以连退几步再连进几步（代码视图里 <code>Ctrl+Z</code> 直接走编辑框自己的撤销）。</p>
+<ul><li>语句按嵌套一层层缩进，带身体的判断/循环画成包住身体的 C 形。</li><li><strong>注释积木</strong>：<code>// …</code> 和 <code>/* … */</code> 会画成一条绿色的斜体积木，显示注释原文；</li></ul>
+<p>点它就能就地改写（写正文会自动补上 <code>//</code>），所以注释在积木视图里也能改、能删、能拖动。</p>
+<ul><li><strong>use 积木拉线</strong>：一条 <code>use "头文件";</code> 积木右边会拉出一条线，连到画布右侧一个独立信息方框，</li></ul>
+<p>方框里写这个头文件的名字、一句话概述、依赖（要先 use 谁）和「已扫描」状态；
+这个方框在所有积木框<strong>外面</strong>，线从 use 积木右边缘穿过去连到它。</p>
+<p><strong>重要</strong>：积木视图和代码视图是<strong>同一个程序</strong>——积木里做的每个动作都会立刻改写代码文本，
+再重新解析成积木。也就是说，<strong>代码永远是真身</strong>，积木只是它的一种好看的样子；
+两边永远不会"对不上"。注释行和空行在积木视图里会藏起来（免得乱），切回代码视图还在。</p>
+<p>积木视图能显示的是<strong>语句级</strong>结构（一块积木 = 一条语句）。想写复杂表达式，
+改积木上的黄色格子（那是一整段代码文字），或者切回代码视图直接写——两种办法等价。</p>
+<hr>
+<h2>4. 语言基础</h2>
+<h3>4.1 程序入口与注释</h3>
+<ul><li>每个程序必须有<strong>入口</strong>，程序从这里开始执行：</li></ul>
+<table>
+<thead><tr><th>写法</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>function main() { ... }</code></td><td><strong>推荐写法</strong>，一眼就能看懂它是"主函数"</td></tr>
+<tr><td><code>start { ... }</code></td><td>老写法，完全等价</td></tr>
+<tr><td><code>number main() { ... }</code> / <code>int main() { ... }</code></td><td>写成 C 的样子也行（里面的 <code>return 3;</code> 就是退出码）</td></tr>
+</tbody></table>
+<p>入口不能带参数；括号里写了东西编译器会提示 <code>'function main' 不要参数</code>。</p>
+<ul><li>入口块里可以 <code>return 整数;</code> 作为退出码，不写就是 0。</li><li>注释：<code>// 一行</code> 和 <code>/* 多行 */</code>，与 C 完全相同。</li></ul>
+<h3>4.2 五种基本类型</h3>
+<table>
+<thead><tr><th>C* 类型</th><th>含义</th><th>对应 C</th><th>取值范围</th></tr></thead>
+<tbody>
+<tr><td><code>int</code></td><td>整数</td><td><code>long long</code></td><td>-9223372036854775808 … 9223372036854775807</td></tr>
+<tr><td><code>float</code></td><td>小数</td><td><code>double</code></td><td>约 ±1.8e308</td></tr>
+<tr><td><code>string</code></td><td>字符串</td><td><code>char *</code></td><td>不限长度，<strong>不能原地修改</strong></td></tr>
+<tr><td><code>char</code></td><td>一个字符</td><td><code>char</code></td><td>-128 … 127</td></tr>
+<tr><td><code>bool</code></td><td>真假</td><td><code>int</code></td><td><code>true</code> / <code>false</code></td></tr>
+<tr><td><code>none</code></td><td>无返回值</td><td><code>void</code></td><td>只用于函数类型</td></tr>
+</tbody></table>
+<pre><code class="lang-cask">int n = 42;
+float r = 2.5;
+string s = "hello";
+char c = 'A';
+bool ok = true;</code></pre>
+<p><strong>名字换了（0.4.2）</strong>：类型的规范名字是 <code>int</code> / <code>float</code> / <code>string</code> / <code>char</code>——就是 C 的说法，
+学过 C 的人一眼就懂。0.2 / 0.3 用的 <code>number</code> / <code>real</code> / <code>text</code> / <code>letter</code> 现在是<strong>软弃用别名</strong>：
+照样能编译，只是编辑器会在「提示」（H）里建议你换新名。</p>
+<table>
+<thead><tr><th>老名字</th><th>新名字</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td><code>number</code></td><td><code>int</code></td><td>整数</td></tr>
+<tr><td><code>real</code></td><td><code>float</code></td><td>小数</td></tr>
+<tr><td><code>text</code></td><td><code>string</code></td><td>字符串（一段文字）</td></tr>
+<tr><td><code>letter</code></td><td><code>char</code></td><td>一个字符</td></tr>
+</tbody></table>
+<p><code>bool</code> 和 <code>none</code> 没有改名。<strong>新写的程序一律用新名字。</strong></p>
+<ul><li>字符串用双引号，字符用单引号，支持转义 <code>\n \t \r \\ \" \' \0 \x41 \101</code>。</li><li><code>string</code> 的所有运算（<code>+</code> 拼接、比较）都返回<strong>新的字符串</strong>，原串不会被改坏。</li><li>赋值成 <code>char</code> 时会检查数值是否在 -128…127，超出会报运行时错误（字面量在编译期就报）。</li></ul>
+<h3>4.3 变量</h3>
+<ul><li>声明格式：<code>类型 名字 [= 初值];</code>，可逗号连写：<code>int a = 1, b = 2;</code></li><li>名字可以用<strong>中文</strong>：<code>int 苹果 = 3;</code>、<code>string 同学 = "小明";</code>（要求文件保存为 UTF-8）</li><li><strong>自动初始化</strong>：没写初值时，数字/布尔是 <code>0</code>，<code>string</code> 是空（NULL），数组全 0。</li><li>作用域：块 <code>{ }</code> 内声明的变量出了块就没了；内层可以<strong>同名遮蔽</strong>外层。</li><li>全局变量写在入口（<code>function main()</code> / <code>start</code>）之外，任何函数都能读写。</li><li>名字不能和 C 关键字、常用库函数名（<code>printf</code>、<code>main</code>…）、<code>cask_</code>/<code>__cask</code> 前缀冲突。</li></ul>
+<p>中文名字请把源文件保存为 <strong>UTF-8</strong>，否则编译器会提示
+<code>名字里有非 ASCII 字母，文件要存成 UTF-8</code>。</p>
+<h3>4.4 常量</h3>
+<pre><code class="lang-cask">constant int MAX = 100;         // 也可以写 const int MAX = 100;
+constant float PI = 3.14159;
+constant string NAME = "C*";</code></pre>
+<ul><li>常量值必须是<strong>编译期能算出来的表达式</strong>：字面量、四则运算、别的常量。</li></ul>
+<p>函数调用、变量、下标都不行（错误信息会说明）。</p>
+<ul><li>常量名全程序唯一，而且<strong>变量不能和常量同名</strong>——防止误改。</li><li>数组长度可以直接用常量：<code>int table[ROWS][COLS];</code></li></ul>
+<h3>4.5 运算符</h3>
+<p>和 C 一样（优先级也一样）：</p>
+<ul><li>算术 <code>+ - * / %</code>（整数除法截断，如 <code>7/2 == 3</code>；除 0 报错）</li><li>比较 <code>== != &lt; &lt;= &gt; &gt;=</code>（结果是 <code>bool</code>）</li><li>逻辑 <code>and</code> <code>or</code> <code>not</code>（别名 <code>&amp;&amp; || !</code>）</li><li>位运算 <code>&amp; | ^ ~ &lt;&lt; &gt;&gt;</code>（<code>&lt;&lt;</code> 会检查溢出）</li><li>赋值 <code>=</code> 与复合赋值 <code>+= -= *= /= %=</code>（<code>&amp;= |= ^= &lt;&lt;= &gt;&gt;=</code> 也支持）</li><li>自增自减 <code>++ --</code>（前缀后缀都可以）</li><li><strong>没有三目运算符 <code>? :</code></strong>——“二选一的值”写成 <code>IF()</code> 函数（见 4.10），</li></ul>
+<p>这样和 Excel 的 <code>IF(条件, 真值, 假值)</code> 完全一致</p>
+<pre><code class="lang-cask">int i = 0;
+i++;                 // 1
+i += 10;             // 11
+string t = IF(i &gt;= 10, "大", "小");</code></pre>
+<h3>4.6 流程控制</h3>
+<pre><code class="lang-cask">if (分数 &gt;= 60) { print "及格"; }
+else if (分数 &gt;= 80) { print "良好"; }
+else { print "加油"; }
+
+while (i &lt; 10) { i++; }
+
+for (int j = 0; j &lt; 10; j++) {
+    if (j % 2 == 0) { continue; }
+    if (j &gt; 7) { break; }
+}</code></pre>
+<ul><li><code>for</code> 的三个部分都可以省略；第一段允许写多个声明（逗号分隔）。</li><li><code>break</code> / <code>continue</code> 用法与 C 相同。</li><li>条件必须是 <code>bool</code>（或能变成 bool 的比较结果），数字不能直接当条件——想要"非 0 即真"请写 <code>n != 0</code>。</li></ul>
+<p>还有四种（0.3 新增），都是从 C / Python 搬来的常见写法：</p>
+<pre><code class="lang-cask">do {                       // 至少做一次：先做再问
+    print n;
+    n = n + 1;
+} while (n &lt; 3);
+
+until (n &gt;= 3) {           // 做到条件成立为止（= while (条件不成立)）
+    n = n + 1;
+}
+
+foreach (s in scores) {    // 把一维数组每个元素轮流交给 s
+    print s;
+}
+
+switch (score / 10) {      // 一个值对多个"格子"
+    case 10: print "perfect"; break;
+    case 9:  print "great";   break;
+    default: print "keep trying";
+}</code></pre>
+<ul><li><code>do…while</code> 和 <code>until</code> 都<strong>至少执行一次</strong>再判断；<code>until</code> 和 <code>while</code> 正好相反——</li></ul>
+<p>条件<strong>成立就停</strong>。</p>
+<ul><li><code>foreach (名字 in 数组)</code> 只支持<strong>一维数组</strong>，循环里可以直接改元素；</li></ul>
+<p>两层嵌套可以套着写，每层用自己的名字。</p>
+<ul><li><code>switch</code> 的 <code>case</code> 后面必须是<strong>编译期算得出来的常量</strong>（字面量、<code>constant</code>、四则运算）；</li></ul>
+<p>每个 <code>case</code> 末尾写 <code>break;</code> 跳出（<code>return</code> 也算结束）；<code>default:</code> 最多一个，可省略。</p>
+<h3>4.7 函数</h3>
+<pre><code class="lang-cask">int add(int a, int b) {
+    return a + b;
+}
+
+function greet(string who) {        // 不返回值的函数可以写 function 开头
+    print "Hello, ", who, "!";
+}
+
+none bye(string who) {              // 也可以像 C 一样写 none（= void）
+    print "Bye, ", who, "!";
+}
+
+// 可以先用后定义（编译器会先扫一遍）
+function main() {
+    print add(2, 3);
+    greet("world");
+    bye("world");
+}</code></pre>
+<ul><li>返回类型写 <code>none</code> 表示不返回值（对应 C 的 <code>void</code>）；写 <code>function</code> 开头表示"这是个函数，</li></ul>
+<p>不用返回值"——两种写法都行（<code>func</code> 是 <code>function</code> 的简写）。</p>
+<ul><li>参数是<strong>按值传递</strong>的：<code>string</code> 传指针但不可改，<code>int/float/char/bool</code> 复制。</li><li>所有路径都必须 <code>return</code>（忘了写，编译器会在末尾补一个安全的 <code>return 0</code>，不会返回垃圾值）。</li><li>函数不能递归到"无限"以外的未定义行为：递归和 C 一样快（<code>fib(20)</code> 秒出）。</li></ul>
+<h3>4.8 数组</h3>
+<pre><code class="lang-cask">int a[5] = {10, 20, 30, 40, 50};
+string names[3] = {"ann", "bob", "cat"};
+int table[3][4];               // 二维
+int b[4];                      // 自动全 0
+
+for (int i = 0; i &lt; 5; i++) {
+    print a[i];
+}</code></pre>
+<ul><li>长度必须是整数或常量 <code>int</code>；每维最多 8 维。</li><li><strong>下标越界立刻报错</strong>并指出文件和行号（<code>--fast</code> 会关掉检查）。</li><li>一维数组可以整表初始化 <code>= {…}</code>；不初始化则全 0。</li></ul>
+<h3>4.9 输入输出</h3>
+<pre><code class="lang-cask">print "结果：", x, " 和 ", y;   // 输出各值，最后换行
+print "完成";                    // 输出并换行
+show "请输入：";               // 只输出，不换行
+input 年龄;                    // 读一行，自动按类型解析</code></pre>
+<ul><li><code>print</code> 后面可以跟任意多个值（int/float/string/char/bool），<strong>自动换行</strong>。</li><li><code>say</code> 是 <code>print</code> 的老名字，两者完全一样，看到不用奇怪。</li><li><code>show</code> 不换行，常和 <code>say</code> 搭配排版。</li><li><code>input</code> <strong>每次读一整行</strong>：数字行必须是数字，否则提示重输；字符串读整行（可含空格）；<code>char</code> 取该行第一个非空字符。</li><li>这样设计后，数字、文字、字符输入挨着写也不会互相吃掉换行。</li></ul>
+<h3>4.10 内建函数</h3>
+<table>
+<thead><tr><th>函数</th><th>说明</th><th>例子</th></tr></thead>
+<tbody>
+</tbody></table>
+<p><strong>小写数学函数（软弃用别名，编译时提示改用大写）</strong>：</p>
+<table>
+<thead><tr><th>函数</th><th>说明</th><th>替代</th></tr></thead>
+<tbody>
+<tr><td><code>len(文字)</code></td><td>长度（字节数）</td><td><code>LEN</code></td></tr>
+<tr><td><code>at(文字, i)</code></td><td>第 i 个字符（越界报错）</td><td><code>at</code>（保留）</td></tr>
+<tr><td><code>abs(x)</code></td><td>绝对值</td><td><code>ABS</code></td></tr>
+<tr><td><code>sqrt / pow</code></td><td>平方根 / 幂</td><td><code>SQRT</code> / <code>POWER</code></td></tr>
+<tr><td><code>sin cos tan asin acos atan</code></td><td>三角函数（real，弧度）</td><td><code>SIN COS TAN ASIN ACOS ATAN</code></td></tr>
+<tr><td><code>log log10 exp</code></td><td>自然对数 / 常用对数 / e 的幂</td><td><code>LN</code> / <code>LOG10</code> / <code>EXP</code></td></tr>
+<tr><td><code>floor ceil round</code></td><td>向下取整 / 向上取整 / 四舍五入</td><td><code>FLOOR</code> / <code>CEILING</code> / <code>ROUND</code></td></tr>
+<tr><td><code>random()</code></td><td>0.0 ~ 1.0 随机数</td><td><code>RAND()</code></td></tr>
+<tr><td><code>now()</code></td><td>当前时间戳（秒）</td><td><code>now()</code>（保留）</td></tr>
+</tbody></table>
+<h4>Excel 风格函数（大写，与 Excel 同名同义）</h4>
+<p>会用 Excel 就会写——同名函数含义一致，表格里的公式可以直接搬进程序：</p>
+<table>
+<thead><tr><th>类别</th><th>函数</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>逻辑</td><td><code>IF(条件, 真值, 假值)</code></td><td>二选一（<strong>代替 <code>? :</code></strong>，只计算用到的一边）</td></tr>
+</tbody></table>
+<p><strong>0.4.2 新增内置函数</strong>（补齐 Excel / 常用数学文本能力，缺的直接补上）：</p>
+<table>
+<thead><tr><th>函数</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>ATAN2(y, x)</code></td><td>由 y、x 求角度（弧度）</td></tr>
+<tr><td><code>TRUNC(x)</code></td><td>截断小数（向 0 取整）</td></tr>
+<tr><td><code>LOG10(x)</code></td><td>常用对数（底 10）</td></tr>
+<tr><td><code>FIND(文字, 要找的[, 起点])</code></td><td>位置（从 1 起），找不到给 0（区分大小写）</td></tr>
+<tr><td><code>SUBSTITUTE(文字, 旧, 新)</code></td><td>把"旧"全部换成"新"</td></tr>
+<tr><td><code>REPT(文字, 次数)</code></td><td>把文字重复几遍</td></tr>
+<tr><td><code>EXACT(a, b)</code></td><td>两段文字逐字节是否完全一样</td></tr>
+<tr><td><code>CHAR(编号)</code> / <code>CODE(文字)</code></td><td>编号（0..255）&lt;-&gt; 字符</td></tr>
+</tbody></table>
+<p>Excel 大写的 <code>SIN COS TAN ASIN ACOS ATAN FLOOR CEILING</code> 现在也都认（和小写含义相同）。
+小写老写法（<code>abs</code>、<code>len</code>、<code>sin</code>、<code>floor</code>、<code>ceil</code>、<code>log10</code>…）保留为<strong>软弃用别名</strong>，照常能编译，
+<code>--check --diag</code> 时会提示改大写的规范名。</p>
+<h4>彩蛋函数 <code>rcl</code></h4>
+<p><code>rcl</code> 是一个内置的彩蛋函数：不用 <code>use</code>、不用写函数体，直接调用。语义：
+<strong>空参 <code>rcl();</code> 打印 <code>方程235永远爱rcl！</code> 并立刻结束整个程序</strong>；对上暗号则回一句话；其它值什么都不做。</p>
+<table>
+<thead><tr><th>写法</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td><code>rcl();</code></td><td>打印 <code>方程235永远爱rcl！</code>，然后<strong>立刻结束整个程序</strong></td></tr>
+<tr><td><code>rcl(235);</code> / <code>rcl(235.0);</code></td><td>打印 <code>方程235 爱 rcl</code></td></tr>
+<tr><td><code>rcl("FC235");</code> 等认得的字符串</td><td>打印 <code>方程235 爱 rcl</code></td></tr>
+<tr><td><code>rcl("rcl");</code></td><td>打印 <code>rcl，方程235永远爱你！</code></td></tr>
+<tr><td>别的值（<code>rcl(1);</code>、<code>rcl("hello");</code>）</td><td>什么也不做，程序继续</td></tr>
+</tbody></table>
+<p>认得的字符串暗号（<strong>不分大小写</strong>）：<code>235</code>、<code>方程235</code>、<code>FangCheng235</code>、<code>ZFC235</code>、<code>JF235</code>、<code>JF</code>、<code>FC235</code>、<code>FC</code>、<code>ZFC</code>、<code>FangCheng</code>。
+参数只能是 0 个或 1 个；给两个参数会报错。返回值是 <code>int</code> 0。
+| | <code>AND(a, b, …)</code> <code>OR(a, b, …)</code> <code>NOT(x)</code> | 与 / 或 / 非，参数必须是比较结果 |
+| | <code>TRUE()</code> <code>FALSE()</code> | 逻辑值 |
+| 数学 | <code>ABS(x)</code> <code>SIGN(x)</code> | 绝对值 / 符号（-1、0、1） |
+| | <code>MOD(a, b)</code> | 取余，<strong>结果符号跟除数</strong>（Excel 含义）：<code>MOD(-3, 10) == 7</code> |
+| | <code>ROUND(x)</code> <code>ROUND(x, 位数)</code> | 四舍五入（保留小数的写法返回 <code>real</code>） |
+| | <code>INT(x)</code> | 向下取整：<code>INT(-2.7) == -3</code> |
+| | <code>SQRT POWER EXP LN LOG PI</code> | 平方根 / 幂 / e 的幂 / 自然对数 / 常用对数（<code>LOG(x, 底)</code> 可选底数）/ 圆周率 |
+| | <code>RAND()</code> <code>RANDBETWEEN(a, b)</code> | 0~1 随机小数 / 两端都含的随机整数 |
+| 汇总 | <code>SUM(数组)</code> <code>AVERAGE(数组)</code> <code>COUNT(数组)</code> | 求和 / 平均（返回 <code>real</code>）/ 元素个数 |
+| | <code>MAX(...)</code> <code>MIN(...)</code> | 多个数比大小，或传整个数组 |
+| 文本 | <code>LEN</code> <code>LEFT</code> <code>RIGHT</code> <code>MID</code> | 长度 / 两端取字 / 取子串（<strong>位置从 1 开始</strong>，同 Excel） |
+| | <code>UPPER</code> <code>LOWER</code> <code>TRIM</code> | 变大写 / 变小写 / 去两端空格（中间连续空格并成一个） |
+| | <code>CONCAT(a, b, …)</code> | 拼成一段文字（数字、逻辑值自动转换） |
+| | <code>VALUE(文字)</code> <code>VAL(文字)</code> | 把文字转成整数（Excel 的 <code>VALUE</code>）：<code>VALUE("42") == 42</code>，开头不是数字就算 0 |</p>
+<ul><li>大写是 Excel 名字，小写是原来的名字：<code>ABS</code> = <code>abs</code>、<code>SQRT</code> = <code>sqrt</code>、</li></ul>
+<p><code>LEN</code> = <code>len</code>……两套都能用。</p>
+<ul><li><strong><code>%</code> 和 <code>MOD()</code> 并存但规则不同</strong>：<code>-3 % 10</code> 是 <strong>-3</strong>（C 规则，跟被除数），</li></ul>
+<p><code>MOD(-3, 10)</code> 是 <strong>7</strong>（Excel 规则，跟除数）。</p>
+<ul><li><code>IF()</code> / <code>AND()</code> / <code>OR()</code> 的条件必须是<strong>比较</strong>（<code>x &gt; 3</code>），</li></ul>
+<p>想要“非 0 即真”请写 <code>n != 0</code>。</p>
+<ul><li><code>SUM/MAX/MIN</code> 等传的是<strong>整个数组名</strong>，不用写 <code>[ ]</code>。</li></ul>
+<pre><code class="lang-cask">int 分数 = 75;
+print IF(分数 &gt;= 60, "及格", "不及格");        // 及格
+print "圆周率 ", ROUND(PI(), 4);               // 圆周率 3.1416
+int 成绩[4] = {88, 95, 72, 66};
+print "总分 ", SUM(成绩), " 平均 ", AVERAGE(成绩);  // 总分 321 平均 80.25
+print TRIM(UPPER("  hello world  "));          // HELLO WORLD</code></pre>
+<h3>4.11 引入头文件</h3>
+<pre><code class="lang-cask">use "my_helper.h";     // 引号里带路径/带 .h → 生成 #include "..."
+use &lt;stdio.h&gt;;         // 尖括号 → 生成 #include &lt;stdio.h&gt;</code></pre>
+<p>生成的 C 文件会原样包含它们，所以能直接调用 C 库函数（进阶用法，注意类型要对得上）。</p>
+<p>有一个头文件很特别：<strong><code>use "C_OPED.cash";</code></strong>——它一行就打开整个 C / C++ / Win32 世界，
+让程序能建真正的窗口、弹窗、直接调用系统函数。详见第 5 章。</p>
+<hr>
+<h2>5. 窗口式程序：<code>use "C_OPED.cash";</code></h2>
+<p>前面写的都是"黑底白字"的控制台程序。C* 0.4.2 起，只要在文件<strong>最前面</strong>写一行</p>
+<pre><code class="lang-cask">use "C_OPED.cash";</code></pre>
+<p>就打开了 <strong>C / C++ / Win32 的世界</strong>：</p>
+<table>
+<thead><tr><th>打开之后</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td>系统头文件已经包含</td><td>不用再写 <code>use &lt;windows.h&gt;;</code>，C / C++ 常用头文件都在了</td></tr>
+<tr><td>可以直接调系统函数</td><td>头文件里的函数<strong>不用声明</strong>就能调，例如 <code>int t = GetTickCount();</code></td></tr>
+<tr><td>自动链接窗口库</td><td>user32 / gdi32 / comctl32 … 编译器替你带上</td></tr>
+<tr><td>一套内建窗口控件</td><td><code>window</code> <code>label</code> <code>button</code> <code>textbox</code> … 见 5.2</td></tr>
+<tr><td>生成窗口式 exe</td><td>默认<strong>不带黑色控制台</strong>；想留着调试加 <code>--console</code></td></tr>
+</tbody></table>
+<blockquote><p><strong>C# 用不了。</strong> C# / .NET 没有 C 头文件，能打开的只有 C 和 C++ 两个世界。</p></blockquote>
+<h3>5.1 第一个窗口程序</h3>
+<pre><code class="lang-cask">use "C_OPED.cash";
+
+int 次数标签;
+int 点击次数 = 0;
+
+function on_click(int 控件) {                       // 按钮被点击时，C* 自动调用它
+    点击次数 = 点击次数 + 1;
+    settext(次数标签, "你点了 " + 点击次数 + " 次");
+}
+
+function main() {
+    int 窗口 = window("我的第一个窗口", 460, 260);       // 标题, 宽, 高
+    label("你好，C*！点一下按钮看看：", 24, 24, 400, 24); // 文字, x, y, 宽, 高
+    次数标签 = label("你点了 0 次", 24, 56, 400, 24);
+    button("点我", 24, 104, 140, 34);
+    run();                                          // 显示窗口，等窗口关闭才结束
+}</code></pre>
+<p>编译并运行（<code>examples\win_hello.cask</code> 就是这个例子）：</p>
+<pre><code class="lang-bat">bin\caskc.exe examples\win_hello.cask --run</code></pre>
+<p>要点：</p>
+<ul><li><code>window</code> 建的窗口就是<strong>主窗口</strong>，之后建的控件都放在它里面，所以控件不用再写窗口号。</li><li>控件的位置、大小都用<strong>像素</strong>：<code>x, y</code> 是左上角坐标，<code>宽, 高</code> 是尺寸。</li><li>程序最后一定要 <code>run();</code> 进入<strong>事件循环</strong>——不然 <code>main</code> 一跑完程序就退出，窗口一闪就没了。</li><li>每个控件都有个<strong>编号</strong>（<code>window</code> / <code>label</code> / <code>button</code> 的返回值，从 0 开始），</li></ul>
+<p>事件函数拿到的就是这个编号。</p>
+<h3>5.2 控件一览</h3>
+<table>
+<thead><tr><th>函数</th><th>建的控件</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>window(标题, 宽, 高)</code></td><td>主窗口</td><td>返回窗口号</td></tr>
+<tr><td><code>label(文字, x, y, 宽, 高)</code></td><td>文字标签</td><td>只显示；可以用 <code>settext</code> 改内容</td></tr>
+<tr><td><code>button(文字, x, y, 宽, 高)</code></td><td>按钮</td><td>点了触发 <code>on_click</code></td></tr>
+<tr><td><code>textbox(文字, x, y, 宽, 高)</code></td><td>单行输入框</td><td>文字改了触发 <code>on_change</code></td></tr>
+<tr><td><code>memo(文字, x, y, 宽, 高)</code></td><td>多行文本框</td><td>同上，可以换行</td></tr>
+<tr><td><code>checkbox(文字, x, y, 宽, 高)</code></td><td>复选框</td><td><code>checked</code> 读、<code>setchecked</code> 写</td></tr>
+<tr><td><code>listbox(x, y, 宽, 高)</code></td><td>列表</td><td><code>additem</code> 加项；换选项触发 <code>on_change</code></td></tr>
+<tr><td><code>progress(x, y, 宽, 高)</code></td><td>进度条</td><td><code>setvalue</code> 设进度、<code>getvalue</code> 读进度</td></tr>
+</tbody></table>
+<p>读和写：</p>
+<table>
+<thead><tr><th>用法</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td><code>settext(控件, "文字")</code></td><td>把控件上的文字改成新的（标签、按钮、输入框都行）</td></tr>
+<tr><td><code>string s = readtext(控件)</code></td><td>读出输入框 / 文本框里的文字</td></tr>
+<tr><td><code>settitle(控件, "标题")</code></td><td>改窗口标题（也能改别的控件的文字）</td></tr>
+<tr><td><code>additem(列表, "一项")</code></td><td>往列表里加一项</td></tr>
+<tr><td><code>checked(勾选框)</code></td><td>勾上了 1，没勾 0</td></tr>
+<tr><td><code>setchecked(勾选框, 1)</code></td><td>勾上 / 取消</td></tr>
+<tr><td><code>setvalue(进度条, 50)</code></td><td>进度条走到 50（0…100）</td></tr>
+<tr><td><code>getvalue(进度条)</code></td><td>读出当前进度</td></tr>
+</tbody></table>
+<blockquote><p>读出来的是<strong>文字</strong>（<code>string</code>）。要当数字算，用 <code>VALUE()</code>：<code>int 答 = VALUE(readtext(输入框));</code></p></blockquote>
+<h3>5.3 事件：让窗口"活"起来</h3>
+<p>窗口程序不是从上往下跑完就结束，而是<strong>等事情发生</strong>——点了按钮、改了文字，C* 就去调对应的函数：</p>
+<table>
+<thead><tr><th>你写的函数</th><th>什么时候被调用</th><th>参数</th></tr></thead>
+<tbody>
+<tr><td><code>function on_click(int 控件) { }</code></td><td>按钮被点击、列表里换了选项</td><td>控件编号</td></tr>
+<tr><td><code>function on_change(int 控件) { }</code></td><td>输入框里的文字被改了</td><td>控件编号</td></tr>
+<tr><td><code>function on_close() { }</code></td><td>用户点了窗口右上角的 ×</td><td>无</td></tr>
+</tbody></table>
+<p>三个函数都是<strong>可选的</strong>：写了才会被调用，一个都不写也不算错。
+<code>run();</code> 一直转，直到主窗口被关掉才返回。</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+
+int 输出框;
+int 输入框;
+
+function on_click(int 控件) {
+    string 名字 = readtext(输入框);
+    if (LEN(名字) == 0) { settext(输出框, "请先写个名字"); return; }
+    settext(输出框, "你好，" + 名字 + "！");
+}
+
+function main() {
+    window("打招呼", 420, 220);
+    输出框 = label("请在上面写名字", 24, 24, 360, 24);
+    输入框 = textbox("", 24, 60, 240, 26);
+    button("打招呼", 24, 104, 120, 32);
+    run();
+}</code></pre>
+<h3>5.4 弹窗、延时、直通系统函数</h3>
+<table>
+<thead><tr><th>用法</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td><code>alert("内容")</code></td><td>弹一个只有「确定」的消息框</td></tr>
+<tr><td><code>msgbox("内容", "标题")</code></td><td>同上，标题自己写</td></tr>
+<tr><td><code>ask("问题？", "标题")</code></td><td>是 / 否 对话框：点「是」返回 1，点「否」返回 0</td></tr>
+<tr><td><code>sleep(毫秒)</code></td><td>等一会儿（1000 = 1 秒）</td></tr>
+<tr><td><code>destroy(控件)</code></td><td>关掉一个控件或窗口</td></tr>
+</tbody></table>
+<p>因为 C / C++ / Win32 的头文件已经打开，<strong>不用声明</strong>就能直接调里面的函数：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+
+function main() {
+    int 毫秒 = GetTickCount();                // Win32：开机到现在的毫秒数
+    if (毫秒 &gt;= 0) { print "系统调用成功"; }
+    MessageBoxA(0, "内容", "标题", 0);         // Win32 原生消息框，直接写
+}</code></pre>
+<p>这类<strong>直通调用</strong> C* 不检查参数个数和类型（名字对不上就报"未知函数"，参数写错由 C 编译器来报，
+错误信息仍然指回 <code>.cask</code> 的行号）。写的时候对照函数说明或查一下 MSDN。</p>
+<h3>5.5 完整小项目：加法练习器</h3>
+<pre><code class="lang-cask">use "C_OPED.cash";
+
+int 题目框;
+int 答案框;
+int 成绩框;
+int 出题按钮;
+int 检查按钮;
+int 对的 = 0;
+int 错的 = 0;
+int 甲 = 0;
+int 乙 = 0;
+
+function 出一道题() {
+    甲 = RANDBETWEEN(1, 20);
+    乙 = RANDBETWEEN(1, 20);
+    settext(题目框, 甲 + " + " + 乙 + " = ?");
+    settext(答案框, "");
+    settext(成绩框, "对 " + 对的 + " 题，错 " + 错的 + " 题");
+}
+
+function on_click(int 控件) {
+    if (控件 == 出题按钮) { 出一道题(); return; }
+    if (控件 != 检查按钮) return;
+    if (VALUE(readtext(答案框)) == 甲 + 乙) {
+        对的 = 对的 + 1;
+        settext(成绩框, "答对了！");
+    } else {
+        错的 = 错的 + 1;
+        settext(成绩框, "答错了，正确答案是 " + (甲 + 乙));
+    }
+    出一道题();
+}
+
+function main() {
+    window("加法练习器", 480, 320);
+    label("算一算：", 24, 20, 120, 24);
+    题目框 = label("", 100, 20, 320, 24);
+    答案框 = textbox("", 100, 60, 120, 26);
+    检查按钮 = button("检查", 240, 58, 90, 30);
+    出题按钮 = button("换一题", 340, 58, 90, 30);
+    成绩框 = label("", 24, 110, 420, 24);
+    run();
+}</code></pre>
+<h3>5.6 给窗口上妆：<code>use "C_CSS.cash";</code></h3>
+<p>紧跟在 <code>use "C_OPED.cash";</code> 后面再加一行 <code>use "C_CSS.cash";</code>，
+就打开了 CSS 式的美化工具箱（要两个头一起用）：</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><code>cstext(控件, 色)</code></td><td>改文字颜色</td><td><code>cstext(提示, "FF6347")</code></td></tr>
+<tr><td><code>csbg(控件, 色)</code></td><td>改背景颜色</td><td><code>csbg(输入框, "FFF9C4")</code></td></tr>
+<tr><td><code>csfont(控件, 字号, 加粗)</code></td><td>字号（磅）＋粗细 0/1</td><td><code>csfont(标题, 24, 1)</code></td></tr>
+<tr><td><code>csradius(控件, 像素)</code></td><td>圆角（Linux 生效）</td><td><code>csradius(按钮, 8)</code></td></tr>
+<tr><td><code>csshadow(控件, 0~3)</code></td><td>投影（Linux 生效）</td><td><code>csshadow(窗口, 1)</code></td></tr>
+<tr><td><code>cshide(控件) / csshow(控件)</code></td><td>隐藏 / 显示</td><td><code>cshide(标签)</code></td></tr>
+<tr><td><code>cspass(控件)</code></td><td>输入框打码（密码框）</td><td><code>cspass(密码框)</code></td></tr>
+<tr><td><code>cscolor(名, 色)</code> / <code>csapply(名, 控件)</code></td><td>给样式起个名，再涂到别的控件上</td><td><code>cscolor("主题","1E88E5")</code></td></tr>
+</tbody></table>
+<p>颜色写法和 CSS 一样：<code>"#RRGGBB"</code>、<code>"RRGGBB"</code>，或者颜色名（<code>"blue"</code> <code>"gold"</code> …）。</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";
+
+function main() {
+    int 窗口, 标题, 密码框;
+    窗口 = window("登录", 460, 300);
+    标题 = label("请登录", 24, 20, 412, 36);
+    密码框 = textbox("", 108, 70, 328, 28);
+    csswindow();
+    csfont(标题, 24, 1);
+    cstext(标题, "0000FF");
+    cspass(密码框);
+    run();
+}</code></pre>
+<p>完整的登录窗口（账号／密码校验＋提示变红变绿）见 <code>examples\login.cask</code>，
+自动结束版的演示见 <code>examples\css_demo.cask</code>（编辑器里点「运行」看得到输出）。</p>
+<p><strong>用 CSS＋窗口做一个整台计算器</strong>：<code>examples\calc.cask</code> 把第 5 章的窗口积木和第 5.6 节的
+上色积木串起来，做成一台桌面整数计算器——深蓝显示屏、琥珀大数字、数字键/运算键/等号各配
+一个颜色名（<code>cscolor</code> 起名、<code>csapply</code> 涂到对应按键上），再加 <code>csradius</code> 圆角、<code>csshadow</code> 投影。
+有意思的是：C* 没有"数字转文字"的现成函数，代码里用 <code>CHAR</code>＋连接＋<code>LEFT</code>/<code>RIGHT</code>/<code>LEN</code>/<code>MOD</code>
+等文本函数自己把整数拼成字符串，正好当文本函数的小练习。</p>
+<pre><code class="lang-bash">bin\caskc.exe examples\calc.cask -o calc.exe --console   # 编译
+calc.exe                                                  # 运行，点按键算数</code></pre>
+<h3>5.7 窗口程序的调试小抄</h3>
+<table>
+<thead><tr><th>情况</th><th>怎么办</th></tr></thead>
+<tbody>
+<tr><td>窗口一闪就没了</td><td>忘了写 <code>run();</code></td></tr>
+<tr><td>想在窗口里看 <code>print</code> 的输出</td><td>用 <code>bin\caskc.exe 程序.cask --run --console</code></td></tr>
+<tr><td>按钮点了没反应</td><td>检查 <code>on_click</code> 写没写、控件编号有没有对上（用变量存住编号）</td></tr>
+<tr><td>中文变成方块 / 乱码</td><td>源文件存成 UTF-8（菜单栏「编辑 → 转成 UTF-8」）</td></tr>
+<tr><td>提示 <code>找不到 'C_OPED.cash'</code></td><td><code>C_OPED.cash</code> 要和 <code>caskc.exe</code> 放在一起（<code>build.bat</code> 会自动复制）</td></tr>
+</tbody></table>
+<hr>
+<h2>6. 安全机制（重点）</h2>
+<p>C* 默认打开三层运行时检查，出错时<strong>程序立刻停止</strong>，并打印：</p>
+<pre><code>C* 运行错误: 数组下标越界
+  位置 tests\array.cask:6</code></pre>
+<table>
+<thead><tr><th>检查</th><th>触发条件</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td>整数溢出</td><td><code>int</code> 加/减/乘结果放不下</td><td><code>9000000000000000000 * 9</code></td></tr>
+<tr><td>除零</td><td><code>/</code> <code>%</code> 的除数为 0</td><td><code>10 / 0</code></td></tr>
+<tr><td>数组越界</td><td>下标 <code>&lt;0</code> 或 <code>&gt;=长度</code></td><td><code>a[5]</code> 只有 3 个元素</td></tr>
+<tr><td>移位检查</td><td>移位位数不在 0…63，或左移负数/溢出</td><td><code>1 &lt;&lt; 99</code></td></tr>
+<tr><td>字符范围</td><td><code>int</code> 赋给 <code>char</code> 超出 -128…127</td><td><code>char c = 999;</code></td></tr>
+</tbody></table>
+<ul><li>错误信息里的文件和行号指向 <strong><code>.cask</code> 源文件</strong>（因为翻译成 C 时用了 <code>#line</code>）。</li><li>追求速度、并且确认逻辑正确时可以 <code>--fast</code> 关闭这些检查（省一点点开销，出错行为不再保证）。</li><li>编译期问题分<strong>三级</strong>：严重 / 语法 / 拼写（另有不计错的"提示"）。都带</li></ul>
+<p><code>文件:行:列: 错误:</code> 格式；<code>--check --diag</code> 时按 <code>E|行|列|…</code>、<code>S|…</code>、<code>P|…</code> 打出。
+在 C* Studio 里点「问题」面板中的一条即可跳到出错的那一行。</p>
+<hr>
+<h2>7. C* 与 C 的对照速查</h2>
+<table>
+<thead><tr><th>C*</th><th>C</th></tr></thead>
+<tbody>
+<tr><td><code>int</code></td><td><code>long long</code></td></tr>
+<tr><td><code>float</code></td><td><code>double</code></td></tr>
+<tr><td><code>string</code></td><td><code>char *</code></td></tr>
+<tr><td><code>char</code></td><td><code>char</code></td></tr>
+<tr><td><code>bool</code></td><td><code>int</code>（0/1）</td></tr>
+<tr><td><code>none</code></td><td><code>void</code></td></tr>
+<tr><td><code>print a, b;</code></td><td><code>printf("%lld%s", a, b); printf("\n");</code>（自动选格式）</td></tr>
+<tr><td><code>use "C_OPED.cash";</code></td><td><code>#include &lt;windows.h&gt;</code> + 链接窗口库 + 生成 <code>WinMain</code></td></tr>
+<tr><td><code>input x;</code></td><td>按行读入并解析</td></tr>
+<tr><td><code>function main() { }</code></td><td><code>int main(void) { … return 0; }</code></td></tr>
+<tr><td><code>constant int N = 5;</code></td><td><code>#define N (5LL)</code></td></tr>
+<tr><td><code>and or not</code></td><td>`&amp;&amp; \</td><td>\</td><td>!`</td></tr>
+<tr><td><code>IF(条件, a, b)</code></td><td><code>(条件) ? (a) : (b)</code></td></tr>
+<tr><td><code>MOD(a, b)</code></td><td>结果符号跟除数（C 的 <code>%</code> 跟被除数）</td></tr>
+<tr><td>越界/溢出</td><td>无检查（C 未定义行为）</td></tr>
+</tbody></table>
+<hr>
+<h2>8. 常见问题</h2>
+<p><strong>Q：提示 <code>找不到 'C_OPED.cash'</code>？</strong>
+把 <code>C_OPED.cash</code> 放在 <code>caskc.exe</code> 同目录（<code>build.bat</code> 已自动复制到 <code>bin\</code>），
+或设置环境变量 <code>CASK_RT_DIR</code> 指向那个目录。</p>
+<p><strong>Q：窗口程序运行起来没有黑窗口，<code>print</code> 看不见？</strong>
+窗口程序默认是"窗口式"的，没有控制台，所以 <code>print</code> 的输出没地方显示。
+调试时加 <code>--console</code>（或干脆用 <code>alert()</code> / 标签显示结果）：</p>
+<pre><code class="lang-bat">bin\caskc.exe 我的窗口.cask --run --console</code></pre>
+<p><strong>Q：编译时提示 <code>找不到 C 编译器</code>？</strong>
+把 gcc 所在目录加进 PATH，或直接用 Dev-C++ 自带的 gcc。</p>
+<p><strong>Q：提示 <code>找不到 cask_rt.h</code>？</strong>
+把 <code>cask_rt.h</code> 放在 <code>caskc.exe</code> 同目录（<code>build.bat</code> 已自动复制），或设置环境变量 <code>CASK_RT_DIR</code> 指向它。</p>
+<p><strong>Q：中文输出乱码？</strong>
+源文件保存为 <strong>UTF-8</strong>，C* 会自动把控制台切到 65001 代码页；保存为 GBK 也可以，程序会用默认代码页。两者不要混。</p>
+<p><strong>Q：想用中文当变量名、函数名？</strong>
+可以，例如 <code>int 苹果 = 3;</code>、<code>function 打招呼(string 谁) { … }</code>。
+要求文件保存为 <strong>UTF-8</strong>；如果存成了别的编码，编译器会提示
+<code>名字里有非 ASCII 字母，文件要存成 UTF-8</code>。
+（C\* Studio 状态栏会显示当前文件是 UTF-8 / ASCII / GBK；
+如果文件是 GBK，用菜单栏「编辑 → 转成 UTF-8（推荐）」一键转换。）
+纯英文的（ASCII）文件会自动按 UTF-8 保存，所以以后加中文名字不会有问题。</p>
+<p><strong>Q：积木视图和代码视图会不会不一致？</strong>
+不会。积木是从代码文本解析出来的<strong>视图</strong>，你对积木的每次操作（拖入/删除/移动/双击改内容）
+都是立刻改写代码文本再重新解析。<strong>代码是唯一的真身</strong>，随时可以切回代码视图核对。</p>
+<p><strong>Q：<code>string</code> 能不能 <code>t[0] = 'X';</code> 这样改一个字？</strong>
+不能（这是有意的简化）。用拼接：<code>t = 前缀 + "X" + 后缀</code>，或改用 <code>char arr[]</code> 数组。</p>
+<p><strong>Q：还写着 <code>number</code>，会不会哪天不能编译了？</strong>
+不会。<code>number</code> / <code>real</code> / <code>text</code> / <code>letter</code> 是<strong>软弃用别名</strong>，一直能编译；
+只是 <code>--check --diag</code> 和 C\* Studio 的「问题」面板会给你一条 <code>H</code>（提示），建议换成新名字。
+老项目可以慢慢改，不用一次性大改。</p>
+<p><strong>Q：常量报"必须是……表达式"？</strong>
+常量是编译期 <code>#define</code>，只能放字面量、算术和其它常量；要运行期算的值请用普通变量。</p>
+<p><strong>Q：想看翻译出来的 C 代码？</strong>
+<code>bin\caskc.exe 程序.cask --emit-c</code>，得到 <code>程序.cask.c</code>。</p>
+<hr>
+<h2>9. 关键字总表</h2>
+<table>
+<thead><tr><th>类别</th><th>关键字</th></tr></thead>
+<tbody>
+<tr><td>程序</td><td><code>function</code> <code>main</code> <code>use</code> <code>constant</code></td></tr>
+<tr><td>类型</td><td><code>int</code> <code>float</code> <code>string</code> <code>char</code> <code>bool</code> <code>none</code></td></tr>
+<tr><td>输出/输入</td><td><code>print</code> <code>show</code> <code>input</code></td></tr>
+<tr><td>流程</td><td><code>if</code> <code>else</code> <code>while</code> <code>for</code> <code>do</code> <code>until</code> <code>foreach</code> <code>in</code> <code>switch</code> <code>case</code> <code>default</code> <code>break</code> <code>continue</code> <code>return</code></td></tr>
+<tr><td>逻辑</td><td><code>and</code> <code>or</code> <code>not</code> <code>true</code> <code>false</code></td></tr>
+</tbody></table>
+<p>以上就是全部关键字——每个都是初中阶段的英语词。其余（<code>printf</code>、<code>for</code> 的括号）都是你已经会的 C。</p>
+<p><strong>老名字全都还能用</strong>，一个都不会突然失效：</p>
+<table>
+<thead><tr><th>老写法</th><th>新写法</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>say</code></td><td><code>print</code></td><td>完全一样（打印并换行）</td></tr>
+<tr><td><code>start { … }</code></td><td><code>function main() { … }</code></td><td>完全一样（程序入口）</td></tr>
+<tr><td><code>func</code></td><td><code>function</code></td><td>完全一样</td></tr>
+<tr><td><code>const</code></td><td><code>constant</code></td><td>完全一样</td></tr>
+<tr><td><code>void</code></td><td><code>none</code></td><td>完全一样</td></tr>
+<tr><td><code>number</code></td><td><code>int</code></td><td>完全一样（整数类型）</td></tr>
+<tr><td><code>real</code></td><td><code>float</code></td><td>完全一样（小数类型）</td></tr>
+<tr><td><code>text</code></td><td><code>string</code></td><td>完全一样（字符串类型）</td></tr>
+<tr><td><code>letter</code></td><td><code>char</code></td><td>完全一样（字符类型）</td></tr>
+<tr><td><code>&amp;&amp;</code> `\</td><td>\</td><td><code> </code>!`</td><td><code>and</code> <code>or</code> <code>not</code></td><td>完全一样</td></tr>
+</tbody></table>
+<p>老写法现在算是<strong>软弃用</strong>：照样编译通过，但带 <code>--diag</code> 检查时会多给一条 <code>H|行|列|…</code> 的<strong>提示</strong>
+（建议换成新写法），不计入错误、不影响退出码。新程序建议一律用新写法。</p>
+<p>另外还有一整套<strong>大写的 Excel 风格内建函数</strong>（<code>IF</code> <code>MOD</code> <code>SUM</code> <code>LEFT</code>……，见 4.10）——
+它们是函数名，不是关键字，不能当变量名用。</p>
+<hr>
+<h2>10. 在 VS Code 里写 C*</h2>
+<p><code>vscode-ext\</code> 里是一个 VS Code 扩展（<code>c-asterisk</code>）：装上以后，<code>.cask</code> 文件会有</p>
+<ul><li>语法高亮（关键字、类型、内建函数、字符串、注释）</li><li>代码片段（输入 <code>main</code>、<code>print</code>、<code>for</code>、<code>if</code>… 按 Tab 就能展开成完整骨架）</li><li>括号自动配对、<code>//</code> 自动注释</li></ul>
+<p>安装方法：在 VS Code 里按 <code>Ctrl+Shift+P</code> → 输入 <code>Install from VSIX</code> → 选 <code>dist\c-asterisk-0.4.2.vsix</code>。
+（在 <code>vscode-ext\</code> 目录里运行 <code>npx @vscode/vsce package</code> 也可以自己重新打包。）</p>
+<p>想让它也能一键编译/运行，可以在 VS Code 的 <code>tasks.json</code> 里加一条调用 <code>bin\caskc.exe</code> 的任务，
+或者在 VS Code 的集成终端里直接用 <code>bin\caskc.exe 程序.cask --run</code>。</p>
+<hr>
+<p><em>C</em> 0.4.2 · 源码与问题反馈见 <code>README.md</code>。*</p>
+<hr>
+<p style="color:#888;font-size:0.9em;">由 docs/md2html.py 从 CStar手册.md 生成</p>
+</body>
+</html>

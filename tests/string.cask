@@ -1,0 +1,30 @@
+// string.cask -- text values: length, at(), +, comparisons
+start {
+    text s = "hello";
+    text t = "world";
+
+    say "len(s) = ", len(s);
+    say "at(s, 1) = ", at(s, 1);
+    say "s + t = ", s + t;
+    say "s + ' ' + t = ", s + " " + t;
+
+    text big = s + " " + t + "!";
+    say "big = ", big;
+    say "len(big) = ", len(big);
+
+    if (s == "hello") { say "equal"; } else { say "not equal"; }
+    if (s != t) { say "different"; }
+
+    // counting letters in a text
+    text w = "banana";
+    number n = 0;
+    for (number i = 0; i < len(w); i++) {
+        if (at(w, i) == 'a') { n = n + 1; }
+    }
+    say "letters a in ", w, ": ", n;
+
+    // text repeats / grows in a loop
+    text line = "";
+    for (number k = 1; k <= 3; k++) { line = line + "*"; }
+    say line;
+}

@@ -1,0 +1,3 @@
+before: 
+C* 运行错误: 除以零
+  位置 tests\rtcheck_mod0.cask:4

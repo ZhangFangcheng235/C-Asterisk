@@ -1,0 +1,1 @@
+tests\cerr_switch.cask:3:0: 错误: 'switch' 要一个 int（string 或 float 请用 if / else if）

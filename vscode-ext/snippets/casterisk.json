@@ -1,0 +1,192 @@
+{
+  "program entry (function main)": {
+    "prefix": "main",
+    "body": [
+      "function main() {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "program entry point (recommended 0.2 way)"
+  },
+  "program entry (start)": {
+    "prefix": "start",
+    "body": [
+      "start {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "program entry block (old name, same as function main)"
+  },
+  "if": {
+    "prefix": "if",
+    "body": [
+      "if (${1:condition}) {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "if statement"
+  },
+  "if / else": {
+    "prefix": "ifelse",
+    "body": [
+      "if (${1:condition}) {",
+      "\t${2}",
+      "} else {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "if / else statement"
+  },
+  "while": {
+    "prefix": "while",
+    "body": [
+      "while (${1:condition}) {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "while loop"
+  },
+  "for": {
+    "prefix": "for",
+    "body": [
+      "for (int ${1:i} = 0; $1 < ${2:10}; $1 = $1 + 1) {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "for loop"
+  },
+  "print a line": {
+    "prefix": "print",
+    "body": ["print ${1:\"text\"};${0}"],
+    "description": "print a line (say is the old name)"
+  },
+  "say a line (old name)": {
+    "prefix": "say",
+    "body": ["print ${1:\"text\"};${0}"],
+    "description": "print a line (expands to print)"
+  },
+  "show (print no newline)": {
+    "prefix": "show",
+    "body": ["show ${1:value};${0}"],
+    "description": "print without newline"
+  },
+  "input": {
+    "prefix": "input",
+    "body": ["input ${1:var};${0}"],
+    "description": "read a value from stdin"
+  },
+  "function (no return value)": {
+    "prefix": "function",
+    "body": [
+      "function ${1:name}(${2}) {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "function that returns nothing"
+  },
+  "func (no return value)": {
+    "prefix": "func",
+    "body": [
+      "function ${1:name}(${2}) {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "function that returns nothing"
+  },
+  "function returning a value": {
+    "prefix": "fnv",
+    "body": [
+      "${1:int} ${2:name}(${3}) {",
+      "\treturn ${0};",
+      "}"
+    ],
+    "description": "function that returns a value"
+  },
+  "variable declaration": {
+    "prefix": "var",
+    "body": ["${1:int} ${2:name} = ${3:0};${0}"],
+    "description": "declare a variable"
+  },
+  "constant": {
+    "prefix": "constant",
+    "body": ["constant ${1:NAME} = ${2:value};${0}"],
+    "description": "constant definition"
+  },
+  "use header": {
+    "prefix": "use",
+    "body": ["use \"${1:stdio.h}\";${0}"],
+    "description": "include a header"
+  },
+  "IF (Excel style)": {
+    "prefix": "IF",
+    "body": ["IF(${1:condition}, ${2:value_if_true}, ${3:value_if_false})${0}"],
+    "description": "Excel-style IF expression"
+  },
+  "SUM array": {
+    "prefix": "SUM",
+    "body": ["SUM(${1:arr})${0}"],
+    "description": "sum of an array or values"
+  },
+  "ATAN2": {
+    "prefix": "atan2",
+    "body": ["ATAN2(${1:y}, ${2:x})${0}"],
+    "description": "Excel-style two-argument arctangent (radians)"
+  },
+  "TRUNC": {
+    "prefix": "trunc",
+    "body": ["TRUNC(${1:x})${0}"],
+    "description": "truncate toward zero (INT rounds down)"
+  },
+  "FIND": {
+    "prefix": "find",
+    "body": ["FIND(${1:needle}, ${2:text}${3:, ${4:1}})${0}"],
+    "description": "position of text (from 1), 0 if not found"
+  },
+  "SUBSTITUTE": {
+    "prefix": "subst",
+    "body": ["SUBSTITUTE(${1:text}, ${2:old}, ${3:new})${0}"],
+    "description": "replace every old with new"
+  },
+  "REPT": {
+    "prefix": "rept",
+    "body": ["REPT(${1:text}, ${2:n})${0}"],
+    "description": "repeat text n times"
+  },
+  "FOR loop count (block style)": {
+    "prefix": "repeat",
+    "body": [
+      "for (int ${1:i} = 1; $1 <= ${2:10}; $1++) {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "counted loop, reads like a block"
+  },
+  "window program (C_OPED.cash)": {
+    "prefix": "win",
+    "body": [
+      "use \"C_OPED.cash\";",
+      "",
+      "function main() {",
+      "\tint ${1:窗口} = window(\"${2:我的窗口}\", ${3:460}, ${4:260});",
+      "\tlabel(\"${5:你好，C*！}\", 24, 24, 400, 24);",
+      "\tbutton(\"${6:点我}\", 24, 100, 140, 34);",
+      "\trun();",
+      "}"
+    ],
+    "description": "a whole window program (window + label + button + run)"
+  },
+  "window: use C_OPED.cash": {
+    "prefix": "winuse",
+    "body": ["use \"C_OPED.cash\";${0}"],
+    "description": "open the C / C++ / Win32 world"
+  },
+  "window: on_click handler": {
+    "prefix": "winonclick",
+    "body": [
+      "function on_click(int ${1:控件}) {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "called when a button is clicked"
+  }
+}

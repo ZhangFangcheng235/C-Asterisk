@@ -1,0 +1,142 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "C Asterisk",
+  "scopeName": "source.casterisk",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#logic" },
+    { "include": "#constants" },
+    { "include": "#types" },
+    { "include": "#builtin-functions" },
+    { "include": "#function-calls" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.casterisk",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.casterisk",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.casterisk",
+          "begin": "\"",
+          "end": "\"",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.casterisk" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.casterisk" }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.casterisk",
+              "match": "\\\\(x[0-9a-fA-F]{1,2}|u[0-9a-fA-F]{4}|[0-7]{1,3}|[\\\\\"'nrtbfv0a])"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.casterisk",
+          "begin": "'",
+          "end": "'",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.casterisk" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.casterisk" }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.casterisk",
+              "match": "\\\\(x[0-9a-fA-F]{1,2}|u[0-9a-fA-F]{4}|[0-7]{1,3}|[\\\\\"'nrtbfv0a])"
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.casterisk",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.casterisk",
+          "match": "\\b\\d+\\.\\d+([eE][+-]?\\d+)?\\b|\\b\\d+[eE][+-]?\\d+\\b|\\b\\d+\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.casterisk",
+          "match": "\\b(function|func|if|else|while|for|do|until|foreach|in|switch|case|default|break|continue|return)\\b"
+        },
+        {
+          "name": "keyword.other.casterisk",
+          "match": "\\b(print|say|show|input|use|constant|const)\\b"
+        }
+      ]
+    },
+    "logic": {
+      "patterns": [
+        {
+          "name": "keyword.operator.word.casterisk",
+          "match": "\\b(and|or|not)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.casterisk",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.casterisk",
+          "match": "\\b(int|float|string|char|number|real|text|letter|bool|none)\\b"
+        }
+      ]
+    },
+    "builtin-functions": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.casterisk",
+          "match": "\\b(len|at|abs|sqrt|pow|sin|cos|tan|asin|acos|atan|log|log10|exp|floor|ceil|round|random|now|atan2|trunc|PI|IF|AND|OR|NOT|TRUE|FALSE|ABS|SIGN|MOD|ROUND|INT|POWER|SQRT|EXP|LN|LOG|LOG10|SIN|COS|TAN|ASIN|ACOS|ATAN|ATAN2|FLOOR|CEILING|TRUNC|RAND|RANDBETWEEN|SUM|AVERAGE|COUNT|MAX|MIN|LEN|LEFT|RIGHT|MID|UPPER|LOWER|TRIM|CONCAT|VALUE|VAL|FIND|SUBSTITUTE|REPT|EXACT|CHAR|CODE|rcl)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "function-calls": {
+      "patterns": [
+        {
+          "name": "variable.function.casterisk",
+          "match": "[\\p{L}_][\\p{L}\\p{N}_]*\\s*(?=\\()"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.casterisk",
+          "match": "<<=|>>=|==|!=|<=|>=|<<|>>|&&|\\|\\||\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|[+\\-*/%=<>!&|^~]"
+        }
+      ]
+    }
+  }
+}

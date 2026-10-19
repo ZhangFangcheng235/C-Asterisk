@@ -1,0 +1,9 @@
+// rtcheck.cask -- runtime checks catch mistakes (this program must FAIL)
+start {
+    number a[3] = {1, 2, 3};
+    number i = 0;
+    // loop forever-ish so the overflow below is reached deterministically
+    number big = 9000000000000000000;
+    big = big * 9;         // overflow -> run-time error, program stops here
+    say "you should never see this: ", big, " ", a[i];
+}

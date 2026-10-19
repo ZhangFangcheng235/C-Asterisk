@@ -1,0 +1,1 @@
+tests\cerr_cond.cask:1:27: 错误: 条件必须是一个比较（true 或 false），不能是 int —— 例如写 'n != 0'

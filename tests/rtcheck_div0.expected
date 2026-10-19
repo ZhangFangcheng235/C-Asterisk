@@ -1,0 +1,3 @@
+result: 
+C* 运行错误: 除以零
+  位置 tests\rtcheck_div0.cask:5

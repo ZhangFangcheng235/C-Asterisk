@@ -1,0 +1,1 @@
+tests\cerr_if_cond.cask:2:30: 错误: IF() 的第一个参数必须是一个比较（true 或 false）

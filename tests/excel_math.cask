@@ -1,0 +1,21 @@
+// excel_math.cask -- Excel-style math and logic functions
+start {
+    number score = 75;
+    say "IF: ", IF(score >= 60, "pass", "fail");
+    say "IF number: ", IF(score > 100, 1, 2);
+    say "AND/OR/NOT: ", AND(score >= 60, score < 80), " ",
+        OR(score < 60, score > 70), " ", NOT(false);
+    say "TRUE/FALSE: ", TRUE(), " ", FALSE();
+    say "ABS: ", ABS(-7), " ", ABS(-2.5);
+    say "SIGN: ", SIGN(-9), " ", SIGN(0), " ", SIGN(4);
+    say "MOD: ", MOD(-3, 10), " ", MOD(7, 3), " ", MOD(-3, -10);
+    say "MOD real: ", MOD(-3.5, 2.0);
+    say "ROUND: ", ROUND(2.5), " ", ROUND(-2.5), " ", ROUND(2.345, 2);
+    say "INT: ", INT(-2.7), " ", INT(3.2);
+    say "POWER/SQRT: ", POWER(2.0, 8.0), " ", SQRT(81.0);
+    say "PI: ", PI();
+    say "LOG: ", LOG(100.0), " ", LN(1.0), " ", LOG(27.0, 3.0);
+    say "MAX/MIN: ", MAX(3, 9, 4), " ", MIN(3.5, 1.5, 2.5);
+    say "RANDBETWEEN: ", RANDBETWEEN(5, 5);
+    say "RAND range: ", RAND() >= 0.0 and RAND() < 1.0;
+}

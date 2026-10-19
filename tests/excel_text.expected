@@ -1,0 +1,10 @@
+LEN: 5
+LEFT: [  Hello]
+RIGHT: [rld  ]
+MID: [Hello]
+UPPER: ABC
+LOWER: mixed
+TRIM: [Hello, World]
+inner trim: [a b c]
+CONCAT: a=42, ok=true
+nest: ABC

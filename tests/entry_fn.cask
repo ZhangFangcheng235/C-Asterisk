@@ -1,0 +1,11 @@
+// entry_fn.cask -- the 0.2 way: 'function main() { ... }' + 'print'
+function cheer(text what) {
+    print what, "!";
+}
+
+function main() {
+    print "hello from function main";
+    cheer("C Asterisk");
+    number n = 6;
+    print "6 * 7 = ", n * 7;
+}

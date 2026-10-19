@@ -1,0 +1,10 @@
+// entry.cask -- uses 'main' instead of 'start', multi-declaration in for
+none show2(text a, text b) { show a; show b; say ""; }
+
+number main() {
+    for (number i = 0, j = 4; i < j; i++) {
+        say i;
+    }
+    show2("a", "b");
+    if (1 + 1 == 2) { say "math works"; }
+}

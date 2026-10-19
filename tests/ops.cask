@@ -1,0 +1,49 @@
+// ops.cask -- assignment, ++/--, compound operators, shifts, IF()
+start {
+    number a = 10;
+    number b = 3;
+
+    say "a + b = ", a + b;
+    say "a - b = ", a - b;
+    say "a * b = ", a * b;
+    say "a / b = ", a / b;      // whole numbers: 3
+    say "a % b = ", a % b;
+
+    a++;
+    say "after a++: ", a;
+    a--;
+    a--;
+    say "after a-- twice: ", a;
+    ++a;
+    say "after ++a: ", a;
+
+    a += 5;
+    say "a += 5: ", a;
+    a -= 3;
+    say "a -= 3: ", a;
+    a *= 2;
+    say "a *= 2: ", a;
+    a /= 4;
+    say "a /= 4: ", a;
+
+    number m = 1;
+    say "1 << 10 = ", m << 10;
+    say "1024 >> 3 = ", 1024 >> 3;
+    say "6 & 3 = ", 6 & 3;
+    say "6 | 3 = ", 6 | 3;
+    say "6 ^ 3 = ", 6 ^ 3;
+    say "~0 = ", ~0;
+
+    bool ok = true;
+    say "not ok = ", not ok;
+    say "ok and false = ", ok and false;
+    say "ok or false = ", ok or false;
+
+    number score = 55;
+    say "grade marker: ", IF(score >= 60, "pass", "fail");
+    say "max: ", IF(a > b, a, b);
+
+    // comparisons are whole numbers under the hood
+    say "a > b -> ", a > b;
+    say "a == b -> ", a == b;
+}

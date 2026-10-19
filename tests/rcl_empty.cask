@@ -1,0 +1,6 @@
+﻿// rcl_empty.cask -- rcl() 空着调用：说一句话，然后立刻结束程序
+function main() {
+    print "开始";
+    rcl();
+    print "这一行不会执行";
+}

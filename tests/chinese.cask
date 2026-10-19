@@ -1,0 +1,15 @@
+// chinese.cask -- variable / function names may be written in Chinese
+number 苹果 = 3;
+text 名字 = "小明";
+
+function 打招呼(text 谁) {
+    print "你好，", 谁, "！";
+}
+
+function main() {
+    打招呼(名字);
+    print 名字, "有 ", 苹果, " 个苹果";
+    number 总数 = 苹果 * 2;
+    print "一共 ", 总数, " 个";
+    if (总数 > 5) { print "超过五个了"; }
+}

@@ -1,0 +1,28 @@
+// flow.cask -- if / else / while / for / break / continue
+start {
+    number score = 87;
+
+    if (score >= 90) {
+        say "A";
+    } else if (score >= 80) {
+        say "B";
+    } else {
+        say "C or below";
+    }
+
+    number i = 0;
+    while (i < 5) {
+        say "while ", i;
+        i = i + 1;
+    }
+
+    for (number j = 0; j < 10; j = j + 1) {
+        if (j % 2 == 0) { continue; }
+        if (j > 7) { break; }
+        say "odd ", j;
+    }
+
+    number n = 1;
+    while (n <= 1024) { n = n * 2; }
+    say "largest power of two <= 1024: ", n / 2;
+}

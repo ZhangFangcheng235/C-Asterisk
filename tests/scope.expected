@@ -1,0 +1,6 @@
+counter = 5
+total = 26
+inner x = 2
+outer x = 1
+C
+counter now = 50

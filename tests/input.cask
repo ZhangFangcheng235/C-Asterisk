@@ -1,0 +1,15 @@
+// input.cask -- reads values from the keyboard (piped in tests)
+start {
+    number age;
+    real height;
+    text name;
+    letter grade;
+
+    say "type your age:";      input age;
+    say "type your height:";   input height;
+    say "type your name:";     input name;
+    say "type your grade:";    input grade;
+
+    say "next year you will be ", age + 1;
+    say "hello ", name, ", ", age, " years, ", height, " m, grade ", grade;
+}

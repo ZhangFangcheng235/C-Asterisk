@@ -1,0 +1,12 @@
+function main() {
+    print LOG10(1000.0);
+    print FLOOR(-2.7), CEILING(2.1), TRUNC(-2.7);
+    print ATAN2(0.0, 1.0);
+    print SIN(0.0), COS(0.0);
+    print FIND("hello world", "o");
+    print FIND("hello world", "o", 6);
+    print SUBSTITUTE("a-b-c", "-", "+");
+    print REPT("ab", 3);
+    print EXACT("abc", "abc"), EXACT("abc", "abd");
+    print CHAR(65), CODE("A");
+}

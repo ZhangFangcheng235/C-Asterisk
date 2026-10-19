@@ -1,0 +1,23 @@
+// test_types.cask -- every basic type with say/show/input
+constant number AGE = 15;
+constant real PI = 3.14;
+constant text NAME = "C*";
+constant bool OK = true;
+
+start {
+    number n = 42;
+    real r = 2.5;
+    text s = "good morning";
+    letter c = 'A';
+    bool b = false;
+
+    say "types demo";
+    say "number:", n;
+    show "real: "; say r;
+    say "text:", s;
+    say "letter:", c;
+    say "bool:", b;
+    say "const:", AGE, " ", PI, " ", NAME, " ", OK;
+    say "join:", "n is ", n, " and doubled is ", n * 2;
+    say "truth:", n > 10, " ", b or OK;
+}

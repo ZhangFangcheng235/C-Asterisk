@@ -1,0 +1,6 @@
+function main() {
+    number x = 5;
+    foreach (v in x) {
+        print v;
+    }
+}

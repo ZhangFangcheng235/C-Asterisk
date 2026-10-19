@@ -1,0 +1,36 @@
+constant number LIMIT = 2;
+
+number tag(number v) {
+    switch (v) {
+        case LIMIT: return 7;
+        default: return 9;
+    }
+    return -1;
+}
+
+function main() {
+    number xs[5];
+    xs[0] = 4; xs[1] = 3; xs[2] = 2; xs[3] = 1; xs[4] = 0;
+    number sum = 0;
+    number shown = 0;
+    foreach (x in xs) {
+        if (x == 1) continue;
+        sum = sum + x;
+        shown = shown + 1;
+        if (shown == 3) break;
+    }
+    print sum;
+    print shown;
+
+    number i = 0;
+    for (i = 0; i < 3; i = i + 1) {
+        switch (i) {
+            case 0: print 100; break;
+            default: print 200;
+        }
+        print 300;
+    }
+
+    print tag(2);
+    print tag(3);
+}

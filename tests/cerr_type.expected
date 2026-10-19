@@ -1,0 +1,1 @@
+tests\cerr_type.cask:1:20: 错误: 不能把 string 放进 int

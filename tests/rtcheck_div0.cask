@@ -1,0 +1,7 @@
+// rtcheck3.cask -- dividing by zero must stop the program
+start {
+    number n = 10;
+    number d = 0;
+    say "result: ", n / d;
+    say "you should never see this";
+}

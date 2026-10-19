@@ -1,0 +1,9 @@
+types demo
+number:42
+real: 2.5
+text:good morning
+letter:A
+bool:false
+const:15 3.14 C* true
+join:n is 42 and doubled is 84
+truth:true true

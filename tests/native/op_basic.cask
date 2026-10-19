@@ -1,0 +1,11 @@
+// tests\native\op_basic.cask -- use "C_OPED.cash" opens the C / C++ / Win32 world
+// built by run_tests.bat with --console so print/show output is visible
+use "C_OPED.cash";
+
+function main() {
+    print "native ok";
+    int 毫秒 = GetTickCount();          // a real Win32 call, no declaration needed
+    if (毫秒 >= 0) print "win32 ok";
+    sleep(1);
+    print "sleep ok";
+}

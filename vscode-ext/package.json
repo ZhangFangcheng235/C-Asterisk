@@ -1,0 +1,51 @@
+{
+  "name": "c-asterisk",
+  "displayName": "C Asterisk (C*)",
+  "description": "Language support for C Asterisk (.cask): syntax highlighting, snippets, comments, brackets",
+  "version": "0.4.2",
+  "publisher": "c-asterisk",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "c asterisk",
+    "c*",
+    "cask",
+    "casterisk",
+    "education"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "casterisk",
+        "aliases": [
+          "C Asterisk",
+          "C*",
+          "cask"
+        ],
+        "extensions": [
+          ".cask"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "casterisk",
+        "scopeName": "source.casterisk",
+        "path": "./syntaxes/casterisk.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "casterisk",
+        "path": "./snippets/casterisk.json"
+      }
+    ]
+  }
+}

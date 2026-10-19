@@ -1,0 +1,1 @@
+tests\cerr_ternary.cask:2:40: 错误: C* 里不写 ? : 运算符 —— 请改用 IF(condition, value_if_true, value_if_false)

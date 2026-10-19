@@ -1,0 +1,14 @@
+// excel_text.cask -- Excel text functions (positions start at 1, like Excel)
+start {
+    text t = "  Hello, World  ";
+    say "LEN: ", LEN("hello");
+    say "LEFT: [", LEFT(t, 7), "]";
+    say "RIGHT: [", RIGHT(t, 5), "]";
+    say "MID: [", MID(t, 3, 5), "]";
+    say "UPPER: ", UPPER("abc");
+    say "LOWER: ", LOWER("MiXeD");
+    say "TRIM: [", TRIM(t), "]";
+    say "inner trim: [", TRIM("a   b    c"), "]";
+    say "CONCAT: ", CONCAT("a=", 42, ", ok=", true);
+    say "nest: ", UPPER(LEFT("abcdef", 3));
+}

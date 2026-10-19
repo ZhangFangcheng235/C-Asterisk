@@ -1,0 +1,39 @@
+# === build / output products (do not commit) ===
+/build/
+/dist/
+/bin/caskc.exe
+/bin/caskide.exe
+/bin/webdata/
+/bin/webview2/
+/bin/WebView2Loader.dll
+/bin/*.dll
+*.exe
+*.obj
+*.o
+*.cskc
+*.gen.c
+*.gen.s
+*.gen.o
+*.out
+*.cerr
+*.log
+*.pre.i
+
+# === editor SDK binaries (headers kept, big DLLs ignored) ===
+/editor/webview2/x64/
+
+# === editor / IDE generated ===
+/bin/web/
+/__pycache__/
+
+# === Agnes workspace (work, artifacts, research ledgers) ===
+/.agnes/
+
+# === OS noise ===
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# === misc local scratch ===
+*.pyc
+notes*.txt

@@ -1,0 +1,35 @@
+// scope.cask -- globals, nested blocks, shadowing, else-if chain
+number counter = 0;
+number table[4] = {5, 6, 7, 8};
+
+none bump(number by) {
+    counter = counter + by;
+}
+
+start {
+    bump(2);
+    bump(3);
+    say "counter = ", counter;
+
+    number total = 0;
+    for (number i = 0; i < 4; i++) { total += table[i]; }
+    say "total = ", total;
+
+    {
+        number x = 1;              // inner x
+        {
+            number x = 2;          // shadows the outer x
+            say "inner x = ", x;
+        }
+        say "outer x = ", x;
+    }
+
+    number v = 75;
+    if (v >= 90) { say "A"; }
+    else if (v >= 80) { say "B"; }
+    else if (v >= 70) { say "C"; }
+    else { say "F"; }
+
+    counter = counter * 10;
+    say "counter now = ", counter;
+}

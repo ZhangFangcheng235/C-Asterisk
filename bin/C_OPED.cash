@@ -1,0 +1,650 @@
+/* ============================================================
+ *  C_OPED.cash -- the C* window header  (C* 0.4.2)
+ *
+ *  A C* program that starts with
+ *
+ *      use "C_OPED.cash";
+ *
+ *  opens the whole C / C++ / native-GUI world:
+ *    - the usual C and C++ system headers are already included,
+ *      so there is no need to write 'include' anywhere;
+ *    - any function the headers offer can be called straight away
+ *      (printf, GetTickCount on Windows, ...);
+ *    - the window libraries are linked in automatically;
+ *    - and the small window toolkit below builds a real native
+ *      window: window / label / button / textbox / memo /
+ *      checkbox / listbox / progress, plus msgbox / alert / ask /
+ *      sleep / run, with the event functions on_click,
+ *      on_change and on_close.
+ *
+ *  On Windows the toolkit uses Win32; on Linux it uses GTK3, so
+ *  the same .cask program builds on both.  C# has no C headers,
+ *  so a .cs / .NET assembly cannot be used here -- only the C
+ *  and C++ worlds are open.
+ * ============================================================ */
+#ifndef CASK_OPED_CASH
+#define CASK_OPED_CASH
+
+#if defined(_WIN32)
+
+/* ============================ Windows / Win32 ============================ */
+
+#include <windows.h>
+#include <commctrl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <limits.h>
+
+/* ---------------- what a C* program may define ----------------
+ *   function on_click(int 控件) { ... }   一个按钮/条目被点击
+ *   function on_change(int 控件) { ... }  文本框改了 / 列表换了选项
+ *   function on_close() { ... }           窗口正要关闭
+ * They are weak: a window program works with or without them.   */
+extern void on_click(long long id)  __attribute__((weak));
+extern void on_change(long long id) __attribute__((weak));
+extern void on_close(void)          __attribute__((weak));
+
+/* ---------------- small state ---------------- */
+#define CASK_OP_MAX   512
+
+static HWND   cask_op_hwnd[CASK_OP_MAX];
+static int    cask_op_n       = 0;      /* how many handles are used  */
+static int    cask_op_nextid  = 1000;   /* Win32 control id           */
+static HWND   cask_op_main    = 0;      /* the first window           */
+static HINSTANCE cask_op_hinst = 0;
+static int    cask_op_ready   = 0;
+static HFONT  cask_op_uifont  = 0;
+
+/* CSS hooks (C_CSS.cash): per-control text / background color, filled by
+ * cstext/csbg.  Zero = "not set": the window procedure falls through to the
+ * default handling so ordinary labels keep their look. */
+static COLORREF cask_css_fg[CASK_OP_MAX] = { 0 };
+static HBRUSH   cask_css_bg[CASK_OP_MAX] = { 0 };
+
+static int cask_op_slot(HWND h)
+{
+    int i;
+    if (!h) return -1;
+    if (cask_op_n >= CASK_OP_MAX) return -1;
+    i = cask_op_n++;
+    cask_op_hwnd[i] = h;
+    cask_css_fg[i] = 0;
+    cask_css_bg[i] = 0;
+    return i;
+}
+static HWND cask_op_get(long long id)
+{
+    if (id < 0 || id >= cask_op_n) return 0;
+    return cask_op_hwnd[id];
+}
+static int cask_op_index_of(HWND h)
+{
+    int i;
+    for (i = 0; i < cask_op_n; i++)
+        if (cask_op_hwnd[i] == h) return i;
+    return -1;
+}
+
+/* ---------------- text: C* strings are UTF-8 ---------------- */
+static WCHAR *cask_op_wide(const char *s)
+{
+    static WCHAR buf[8][4096];
+    static int slot = 0;
+    WCHAR *out = buf[slot];
+    slot = (slot + 1) & 7;
+    if (!s) { out[0] = 0; return out; }
+    if (!MultiByteToWideChar(CP_UTF8, 0, s, -1, out, 4096)) out[0] = 0;
+    return out;
+}
+static const char *cask_op_utf8(const WCHAR *w)
+{
+    static char buf[8][8192];
+    static int slot = 0;
+    char *out = buf[slot];
+    slot = (slot + 1) & 7;
+    if (!w) { out[0] = 0; return out; }
+    if (!WideCharToMultiByte(CP_UTF8, 0, w, -1, out, 8192, NULL, NULL)) out[0] = 0;
+    return out;
+}
+
+static HFONT cask_op_font(void)
+{
+    if (!cask_op_uifont)
+        cask_op_uifont = CreateFontW(-16, 0, 0, 0, FW_NORMAL, 0, 0, 0,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+            CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
+            L"Microsoft YaHei UI");
+    return cask_op_uifont;
+}
+
+static LRESULT CALLBACK cask_op_wndproc(HWND h, UINT m, WPARAM wp, LPARAM lp)
+{
+    switch (m) {
+    case WM_COMMAND: {
+        int code = HIWORD(wp);
+        int ci = cask_op_index_of((HWND)lp);
+        if (ci < 0) return 0;
+        if (code == BN_CLICKED && on_click) on_click(ci);
+        else if (code == EN_CHANGE && on_change) on_change(ci);
+        else if (code == LBN_SELCHANGE && on_change) on_change(ci);
+        return 0;
+    }
+    case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLOREDIT: {
+        /* a styled control (cstext / csbg from C_CSS.cash) */
+        int ci = cask_op_index_of((HWND)lp);
+        HDC dc = (HDC)wp;
+        if (ci >= 0) {
+            SetTextColor(dc, cask_css_fg[ci] ? cask_css_fg[ci] : 0x303030);
+            if (cask_css_bg[ci]) {
+                SetBkMode(dc, OPAQUE);
+                return (LRESULT)cask_css_bg[ci];
+            }
+            SetBkMode(dc, TRANSPARENT);
+            return (LRESULT)GetStockObject(NULL_BRUSH);
+        }
+        break;
+    }
+    case WM_CLOSE:
+        if (on_close) on_close();
+        DestroyWindow(h);
+        return 0;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    }
+    return DefWindowProcW(h, m, wp, lp);
+}
+
+static void cask_op_init(void)
+{
+    WNDCLASSEXW wc;
+    if (cask_op_ready) return;
+    cask_op_hinst = GetModuleHandleW(NULL);
+    memset(&wc, 0, sizeof wc);
+    wc.cbSize        = sizeof wc;
+    wc.style         = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc   = cask_op_wndproc;
+    wc.hInstance     = cask_op_hinst;
+    wc.hCursor       = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+    wc.lpszClassName = L"CStarWindow";
+    RegisterClassExW(&wc);
+    InitCommonControls();
+    cask_op_ready = 1;
+}
+
+/* window("标题", 宽, 高) -> 窗口号 */
+static long long window(const char *title, long long w, long long h)
+{
+    HWND hw;
+    int sw, sh, i;
+    cask_op_init();
+    if (w < 160) w = 520;
+    if (h < 100) h = 360;
+    sw = GetSystemMetrics(SM_CXSCREEN);
+    sh = GetSystemMetrics(SM_CYSCREEN);
+    hw = CreateWindowExW(0, L"CStarWindow", cask_op_wide(title),
+            WS_OVERLAPPEDWINDOW, (sw - (int)w) / 2, (sh - (int)h) / 2,
+            (int)w, (int)h, NULL, NULL, cask_op_hinst, NULL);
+    if (!hw) return -1;
+    i = cask_op_slot(hw);
+    cask_op_main = hw;
+    ShowWindow(hw, SW_SHOW);
+    UpdateWindow(hw);
+    return i;
+}
+
+/* the shape behind label / button / textbox / memo / checkbox / listbox / progress */
+static long long cask_op_make(int kind, const char *text,
+                              long long x, long long y, long long w, long long h)
+{
+    const WCHAR *cls;
+    DWORD style;
+    HWND cw;
+    int i;
+    if (!cask_op_main) return -1;
+    switch (kind) {
+    case 0: cls = L"STATIC";   style = SS_LEFT;  break;
+    case 1: cls = L"BUTTON";   style = BS_PUSHBUTTON; break;
+    case 2: cls = L"EDIT";     style = WS_BORDER | ES_AUTOHSCROLL; break;
+    case 3: cls = L"EDIT";     style = WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL
+                                       | ES_WANTRETURN | WS_VSCROLL; break;
+    case 4: cls = L"BUTTON";   style = BS_AUTOCHECKBOX; break;
+    case 5: cls = L"LISTBOX";  style = WS_BORDER | LBS_NOTIFY | WS_VSCROLL; break;
+    default: cls = PROGRESS_CLASSW; style = PBS_SMOOTH; break;
+    }
+    if (w < 8) w = 120;
+    if (h < 8) h = 24;
+    cw = CreateWindowExW(0, cls, cask_op_wide(text),
+            WS_CHILD | WS_VISIBLE | style, (int)x, (int)y, (int)w, (int)h,
+            cask_op_main, (HMENU)(INT_PTR)(cask_op_nextid++), cask_op_hinst, NULL);
+    if (!cw) return -1;
+    SendMessageW(cw, WM_SETFONT, (WPARAM)cask_op_font(), TRUE);
+    i = cask_op_slot(cw);
+    return i;
+}
+static long long label(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(0, t, x, y, w, h); }
+static long long button(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(1, t, x, y, w, h); }
+static long long textbox(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(2, t, x, y, w, h); }
+static long long memo(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(3, t, x, y, w, h); }
+static long long checkbox(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(4, t, x, y, w, h); }
+static long long listbox(long long x, long long y, long long w, long long h)
+{ return cask_op_make(5, "", x, y, w, h); }
+static long long progress(long long x, long long y, long long w, long long h)
+{ return cask_op_make(6, "", x, y, w, h); }
+
+/* ---- read / write a control ---- */
+static long long settext(long long id, const char *s)
+{ HWND h = cask_op_get(id); if (h) SetWindowTextW(h, cask_op_wide(s)); return 0; }
+static const char *readtext(long long id)
+{
+    WCHAR b[8192];
+    HWND h = cask_op_get(id);
+    b[0] = 0;
+    if (h) GetWindowTextW(h, b, 8191);
+    return cask_op_utf8(b);
+}
+static long long settitle(long long id, const char *s)
+{ HWND h = cask_op_get(id); if (h) SetWindowTextW(h, cask_op_wide(s)); return 0; }
+static long long additem(long long id, const char *s)
+{ HWND h = cask_op_get(id); return h ? (long long)SendMessageW(h, LB_ADDSTRING, 0, (LPARAM)cask_op_wide(s)) : -1; }
+static long long checked(long long id)
+{ HWND h = cask_op_get(id); return h ? (long long)SendMessageW(h, BM_GETCHECK, 0, 0) : 0; }
+static long long setchecked(long long id, long long v)
+{ HWND h = cask_op_get(id); if (h) SendMessageW(h, BM_SETCHECK, (WPARAM)(v ? BST_CHECKED : BST_UNCHECKED), 0); return 0; }
+static long long setvalue(long long id, long long v)
+{ HWND h = cask_op_get(id); if (h) SendMessageW(h, PBM_SETPOS, (WPARAM)v, 0); return 0; }
+static long long getvalue(long long id)
+{ HWND h = cask_op_get(id); return h ? (long long)SendMessageW(h, PBM_GETPOS, 0, 0) : 0; }
+
+/* ---- dialogs, time, the event loop ---- */
+static long long msgbox(const char *text, const char *title)
+{ return MessageBoxW(NULL, cask_op_wide(text), cask_op_wide(title), MB_OK | MB_ICONINFORMATION); }
+static long long alert(const char *text)
+{ return MessageBoxW(NULL, cask_op_wide(text), L"C*", MB_OK | MB_ICONINFORMATION); }
+static long long ask(const char *text, const char *title)
+{ return MessageBoxW(NULL, cask_op_wide(text), cask_op_wide(title), MB_YESNO | MB_ICONQUESTION) == IDYES ? 1 : 0; }
+static long long sleep(long long ms) { Sleep((DWORD)(ms < 0 ? 0 : ms)); return 0; }
+static long long destroy(long long id) { HWND h = cask_op_get(id); if (h) { if (h == cask_op_main) PostMessageW(h, WM_CLOSE, 0, 0); else DestroyWindow(h); } return 0; }
+
+/* run();  -- show the window and wait for clicks until it is closed */
+static long long run(void)
+{
+    MSG msg;
+    if (!cask_op_main) return 0;
+    while (GetMessageW(&msg, NULL, 0, 0) > 0) {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+    return (long long)msg.wParam;
+}
+
+#else
+
+/* ============================ Linux / GTK3 ============================ */
+
+#include <gtk/gtk.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <limits.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <time.h>
+
+/* C* strings are UTF-8; GTK3 uses UTF-8 natively, so no conversion. */
+
+/* ---------------- what a C* program may define ----------------
+ *   function on_click(int 控件) { ... }   一个按钮被点击
+ *   function on_change(int 控件) { ... }  文本框改了 / 列表换了选项
+ *   function on_close() { ... }           窗口正要关闭
+ * They are weak: a window program works with or without them.   */
+extern void on_click(long long id)  __attribute__((weak));
+extern void on_change(long long id) __attribute__((weak));
+extern void on_close(void)          __attribute__((weak));
+
+/* ---------------- small state ---------------- */
+#define CASK_OP_MAX   512
+
+static GtkWidget *cask_op_wid[CASK_OP_MAX];
+static int        cask_op_n    = 0;
+static GtkWidget *cask_op_main = 0;      /* the first top-level window */
+static int        cask_op_ready = 0;
+
+static long long cask_op_slot(GtkWidget *w)
+{
+    if (!w) return -1;
+    if (cask_op_n >= CASK_OP_MAX) return -1;
+    long long i = cask_op_n++;
+    cask_op_wid[i] = w;
+    { char nm[32];                          /* CSS name for C_CSS.cash */
+      snprintf(nm, sizeof nm, "csk_%lld", i);
+      gtk_widget_set_name(w, nm); }
+    return i;
+}
+static GtkWidget *cask_op_get(long long id)
+{
+    if (id < 0 || id >= cask_op_n) return 0;
+    return cask_op_wid[id];
+}
+static long long cask_op_index_of(GtkWidget *w)
+{
+    int i;
+    for (i = 0; i < cask_op_n; i++)
+        if (cask_op_wid[i] == w) return i;
+    return -1;
+}
+
+/* a grid inside the main window for absolute-ish positioning: each
+ * control is a GtkFixed child so (x, y, w, h) keep the same meaning
+ * as on Windows. */
+static GtkFixed *cask_op_fixed = 0;
+
+static long long cask_op_place(GtkWidget *w, long long x, long long y,
+                               long long ww, long long hh, long long preid)
+{
+    if (ww < 8)  ww = 120;
+    if (hh < 8)  hh = 24;
+    gtk_widget_set_size_request(w, (int)ww, (int)hh);
+    gtk_fixed_put(cask_op_fixed, w, (int)x, (int)y);
+    if (preid >= 0) return preid;         /* already reserved by the caller */
+    return cask_op_slot(w);
+}
+
+/* ---- event callbacks that route into the C* weak functions ---- */
+static void cask_op_btn_clicked(GtkButton *b, gpointer data)
+{
+    (void)b;
+    long long id = (long long)data;
+    if (on_click) on_click(id);
+}
+static void cask_op_edit_changed(GtkEditable *ed, gpointer data)
+{
+    (void)ed;
+    long long id = (long long)data;
+    if (on_change) on_change(id);
+}
+static void cask_op_list_changed(GtkTreeView *tv, gpointer data)
+{
+    (void)tv;
+    long long id = (long long)data;
+    if (on_change) on_change(id);
+}
+static gboolean cask_op_del(GtkWidget *w, GdkEvent *e, gpointer data)
+{
+    (void)w; (void)e; (void)data;
+    if (on_close) on_close();
+    return FALSE;      /* let the default close proceed */
+}
+
+static void cask_op_init(void)
+{
+    if (cask_op_ready) return;
+    if (!gtk_init_check(NULL, NULL)) return;
+    cask_op_ready = 1;
+}
+
+/* window("标题", 宽, 高) -> 控件编号 */
+static long long window(const char *title, long long w, long long h)
+{
+    GtkWidget *top;
+    cask_op_init();
+    if (w < 160) w = 520;
+    if (h < 100) h = 360;
+    top = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(top), title ? title : "");
+    gtk_window_set_default_size(GTK_WINDOW(top), (int)w, (int)h);
+    cask_op_fixed = gtk_fixed_new();
+    gtk_container_add(GTK_CONTAINER(top), cask_op_fixed);
+    gtk_widget_show_all(top);
+    g_signal_connect(top, "delete-event", G_CALLBACK(cask_op_del), 0);
+    if (on_close) { /* also bind close on destroy */ }
+    cask_op_main = top;
+    return cask_op_slot(top);
+}
+
+/* the shape behind label / button / textbox / memo / checkbox / listbox / progress */
+static long long cask_op_make(int kind, const char *text,
+                              long long x, long long y, long long w, long long h)
+{
+    GtkWidget *cw = 0;
+    long long preid = -1;
+    if (!cask_op_main || !cask_op_fixed) return -1;
+    switch (kind) {
+    case 0:  /* label */
+        cw = gtk_label_new(text ? text : "");
+        break;
+    case 1:  /* button */
+        cw = gtk_button_new_with_label(text ? text : "");
+        { preid = cask_op_slot(cw);
+          g_signal_connect(cw, "clicked", G_CALLBACK(cask_op_btn_clicked), (void*)preid); }
+        break;
+    case 2:  /* textbox */
+        cw = gtk_entry_new();
+        if (text) gtk_entry_set_text(GTK_ENTRY(cw), text);
+        { preid = cask_op_slot(cw);
+          g_signal_connect(cw, "changed", G_CALLBACK(cask_op_edit_changed), (void*)preid); }
+        break;
+    case 3:  /* memo (multiline) */
+        { GtkTextBuffer *buf;
+          GtkWidget *sw = gtk_scrolled_window_new(0, 0);
+          GtkWidget *tv = gtk_text_view_new();
+          buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
+          if (text) gtk_text_buffer_set_text(buf, text, -1);
+          gtk_container_add(GTK_CONTAINER(sw), tv);
+          cw = sw;
+          preid = cask_op_slot(cw);
+          g_signal_connect(buf, "changed", G_CALLBACK(cask_op_edit_changed), (void*)preid);
+        }
+        break;
+    case 4:  /* checkbox */
+        cw = gtk_check_button_new_with_label(text ? text : "");
+        break;
+    case 5:  /* listbox */
+        { GtkListStore *st = gtk_list_store_new(1, G_TYPE_STRING);
+          GtkWidget *tv = gtk_tree_view_new_with_model(GTK_TREE_MODEL(st));
+          GtkWidget *col = gtk_tree_view_column_new();
+          GtkCellRenderer *r = gtk_cell_renderer_text_new();
+          gtk_tree_view_column_pack_start(GTK_TREE_VIEW_COLUMN(col), r, TRUE);
+          gtk_tree_view_column_set_title(GTK_TREE_VIEW_COLUMN(col), "");
+          gtk_tree_view_append_column(GTK_TREE_VIEW(tv), col);
+          cw = tv;
+          preid = cask_op_slot(cw);
+          g_signal_connect(cw, "cursor-changed", G_CALLBACK(cask_op_list_changed), (void*)preid);
+        }
+        break;
+    default:  /* progress */
+        cw = gtk_progress_bar_new();
+        break;
+    }
+    gtk_widget_show(cw);
+    return cask_op_place(cw, x, y, w, h, preid);
+}
+static long long label(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(0, t, x, y, w, h); }
+static long long button(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(1, t, x, y, w, h); }
+static long long textbox(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(2, t, x, y, w, h); }
+static long long memo(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(3, t, x, y, w, h); }
+static long long checkbox(const char *t, long long x, long long y, long long w, long long h)
+{ return cask_op_make(4, t, x, y, w, h); }
+static long long listbox(long long x, long long y, long long w, long long h)
+{ return cask_op_make(5, "", x, y, w, h); }
+static long long progress(long long x, long long y, long long w, long long h)
+{ return cask_op_make(6, "", x, y, w, h); }
+
+/* ---- read / write a control ---- */
+static long long settext(long long id, const char *s)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (!w) return 0;
+    if (GTK_IS_ENTRY(w)) gtk_entry_set_text(GTK_ENTRY(w), s ? s : "");
+    else if (GTK_IS_TEXT(w))
+        gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)), s ? s : "", -1);
+    else if (GTK_IS_LABEL(w)) gtk_label_set_text(GTK_LABEL(w), s ? s : "");
+    else if (GTK_IS_BUTTON(w)) gtk_button_set_label(GTK_BUTTON(w), s ? s : "");
+    else if (GTK_IS_SCROLLED_WINDOW(w)) {
+        GtkWidget *ch = gtk_bin_get_child(GTK_BIN(w));
+        if (ch && GTK_IS_TEXT(ch))
+            gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(ch)), s ? s : "", -1);
+    }
+    return 0;
+}
+static const char *readtext(long long id)
+{
+    static char buf[8][8192]; static int slot = 0;
+    GtkWidget *w = cask_op_get(id);
+    char *out = buf[slot]; slot = (slot + 1) & 7;
+    out[0] = 0;
+    if (w) {
+        if (GTK_IS_ENTRY(w)) strcpy(out, gtk_entry_get_text(GTK_ENTRY(w)));
+        else if (GTK_IS_TEXT(w)) {
+            GtkTextBuffer *b = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+            GtkTextIter a, b2;
+            gtk_text_buffer_get_start_iter(b, &a);
+            gtk_text_buffer_get_end_iter(b, &b2);
+            { char *t = gtk_text_buffer_get_text(b, &a, &b2, FALSE);
+              strncpy(out, t, 8191); out[8191] = 0; g_free(t); }
+        } else if (GTK_IS_SCROLLED_WINDOW(w)) {
+            GtkWidget *ch = gtk_bin_get_child(GTK_BIN(w));
+            if (ch && GTK_IS_TEXT(ch)) {
+                GtkTextBuffer *b = gtk_text_view_get_buffer(GTK_TEXT_VIEW(ch));
+                GtkTextIter a, b2;
+                gtk_text_buffer_get_start_iter(b, &a);
+                gtk_text_buffer_get_end_iter(b, &b2);
+                char *t = gtk_text_buffer_get_text(b, &a, &b2, FALSE);
+                strncpy(out, t, 8191); out[8191] = 0; g_free(t);
+            }
+        }
+    }
+    return out;
+}
+static long long settitle(long long id, const char *s)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (w && GTK_IS_WINDOW(w)) gtk_window_set_title(GTK_WINDOW(w), s ? s : "");
+    return 0;
+}
+static long long additem(long long id, const char *s)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (!w || !GTK_IS_TREE_VIEW(w)) return -1;
+    { GtkTreeModel *m = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
+      GtkListStore *st = (GtkListStore*)m;
+      GtkTreeIter it;
+      if (GTK_IS_LIST_STORE(st)) {
+          gtk_list_store_append(st, &it);
+          gtk_list_store_set(st, &it, 0, s ? s : "", -1);
+      }
+      gtk_widget_show_all(w);
+    }
+    return 0;
+}
+static long long checked(long long id)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (!w || !GTK_IS_CHECK_BUTTON(w)) return 0;
+    return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)) ? 1 : 0;
+}
+static long long setchecked(long long id, long long v)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (w && GTK_IS_CHECK_BUTTON(w))
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), v ? TRUE : FALSE);
+    return 0;
+}
+static long long setvalue(long long id, long long v)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (w && GTK_IS_PROGRESS_BAR(w))
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(w), (gdouble)v / 100.0);
+    return 0;
+}
+static long long getvalue(long long id)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (w && GTK_IS_PROGRESS_BAR(w))
+        return (long long)(gtk_progress_bar_get_fraction(GTK_PROGRESS_BAR(w)) * 100.0);
+    return 0;
+}
+
+/* ---- dialogs, time, the event loop ---- */
+static long long msgbox(const char *text, const char *title)
+{
+    GtkWidget *d = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL,
+        GTK_MESSAGE_INFO, GTK_BUTTONS_OK, "%s", text ? text : "");
+    gtk_window_set_title(GTK_WINDOW(d), title ? title : "C*");
+    gtk_dialog_run(GTK_DIALOG(d));
+    gtk_widget_destroy(d);
+    return 0;
+}
+static long long alert(const char *text)
+{ return msgbox(text, "C*"); }
+static long long ask(const char *text, const char *title)
+{
+    GtkWidget *d = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL,
+        GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s", text ? text : "");
+    gtk_window_set_title(GTK_WINDOW(d), title ? title : "C*");
+    { long long r = gtk_dialog_run(GTK_DIALOG(d)) == GTK_RESPONSE_YES;
+      gtk_widget_destroy(d);
+      return r; }
+}
+static long long sleep(long long ms)
+{
+    if (ms < 0) ms = 0;
+    { struct timespec ts; ts.tv_sec = ms / 1000; ts.tv_nsec = (ms % 1000) * 1000000L;
+      nanosleep(&ts, 0); }
+    /* pump the GTK loop so the UI stays responsive */
+    while (gtk_events_pending()) gtk_main_iteration_do(FALSE);
+    return 0;
+}
+static long long destroy(long long id)
+{
+    GtkWidget *w = cask_op_get(id);
+    if (!w) return 0;
+    if (w == cask_op_main) gtk_main_quit();     /* quit the event loop */
+    else gtk_widget_destroy(w);
+    return 0;
+}
+
+/* a shim so the same C* code that calls Win32 GetTickCount() still
+ * compiles on Linux: returns milliseconds since process start. */
+static long long GetTickCount(void)
+{
+    static long long t0 = 0;
+    struct timespec ts;
+    if (!t0) { clock_gettime(CLOCK_MONOTONIC, &ts);
+               t0 = ts.tv_sec * 1000 + ts.tv_nsec / 1000000; }
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    { long long now = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+      return now - t0; }
+}
+
+/* run();  -- enter the GTK event loop until the main window is closed */
+static long long run(void)
+{
+    if (!cask_op_main) return 0;
+    gtk_main();
+    return 0;
+}
+
+#endif /* _WIN32 / GTK3 */
+
+#endif /* CASK_OPED_CASH */
