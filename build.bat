@@ -92,6 +92,7 @@ if exist editor\webide.c (
     copy /y web\blocks.js  bin\web\blocks.js  >nul
     copy /y web\syntax.js bin\web\syntax.js >nul
     copy /y web\header-info.json bin\web\header-info.json >nul
+    copy /y web\icon.png bin\web\icon.png >nul
     if exist editor\webview2\x64\WebView2Loader.dll (
         copy /y editor\webview2\x64\WebView2Loader.dll bin\WebView2Loader.dll >nul
     )

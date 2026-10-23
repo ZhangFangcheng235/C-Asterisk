@@ -67,7 +67,7 @@ chmod +x bin/caskide.sh
 
 # the page the editor shows
 mkdir -p bin/web
-for f in index.html style.css editor.js app.js blocks.js syntax.js header-info.json; do
+for f in index.html style.css editor.js app.js blocks.js syntax.js header-info.json icon.png; do
   cp web/$f bin/web/$f
 done
 

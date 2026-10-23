@@ -3,6 +3,7 @@
   "displayName": "C Asterisk (C*)",
   "description": "Language support for C Asterisk (.cask): syntax highlighting, snippets, comments, brackets",
   "version": "0.5.0",
+  "icon": "icon.png",
   "publisher": "c-asterisk",
   "license": "MIT",
   "engines": {

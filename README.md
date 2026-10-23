@@ -1,3 +1,5 @@
+<p align="center"><img src="icon.png" alt="C* 图标" width="96" height="89"></p>
+
 # C*（C Asterisk）语言工具链 · 0.5.0
 
 一门**语法像 C、关键字用初中英语词汇**的入门编程语言，**Windows 和 Linux 通用**。
