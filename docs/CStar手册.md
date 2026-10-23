@@ -1,6 +1,6 @@
 # C*（C Asterisk）编程语言 · 使用说明书
 
-> 版本 **0.4.2** — 一门语法像 C、关键字贴近初中英语词汇的小语言。
+> 版本 **0.5.0** — 一门语法像 C、关键字贴近初中英语词汇的小语言。
 > 源文件后缀：`.cask`　编译器：`bin\caskc.exe`　编辑器：`bin\caskide.exe`
 >
 > 本文件是**速查手册**，把语言的每一处细节都列清楚。想跟着课学，选一本：
@@ -13,24 +13,25 @@
 > | C* 语言 选修一 | `docs\普高选修一.md` | 高中选修：算法与窗口程序进阶 |
 > | C* 语言基础 | `docs\高职教程CStar语言基础.md` | 高职，面向就业 |
 >
-> **0.4.2 相对 0.3 的变化**
+> **0.5.0 相对 0.4.2 的变化**
 >
-> * 类型的规范名字改成 C 风格的 `int` / `float` / `string` / `char`；老名字
->   `number` / `real` / `text` / `letter` 仍然能用（**软弃用**，只是提示你换新名）。
-> * 新增 `use "C_OPED.cash";`：一行打开 C / C++ / Win32 世界，可以写**窗口式程序**（第 5 章）。
-> * 新增 `use "C_CSS.cash";`：一行打开 CSS 式**美化工具箱**（给窗口控件上色、改字号、
->   圆角、投影、密码打码），要配 `C_OPED.cash` 一起用（见 5.6）。
-> * 积木视图：「窗口程序」「CSS 美化」两类积木做成**头文件插件**——程序里 `use` 了对应
->   `.cash` 才出现，没 `use` 就不显示；注释行变成可编辑的绿色积木；`use` 积木会拉一条线
->   连到画布右侧的头文件概述卡片（见 3.4）。
-> * 示例新增 `examples\calc.cask`：用 C_OPED＋C_CSS 做的一台桌面整数计算器（见 5.6）。
-> * 新增 `VALUE("42")`（= Excel 的 `VALUE`）：把一段文字变成整数。
-> * 编辑器工具栏新增「**⚡ 快编**」开关（默认开）：走 tcc／`-O0` 编译更快，关掉走
->   gcc `-O2` 运行最快。编译器加了**构建缓存**——程序没改动时直接复用上次的
->   exe、跳过 C 编译器；也修了 `--fast` 模式下 `MOD`／`%` 取余生成 C 丢 `%` 的 bug。
-> * 常用快捷键全通：代码视图 `Ctrl+C/V/X/Z/Y`（复制/粘贴/剪切/撤销/重做）原生可用；
->   积木视图选中一块积木后 `Ctrl+C/X/V/Z/Y` 也能用（见 3.4）。
-> * 编辑器换成 **Visual Studio 2026 深色风格**的外观与布局。
+> * **新增 `use "C_IO.cash";`**：打开"文件与系统"工具箱——`readfile` / `writefile` /
+>   `appendfile` / `fileexists` / `makedir` / `appdir` / `envget` / `launchwait`。
+>   控制台程序也能用，不必先开窗口（见 5.4b）。
+> * **界面美化在 Windows 上真正生效**：按钮改成 owner-draw 自绘，`csbg` / `cstext` /
+>   `csfont` 能改按钮底色与文字；`csbg(窗口, 色)` 改窗口底色；输入框背景与文字底色
+>   一致；`csfont` 按 DPI 把磅换算成像素，不再出现超大字号（见 5.6）。
+> * 新增完整示例 `examples\mc_launcher.cask`：自动探测 Java、自动找 jar、记住配置、
+>   启动 Minecraft，是 C_IO + C_CSS 的综合范例。
+> * 汇编后端修正：`TRUE()` / `FALSE()` 参与表达式、`char` 右操作数符号扩展、
+>   数组初始化超出长度、`INT64_MIN % -1` 崩溃、中文函数嵌套调用、
+>   `--fast` 下字符自增漏检查；`--run` 现在会透传被运行程序的退出码。
+> * 教材同步修订：五本教材新增文件读写与界面美化内容，并把"先翻译成 C 再交给 gcc"
+>   的旧说明改为"直接生成 x86-64 汇编，用 as + ld 链接"。
+>
+> 更早的 0.4.2 带来了 C 风格类型名 `int / float / string / char`（旧名
+> `number / real / text / letter` 仍可用）、`C_OPED.cash` 窗口头、`C_CSS.cash`
+> 美化头、积木视图头文件插件和 Visual Studio 2026 深色编辑器界面。
 
 ---
 
@@ -46,7 +47,7 @@ C*（读作 "C Asterisk"）是一门**入门友好**的编程语言：
 | 运行安全 | 溢出、除零、数组越界都会**报错并指出出错行**，而不是乱算或崩溃 |
 | 整洁易懂 | 局部变量自动初始化为 `0` / 空，先用后赋不会读到垃圾值 |
 | 名字好写 | 变量名、函数名**可以用中文**（`number 苹果 = 3;`） |
-| 跑得快 | `.cask` 先翻译成 C，再由 gcc 编译成原生 exe |
+| 跑得快 | `.cask` 直接生成 x86-64 汇编，再用 `as` + `ld` 链接成原生 exe（不经过 C 编译器） |
 
 一个完整的例子：
 
@@ -72,7 +73,9 @@ function main() {
 ### 2.1 需要什么
 
 * Windows 10/11（也支持 Linux/macOS，路径按 `/` 处理）
-* **gcc**（MinGW-w64：Dev-C++、MSYS2、w64devkit、Strawberry Perl 里的 gcc 都行），要能在命令行输入 `gcc --version` 看到版本
+* **binutils**（`as` / `ld`；MinGW-w64：Dev-C++、MSYS2、w64devkit、Strawberry Perl 里都自带）。
+  编译 `.cask` 只需要它们，**不需要 gcc**
+* 只有**构建工具链本身**（`build.bat` / `build.sh`）才需要 gcc、g++
 * 可选：Python 3（只在重新生成网页版说明书时需要）
 
 ### 2.2 目录结构
@@ -80,9 +83,15 @@ function main() {
 ```
 C_AS\
 ├─ compiler\
-│   ├─ caskc.c        编译器源码（C 语言写成）
-│   ├─ cask_rt.h      运行时（生成的程序会 #include 它）
-│   └─ C_OPED.cash    窗口程序头（use "C_OPED.cash"; 打开 C / Win32 世界）
+│   ├─ caskc.c        编译器源码（C 语言写成；前端 + 汇编后端入口）
+│   ├─ asm_backend.inc  x86-64 汇编后端（.cask → .s，Windows/Linux 双 ABI）
+│   ├─ cask_rt.c      控制台运行时（编译进 libcastrt.a）
+│   ├─ cask_gui.c     窗口 / CSS 运行时（编译进 libcastrt.a）
+│   ├─ cask_io.c      文件与系统运行时（编译进 libcastrt.a）
+│   ├─ cask_rt.h      运行时语义基准与内建声明
+│   ├─ C_OPED.cash    窗口程序头（use "C_OPED.cash"; 打开 C / Win32 世界）
+│   ├─ C_CSS.cash     美化头（配 C_OPED 用）
+│   └─ C_IO.cash      文件与系统头（控制台程序也能用）
 ├─ editor\
 │   ├─ webide.c       C* Studio 编辑器宿主（原生窗口 + 本机网页服务 + 编译运行桥）
 │   ├─ wv2.cpp        WebView2 接入层（把网页放进原生窗口里）
@@ -99,7 +108,8 @@ C_AS\
 ├─ tests\             测试程序 + 期望输出
 ├─ vscode-ext\        VS Code 插件（让 .cask 有高亮和补全）
 ├─ dist\              打包好的发行文件（zip / vsix）
-├─ bin\               build.bat 生成：caskc.exe、caskide.exe、cask_rt.h、C_OPED.cash、web\、WebView2Loader.dll
+├─ bin\               build.bat 生成：caskc.exe、caskide.exe、libcastrt.a、libgcc.a、
+│                     cask_rt.h、C_OPED.cash / C_CSS.cash / C_IO.cash、web\、WebView2Loader.dll
 ├─ build.bat          一键构建整个工具链
 ├─ run_tests.bat      跑全部测试
 └─ README.md
@@ -111,9 +121,11 @@ C_AS\
 build.bat
 ```
 
-会依次生成 `bin\caskc.exe`（编译器）、`bin\caskide.exe`（编辑器），把 `cask_rt.h` 和
-编辑器界面（`web\` → `bin\web\`、`WebView2Loader.dll`）复制进 `bin\`。
-需要 `gcc` 和 `g++` 两个都在 PATH 里（它们本来就是同一个安装包里的）。
+会依次生成 `bin\caskc.exe`（编译器）、`bin\libcastrt.a`（预编译运行时）、
+`bin\caskide.exe`（编辑器），并把 `libgcc.a`、`cask_rt.h`、三个 `.cash` 头和编辑器界面
+（`web\` → `bin\web\`、`WebView2Loader.dll`）复制进 `bin\`。
+构建工具链需要 `gcc` 和 `g++`；但**用户编译 `.cask` 时只需要 `as` / `ld`**，
+链接的是已经编好的 `libcastrt.a`，不会再调用 C 编译器。
 运行测试用：
 
 ```bat
@@ -134,8 +146,8 @@ python docs\md2html.py
 python docs\check_doc_code.py docs\小学版教程.md
 ```
 
-`build.bat` 还会把 `cask_rt.h` 和 `C_OPED.cash` 复制到 `bin\`，
-这两个文件必须和 `caskc.exe` 放在一起，编译出来的程序才跑得起来。
+`build.bat` 还会把 `cask_rt.h`、`C_OPED.cash`、`C_CSS.cash`、`C_IO.cash` 和
+`libcastrt.a` 复制到 `bin\`。这些文件必须和 `caskc.exe` 放在一起，编译出来的程序才跑得起来。
 
 ---
 
@@ -164,15 +176,15 @@ bin\caskc.exe hello.cask --run
 ### 3.2 编译器常用命令
 
 ```bat
-bin\caskc.exe 程序.cask              :: 编译成 程序.exe（默认 -O2）
+bin\caskc.exe 程序.cask              :: 编译成 程序.exe（生成 .s 后调用 as + ld）
 bin\caskc.exe 程序.cask --run        :: 编译完立刻运行
 bin\caskc.exe 程序.cask --console    :: 窗口程序里保留黑色控制台（方便 print 调试）
 bin\caskc.exe 程序.cask -o 我的.exe  :: 指定输出文件名
-bin\caskc.exe 程序.cask --emit-c     :: 只生成 C 代码（程序.cask.c），不编译
-bin\caskc.exe 程序.cask --keep       :: 编译成功后保留生成的 C 文件
+bin\caskc.exe 程序.cask --emit-c 文件.c  :: 只写出生成的 C 代码（调试用，不编译）
+bin\caskc.exe 程序.cask --keep       :: 编译成功后保留生成的 .s 汇编文件
 bin\caskc.exe 程序.cask --fast       :: 关闭运行时检查（更快，但不安全）
-bin\caskc.exe 程序.cask -g           :: 调试版（-O0 -g）
-bin\caskc.exe 程序.cask -v           :: 显示内部执行的 gcc 命令
+bin\caskc.exe 程序.cask -g           :: 保留生成的 .s 汇编文件
+bin\caskc.exe 程序.cask -v           :: 显示内部执行的 as / ld 命令行
 bin\caskc.exe 程序.cask --check      :: 只检查不编译（不留下任何文件），有错退出码非 0
 bin\caskc.exe 程序.cask --check --diag :: 再把每条问题按 P|行|列|信息 打出来
 ```
@@ -740,6 +752,7 @@ function main() {
 | `ask("问题？", "标题")` | 是 / 否 对话框：点「是」返回 1，点「否」返回 0 |
 | `sleep(毫秒)` | 等一会儿（1000 = 1 秒） |
 | `destroy(控件)` | 关掉一个控件或窗口 |
+| `launch("命令行")` | 启动一个外部程序，**启动就返回**（不等它跑完）：1 = 起来了 |
 
 因为 C / C++ / Win32 的头文件已经打开，**不用声明**就能直接调里面的函数：
 
@@ -753,8 +766,40 @@ function main() {
 }
 ```
 
-这类**直通调用** C* 不检查参数个数和类型（名字对不上就报"未知函数"，参数写错由 C 编译器来报，
-错误信息仍然指回 `.cask` 的行号）。写的时候对照函数说明或查一下 MSDN。
+这类**直通调用** C* 不检查参数个数和类型（名字对不上就报"未知函数"；参数写错要到链接或运行时
+
+才会暴露），写的时候对照函数说明或查一下 MSDN。
+
+### 5.4b 文件与系统：`use "C_IO.cash";`
+
+不用窗口也能用的"文件与系统"头：读写文件、判断存在、取程序目录、读环境变量、等外部程序跑完。
+
+| 用法 | 意思 |
+|------|------|
+| `readfile("路径")` | 把整个文件读成一段文字（不存在给 `""`，上限 1MB） |
+| `writefile("路径", 内容)` | 整体写入（覆盖），1 = 成功 |
+| `appendfile("路径", 内容)` | 追加到末尾，1 = 成功 |
+| `fileexists("路径")` | 文件或目录在不在：1 / 0 |
+| `makedir("路径")` | 建目录（已有也算成功） |
+| `appdir()` | 本程序（exe）所在目录的完整路径，不带末尾分隔符 |
+| `envget("名字")` | 读环境变量（没有给 `""`） |
+| `launchwait("命令行")` | 启动外部程序并**等它跑完**，返回退出码（起不来 -1） |
+
+```cask
+use "C_IO.cash";
+
+number main() {
+    string 配置 = appdir() + "/app.set";
+    if (fileexists(配置) != 0) print "上次的内容: ", readfile(配置);
+    writefile(配置, "名字=Steve" + "\n" + "内存=2048");
+    print "写完了。";
+    return 0;
+}
+```
+
+`launch()`（5.4 节，启动就返回）和 `launchwait()`（本节，跑完才返回）是一对：
+
+写启动器、下载器这类"发起就该继续干别的"的程序用前者；写批处理、想拿到退出码的用后者。
 
 ### 5.5 完整小项目：加法练习器
 
@@ -822,6 +867,37 @@ function main() {
 
 颜色写法和 CSS 一样：`"#RRGGBB"`、`"RRGGBB"`，或者颜色名（`"blue"` `"gold"` …）。
 
+**0.5.0 起 Windows 上真正能改的地方**：
+
+* 按钮：改成自绘（owner-draw），`csbg` 改按钮底色、`cstext` 改文字色、`csfont` 改字号，
+  不再被 Win10/11 的视觉样式盖掉。
+* 窗口：`csbg(窗口, "1B2129")` 会换掉窗口背景刷，整块底色都变。
+* 输入框 / 多行框：返回背景刷的同时设置文字底色，内部不再是一块白。
+* `csfont` 的字号按 **磅** 解释，并按屏幕 DPI 换算成像素（96 DPI 下 12 磅 ≈ 16 像素），
+  不会再把 12 磅当成 240 像素。
+* `csradius` / `csshadow` 仍只在 Linux（GTK）生效；Windows 上安全地当作没写。
+
+深色主题的最小写法：
+
+```cask
+use "C_OPED.cash";
+use "C_CSS.cash";
+
+function main() {
+    int 窗口, 标题, 启动钮;
+    窗口 = window("深色示例", 420, 260);
+    标题 = label("C* 0.5.0", 20, 20, 380, 40);
+    启动钮 = button("开始", 20, 90, 160, 40);
+    csbg(窗口, "1B2129");
+    cstext(标题, "#E8EAED");
+    csfont(标题, 22, 1);
+    csbg(启动钮, "238636");
+    cstext(启动钮, "#FFFFFF");
+    csfont(启动钮, 12, 1);
+    run();
+}
+```
+
 ```cask
 use "C_OPED.cash";
 use "C_CSS.cash";
@@ -882,7 +958,7 @@ C* 运行错误: 数组下标越界
 | 移位检查 | 移位位数不在 0…63，或左移负数/溢出 | `1 << 99` |
 | 字符范围 | `int` 赋给 `char` 超出 -128…127 | `char c = 999;` |
 
-* 错误信息里的文件和行号指向 **`.cask` 源文件**（因为翻译成 C 时用了 `#line`）。
+* 错误信息里的文件和行号指向 **`.cask` 源文件**（汇编后端为每条检查记录了源码行号）。
 * 追求速度、并且确认逻辑正确时可以 `--fast` 关闭这些检查（省一点点开销，出错行为不再保证）。
 * 编译期问题分**三级**：严重 / 语法 / 拼写（另有不计错的"提示"）。都带
   `文件:行:列: 错误:` 格式；`--check --diag` 时按 `E|行|列|…`、`S|…`、`P|…` 打出。
@@ -926,8 +1002,9 @@ C* 运行错误: 数组下标越界
 bin\caskc.exe 我的窗口.cask --run --console
 ```
 
-**Q：编译时提示 `找不到 C 编译器`？**
-把 gcc 所在目录加进 PATH，或直接用 Dev-C++ 自带的 gcc。
+**Q：编译时提示找不到 `as` / `ld`？**
+把 binutils 所在目录（MinGW-w64 的 `bin`）加进 PATH，或直接用 Dev-C++ 自带的 binutils。
+编译 `.cask` 不需要 gcc；`gcc` 只在构建工具链本身时用到。
 
 **Q：提示 `找不到 cask_rt.h`？**
 把 `cask_rt.h` 放在 `caskc.exe` 同目录（`build.bat` 已自动复制），或设置环境变量 `CASK_RT_DIR` 指向它。
@@ -956,10 +1033,11 @@ bin\caskc.exe 我的窗口.cask --run --console
 老项目可以慢慢改，不用一次性大改。
 
 **Q：常量报"必须是……表达式"？**
-常量是编译期 `#define`，只能放字面量、算术和其它常量；要运行期算的值请用普通变量。
+常量是**编译期求值**的，只能放字面量、算术和其它常量；要运行期算的值请用普通变量。
 
-**Q：想看翻译出来的 C 代码？**
-`bin\caskc.exe 程序.cask --emit-c`，得到 `程序.cask.c`。
+**Q：想看等价的老式 C 代码？**
+`bin\caskc.exe 程序.cask --emit-c out.c` 会写出一份仅供阅读的 C 参考代码；
+正常编译走汇编后端，不产生 C，也不调用 C 编译器。想看真正生成的汇编用 `--keep`。
 
 ---
 
@@ -1006,7 +1084,7 @@ bin\caskc.exe 我的窗口.cask --run --console
 * 代码片段（输入 `main`、`print`、`for`、`if`… 按 Tab 就能展开成完整骨架）
 * 括号自动配对、`//` 自动注释
 
-安装方法：在 VS Code 里按 `Ctrl+Shift+P` → 输入 `Install from VSIX` → 选 `dist\c-asterisk-0.4.2.vsix`。
+安装方法：在 VS Code 里按 `Ctrl+Shift+P` → 输入 `Install from VSIX` → 选 `dist\c-asterisk-0.5.0.vsix`。
 （在 `vscode-ext\` 目录里运行 `npx @vscode/vsce package` 也可以自己重新打包。）
 
 想让它也能一键编译/运行，可以在 VS Code 的 `tasks.json` 里加一条调用 `bin\caskc.exe` 的任务，
@@ -1014,4 +1092,4 @@ bin\caskc.exe 我的窗口.cask --run --console
 
 ---
 
-*C* 0.4.2 · 源码与问题反馈见 `README.md`。*
+*C* 0.5.0 · 源码与问题反馈见 `README.md`。*

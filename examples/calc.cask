@@ -1,5 +1,5 @@
 // ============================================================
-//  窗口计算器 -- calc.cask   (C* 0.4.2)
+//  窗口计算器 -- calc.cask   (C* 0.5.0)
 //  运行:  bin\caskc.exe examples\calc.cask -o calc.exe --console
 //
 //  一个用 C_OPED（窗口）+ C_CSS（美化）做的桌面整数计算器：

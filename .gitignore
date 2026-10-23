@@ -3,6 +3,7 @@
 /dist/
 /bin/caskc.exe
 /bin/caskide.exe
+/bin/*.a
 /bin/webdata/
 /bin/webview2/
 /bin/WebView2Loader.dll

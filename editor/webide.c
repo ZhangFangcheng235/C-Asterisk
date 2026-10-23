@@ -47,7 +47,7 @@ void wv2_close(void);
 const char *wv2_error(void);
 
 #define APPNAME_A "C* Studio"
-#define APPVER_A  "0.4.2"
+#define APPVER_A  "0.5.0"
 #define LAPPNAMEW L"C* Studio"
 #define WM_DLGREQ (WM_APP + 1)
 

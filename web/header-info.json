@@ -2,7 +2,7 @@
   "_说明": "C* 头文件清单：编辑器用它给 use 积木配概述卡片、给积木箱做门禁。",
   "C_OPED.cash": {
     "name": "窗口程序（万能头文件）",
-    "summary": "打开原生窗口世界：window / label / button / textbox / memo / checkbox / listbox / progress 八种控件，事件 on_click / on_change / on_close，事件循环 run()，弹窗 alert / msgbox / ask，延时 sleep。窗口库自动链接，C / C++ 头文件里的函数不用声明就能调。",
+    "summary": "打开原生窗口世界：window / label / button / textbox / memo / checkbox / listbox / progress 八种控件，事件 on_click / on_change / on_close，事件循环 run()，弹窗 alert / msgbox / ask，延时 sleep，launch() 启动外部程序（启动就返回）。窗口库自动链接，C / C++ 头文件里的函数不用声明就能调。",
     "provides": ["win"],
     "universal": true
   },
@@ -11,5 +11,10 @@
     "summary": "给窗口程序加 CSS 式美化：cstext / csbg 改文字和背景色（\"#RRGGBB\" 或 CSS 颜色名），csfont 改字号粗细，csradius 圆角，csshadow 投影，cspass 密码打码，cshide / csshow 隐藏显示，cscolor / csapply 起个样式名再涂到别的控件上。要配 C_OPED.cash 一起用。",
     "provides": ["css"],
     "requires": ["C_OPED.cash"]
+  },
+  "C_IO.cash": {
+    "name": "文件与系统工具箱",
+    "summary": "读写文件和一些系统小工具：readfile / writefile / appendfile 整文件读写追加，fileexists 判断存在，makedir 建目录，appdir 取本程序所在目录，envget 读环境变量，launchwait 启动外部程序并等它跑完拿退出码。控制台程序也能用，不需要 C_OPED.cash。",
+    "provides": ["io"]
   }
 }

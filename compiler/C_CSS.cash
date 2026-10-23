@@ -1,5 +1,5 @@
 /* ============================================================
- *  C_CSS.cash -- the C* CSS-styling header  (C* 0.4.2)
+ *  C_CSS.cash -- the C* CSS-styling header  (C* 0.5.0)
  *
  *  紧跟在 use "C_OPED.cash"; 后面再写一行
  *
@@ -44,7 +44,7 @@ static const char *cask_css_names[][2] = {
     { "lime",    "00FF00" }, { "indigo",   "4B0082" }, { "crimson", "DC143C" },
     { "chocolate", "D2691E" }, { "tomato",  "FF6347" }, { NULL, NULL }
 };
-/* 把 "#RRGGBB"/"RRGGBB"/"blue" 解析成 0xRRGGBB（都认不出来时给 0） */
+/* 把 "#RRGGBB"/"RRGGBB"/"blue" 解析成0xRRGGBB（都认不出来时给0） */
 static unsigned long cask_css_rgb(const char *s)
 {
     int i;
@@ -63,6 +63,13 @@ static unsigned long cask_css_rgb(const char *s)
     v = (unsigned long)strtoul(t, NULL, 16);
     return v & 0xFFFFFFu;
 }
+#if defined(_WIN32)
+/* 0xRRGGBB -> Win32 COLORREF（0x00BBGGRR），CreateSolidBrush/SetTextColor 直接用 */
+#define CASK_CSS_CREF(c) (COLORREF)( \
+    (((unsigned long)(c)) << 16 & 0xFF0000u) | \
+    (((unsigned long)(c)) & 0x00FF00u) | \
+    (((unsigned long)(c)) >> 16 & 0x0000FFu))
+#endif
 
 #if defined(_WIN32)
 
@@ -85,7 +92,7 @@ static long long cstext(long long id, const char *color)
     if (ci < 0) return 0;
     c = cask_css_rgb(color);
     if (!c) c = 0x303030;               /* 认不出来就用深灰，别弄黑屏 */
-    cask_css_fg[ci] = (COLORREF)c;
+    cask_css_fg[ci] = CASK_CSS_CREF(c);
     cask_css_repaint(h);
     return 0;
 }
@@ -99,7 +106,14 @@ static long long csbg(long long id, const char *color)
     if (!c) c = 0xEFEFEF;
     /* 背景色要一块实体画刷，由 C_OPED.cash 的窗口过程返回 */
     if (cask_css_bg[ci]) { DeleteObject(cask_css_bg[ci]); cask_css_bg[ci] = 0; }
-    cask_css_bg[ci] = CreateSolidBrush((COLORREF)c);
+    cask_css_bg[ci] = CreateSolidBrush(CASK_CSS_CREF(c));
+    cask_css_bgc[ci] = CASK_CSS_CREF(c);
+    /* 给主窗口上色 = 换窗口背景画刷（WM_ERASEBKGND 用它铺底） */
+    if (h == cask_op_main) {
+        if (cask_css_winbg) DeleteObject(cask_css_winbg);
+        cask_css_winbg = CreateSolidBrush(CASK_CSS_CREF(c));
+        InvalidateRect(h, 0, TRUE);
+    }
     cask_css_repaint(h);
     return 0;
 }
@@ -110,7 +124,13 @@ static long long csfont(long long id, long long pt, long long bold)
     if (pt < 4)  pt = 12;
     if (pt > 72) pt = 72;
     {
-        HFONT f = CreateFontW((int)(-pt * 20), 0, 0, 0,
+        /* 负的 lfHeight 单位是像素：磅 → 像素要乘 DPI/72（96dpi 下 12磅=16像素） */
+        HDC dc = GetDC(NULL);
+        int dpi = dc ? GetDeviceCaps(dc, LOGPIXELSY) : 96;
+        HFONT f;
+        if (dc) ReleaseDC(NULL, dc);
+        if (dpi <= 0) dpi = 96;
+        f = CreateFontW(-(int)(pt * dpi / 72), 0, 0, 0,
             bold ? FW_BOLD : FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
             DEFAULT_PITCH | FF_DONTCARE, L"Microsoft YaHei UI");

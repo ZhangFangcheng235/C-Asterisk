@@ -1,0 +1,9 @@
+write=1
+ roundtrip=yes
+ append=1
+ tail=X
+ exists=1/0
+ makedir=1/1
+ appdir=has
+ env=0
+ wait=7

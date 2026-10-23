@@ -1,0 +1,4 @@
+// hello.cask -- the smallest possible C* program
+function main() {
+    print "Hello, world!";
+}

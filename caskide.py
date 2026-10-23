@@ -114,7 +114,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             data = {}
 
         if path == "/api/info":
-            return self._json({"app": "C* Studio", "version": "0.4.2",
+            return self._json({"app": "C* Studio", "version": "0.5.0",
                                "open": OPENFILE})
 
         if path == "/api/dialog/open":

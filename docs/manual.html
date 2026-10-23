@@ -147,10 +147,10 @@ function main() {
 bin\caskc.exe 程序.cask --run        :: 编译完立刻运行
 bin\caskc.exe 程序.cask --console    :: 窗口程序里保留黑色控制台（方便 print 调试）
 bin\caskc.exe 程序.cask -o 我的.exe  :: 指定输出文件名
-bin\caskc.exe 程序.cask --emit-c     :: 只生成 C 代码（程序.cask.c），不编译
-bin\caskc.exe 程序.cask --keep       :: 编译成功后保留生成的 C 文件
+bin\caskc.exe 程序.cask --emit-c 文件.c  :: 只写出生成的 C 代码（调试用，不编译）
+bin\caskc.exe 程序.cask --keep       :: 编译成功后保留生成的 .s 汇编文件
 bin\caskc.exe 程序.cask --fast       :: 关闭运行时检查（更快，但不安全）
-bin\caskc.exe 程序.cask -g           :: 调试版（-O0 -g）
+bin\caskc.exe 程序.cask -g           :: 保留生成的 .s 汇编文件
 bin\caskc.exe 程序.cask -v           :: 显示内部执行的 gcc 命令
 bin\caskc.exe 程序.cask --check      :: 只检查不编译（不留下任何文件），有错退出码非 0
 bin\caskc.exe 程序.cask --check --diag :: 再把每条问题按 P|行|列|信息 打出来</code></pre>
@@ -585,6 +585,7 @@ function main() {
 <tr><td><code>ask("问题？", "标题")</code></td><td>是 / 否 对话框：点「是」返回 1，点「否」返回 0</td></tr>
 <tr><td><code>sleep(毫秒)</code></td><td>等一会儿（1000 = 1 秒）</td></tr>
 <tr><td><code>destroy(控件)</code></td><td>关掉一个控件或窗口</td></tr>
+<tr><td><code>launch("命令行")</code></td><td>启动一个外部程序，<strong>启动就返回</strong>（不等它跑完）：1 = 起来了</td></tr>
 </tbody></table>
 <p>因为 C / C++ / Win32 的头文件已经打开，<strong>不用声明</strong>就能直接调里面的函数：</p>
 <pre><code class="lang-cask">use "C_OPED.cash";
@@ -594,8 +595,33 @@ function main() {
     if (毫秒 &gt;= 0) { print "系统调用成功"; }
     MessageBoxA(0, "内容", "标题", 0);         // Win32 原生消息框，直接写
 }</code></pre>
-<p>这类<strong>直通调用</strong> C* 不检查参数个数和类型（名字对不上就报"未知函数"，参数写错由 C 编译器来报，
-错误信息仍然指回 <code>.cask</code> 的行号）。写的时候对照函数说明或查一下 MSDN。</p>
+<p>这类<strong>直通调用</strong> C* 不检查参数个数和类型（名字对不上就报"未知函数"；参数写错要到链接或运行时</p>
+<p>才会暴露），写的时候对照函数说明或查一下 MSDN。</p>
+<h3>5.4b 文件与系统：<code>use "C_IO.cash";</code></h3>
+<p>不用窗口也能用的"文件与系统"头：读写文件、判断存在、取程序目录、读环境变量、等外部程序跑完。</p>
+<table>
+<thead><tr><th>用法</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td><code>readfile("路径")</code></td><td>把整个文件读成一段文字（不存在给 <code>""</code>，上限 1MB）</td></tr>
+<tr><td><code>writefile("路径", 内容)</code></td><td>整体写入（覆盖），1 = 成功</td></tr>
+<tr><td><code>appendfile("路径", 内容)</code></td><td>追加到末尾，1 = 成功</td></tr>
+<tr><td><code>fileexists("路径")</code></td><td>文件或目录在不在：1 / 0</td></tr>
+<tr><td><code>makedir("路径")</code></td><td>建目录（已有也算成功）</td></tr>
+<tr><td><code>appdir()</code></td><td>本程序（exe）所在目录的完整路径，不带末尾分隔符</td></tr>
+<tr><td><code>envget("名字")</code></td><td>读环境变量（没有给 <code>""</code>）</td></tr>
+<tr><td><code>launchwait("命令行")</code></td><td>启动外部程序并<strong>等它跑完</strong>，返回退出码（起不来 -1）</td></tr>
+</tbody></table>
+<pre><code class="lang-cask">use "C_IO.cash";
+
+number main() {
+    string 配置 = appdir() + "/app.set";
+    if (fileexists(配置) != 0) print "上次的内容: ", readfile(配置);
+    writefile(配置, "名字=Steve" + "\n" + "内存=2048");
+    print "写完了。";
+    return 0;
+}</code></pre>
+<p><code>launch()</code>（5.4 节，启动就返回）和 <code>launchwait()</code>（本节，跑完才返回）是一对：</p>
+<p>写启动器、下载器这类"发起就该继续干别的"的程序用前者；写批处理、想拿到退出码的用后者。</p>
 <h3>5.5 完整小项目：加法练习器</h3>
 <pre><code class="lang-cask">use "C_OPED.cash";
 
@@ -759,9 +785,9 @@ calc.exe                                                  # 运行，点按键�
 只是 <code>--check --diag</code> 和 C\* Studio 的「问题」面板会给你一条 <code>H</code>（提示），建议换成新名字。
 老项目可以慢慢改，不用一次性大改。</p>
 <p><strong>Q：常量报"必须是……表达式"？</strong>
-常量是编译期 <code>#define</code>，只能放字面量、算术和其它常量；要运行期算的值请用普通变量。</p>
+常量是<strong>编译期求值</strong>的，只能放字面量、算术和其它常量；要运行期算的值请用普通变量。</p>
 <p><strong>Q：想看翻译出来的 C 代码？</strong>
-<code>bin\caskc.exe 程序.cask --emit-c</code>，得到 <code>程序.cask.c</code>。</p>
+<code>bin\caskc.exe 程序.cask --emit-c out.c</code>，得到 <code>out.c</code>（正常编译不产生 C，也不调用 C 编译器）。</p>
 <hr>
 <h2>9. 关键字总表</h2>
 <table>

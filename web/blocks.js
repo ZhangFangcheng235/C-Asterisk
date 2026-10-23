@@ -569,6 +569,7 @@ var CAT_COLOR = {
   text: { dot: '#ce9178', cls: 'c-text', name: '橙' },
   win:  { dot: '#4fc1ff', cls: 'c-win',  name: '天蓝' },
   css:  { dot: '#ab7dff', cls: 'c-css',  name: '紫' },
+  io:   { dot: '#dcaa5a', cls: 'c-misc', name: '沙金' },
   misc: { dot: '#9aa3b5', cls: 'c-misc', name: '灰' },
   comment: { dot: '#6a9955', cls: 'c-comment', name: '注释绿' }
 };
@@ -601,11 +602,14 @@ var CALL_CAT = {
   checkbox: 'win', listbox: 'win', progress: 'win', settext: 'win', settitle: 'win',
   additem: 'win', setchecked: 'win', setvalue: 'win', readtext: 'win', checked: 'win',
   getvalue: 'win', msgbox: 'win', ask: 'win', alert: 'win', destroy: 'win',
-  sleep: 'win', run: 'win',
+  sleep: 'win', run: 'win', launch: 'win',
   /* CSS 美化工具箱（C_CSS.cash） */
   csswindow: 'css', cstext: 'css', csbg: 'css', csfont: 'css', csradius: 'css',
   csshadow: 'css', cshide: 'css', csshow: 'css', cspass: 'css',
-  cscolor: 'css', csapply: 'css'
+  cscolor: 'css', csapply: 'css',
+  /* 文件与系统（C_IO.cash） */
+  readfile: 'io', writefile: 'io', appendfile: 'io', fileexists: 'io',
+  makedir: 'io', appdir: 'io', envget: 'io', launchwait: 'io'
 };
 
 /* 语句里第一个被调用的函数名（大小写原样），比如 'button'、'SUM' */
@@ -760,6 +764,7 @@ function stmtCat(s) {
           var hh = toks[ui].text;
           if (hh.indexOf('C_CSS') >= 0) return 'css';
           if (hh.indexOf('C_OPED') >= 0) return 'win';
+          if (hh.indexOf('C_IO') >= 0) return 'io';
           return 'misc';
         }
       return 'win';
@@ -923,6 +928,7 @@ var PALETTE = [
   { cat: 'win', name: '延时',           hint: 'sleep(500);',                         code: 'sleep(500);\n' },
   { cat: 'win', name: '启动窗口',       hint: 'run();',                              code: 'run();\n' },
   { cat: 'win', name: '关闭控件／窗口', hint: 'destroy(窗口);',                      code: 'destroy(窗口);\n' },
+  { cat: 'win', name: '启动外部程序',   hint: 'launch("notepad.exe");',             code: 'launch("notepad.exe");\n' },
 
   /* ---- CSS 美化（C_CSS.cash，要配 C_OPED.cash 一起 use） ---- */
   { cat: 'css', name: '文字颜色',        hint: 'cstext(控件, "RRGGBB");',  code: 'cstext(标签, "00C853");\n' },
@@ -938,6 +944,17 @@ var PALETTE = [
 
   { cat: 'misc', name: '程序入口',   hint: 'function main() { }',      code: 'function main() {\n}\n' },
   { cat: 'misc', name: '安装窗口插件', hint: 'use "C_OPED.cash";',      code: 'use "C_OPED.cash";\n' },
+  /* ---- 文件与系统（C_IO.cash） ---- */
+  { cat: 'io', name: '安装文件系统插件', hint: 'use "C_IO.cash";',            code: 'use "C_IO.cash";\n' },
+  { cat: 'io', name: '读整个文件',     hint: 'readfile(路径)',              code: '内容 = readfile("config.txt");\n' },
+  { cat: 'io', name: '写整个文件',     hint: 'writefile(路径, 内容);',       code: 'writefile("config.txt", 内容);\n' },
+  { cat: 'io', name: '追加写入',       hint: 'appendfile(路径, 内容);',      code: 'appendfile("log.txt", "一行记录" + "\\n");\n' },
+  { cat: 'io', name: '文件存在？',     hint: 'fileexists(路径)',            code: 'if (fileexists("config.txt") != 0) {\n}\n' },
+  { cat: 'io', name: '建目录',         hint: 'makedir(路径);',              code: 'makedir("save");\n' },
+  { cat: 'io', name: '程序所在目录',   hint: 'appdir()',                   code: '路径 = appdir();\n' },
+  { cat: 'io', name: '读环境变量',     hint: 'envget("名字")',              code: 'v = envget("PATH");\n' },
+  { cat: 'io', name: '启动并等它退出', hint: 'launchwait(命令);',           code: '退出码 = launchwait("cmd /c pause");\n' },
+
   { cat: 'misc', name: '安装 CSS 插件', hint: 'use "C_CSS.cash";',     code: 'use "C_CSS.cash";\n' },
   { cat: 'misc', name: '引入头文件', hint: 'use "my_helper.h";',       code: 'use "my_helper.h";\n' },
   { cat: 'misc', name: '空语句',     hint: ';',                        code: ';\n' },

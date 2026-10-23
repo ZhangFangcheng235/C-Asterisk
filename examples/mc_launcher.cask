@@ -1,0 +1,255 @@
+// ============================================================
+//  MC 启动器 -- mc_launcher.cask   (C* 0.5.0)
+//  构建:  bin\caskc.exe examples\mc_launcher.cask -o mc_launcher.exe
+//
+//  首启体验目标：把 client.jar 放到本程序旁边、机器上有 java，
+//  打开后**什么都不用填**，直接点「启动游戏」。
+//    · Java 自动探测：JAVA_HOME\bin\javaw.exe → 否则 javaw(PATH)
+//    · jar 自动落点：输入框留空 → 试 本程序目录/client.jar
+//    · 目录里填相对路径（client.jar）也按本程序目录解析
+//    · 上次填写自动记住（exe 旁边；目录不可写时回落 %APPDATA%）
+//    · 启动失败逐项诊断（java / jar / 主类哪个不对说清楚）
+//  C_IO.cash 提供 readfile/writefile/fileexists/appdir/envget/launch。
+// ============================================================
+use "C_OPED.cash";
+use "C_CSS.cash";
+use "C_IO.cash";
+
+int 窗口;
+int 标题, 副题, 状态;
+int J名, M名, U名, P名, C名, D名;
+int Java框, 内存框, 用户名框, Jar框, 主类框, 目录框;
+int 分隔1, 分隔2;
+int 启动钮, 目录钮, 退出钮;
+int 预览;
+
+// ---- 配置读取：优先 exe 同目录的已有配置，其次 %APPDATA%\CStarMC ----
+string 配置路径() {
+    if (fileexists(appdir() + "/mc_launcher.set") != 0)
+        return appdir() + "/mc_launcher.set";
+    if (LEN(envget("APPDATA")) > 0 &&
+        fileexists(envget("APPDATA") + "/CStarMC/mc_launcher.set") != 0)
+        return envget("APPDATA") + "/CStarMC/mc_launcher.set";
+    return "";                          // 还没有任何配置
+}
+
+// ---- 取文本的第 n 行（1 开头；没有就返回 ""）----
+string 按行取(string 全, int n) {
+    int 从, 到, i;
+    从 = 1;
+    for (i = 1; i < n; i = i + 1) {
+        从 = FIND(全, "\n", 从);
+        if (从 == 0) return "";
+        从 = 从 + 1;
+    }
+    到 = FIND(全, "\n", 从);
+    if (到 == 0) return MID(全, 从, LEN(全) - 从 + 1);
+    return MID(全, 从, 到 - 从);
+}
+
+// ---- Java 默认值：JAVA_HOME 里有就用完整路径，否则交给 PATH ----
+string 找Java() {
+    string 候选;
+    候选 = envget("JAVA_HOME");
+    if (LEN(候选) > 0) {
+        if (RIGHT(候选, 1) == "\\") 候选 = LEFT(候选, LEN(候选) - 1);
+        if (fileexists(候选 + "\\bin\\javaw.exe") != 0)
+            return 候选 + "\\bin\\javaw.exe";
+        if (fileexists(候选 + "\\bin\\java.exe") != 0)
+            return 候选 + "\\bin\\java.exe";
+    }
+    return "javaw";
+}
+
+// ---- jar 解析：输入为空 → 试 exe 旁边的 client.jar；相对路径也按 exe 目录 ----
+string 解析Jar() {
+    string j;
+    j = TRIM(readtext(Jar框));
+    if (j == "") {
+        if (fileexists(appdir() + "/client.jar") != 0) return appdir() + "/client.jar";
+        if (fileexists(appdir() + "/minecraft.jar") != 0) return appdir() + "/minecraft.jar";
+        return "";
+    }
+    if (fileexists(j) != 0) return j;                       // 绝对/相对路径直接命中
+    if (fileexists(appdir() + "/" + j) != 0) return appdir() + "/" + j;
+    return j;                                               // 原样返回，交给失败诊断
+}
+
+// ---- 把输入框里的内容拼成一条完整的启动命令 ----
+string 拼命令(string java, string jar) {
+    string 命令, 目录;
+    命令 = java
+         + " -Xmx" + TRIM(readtext(内存框)) + "M"
+         + " -Xms" + TRIM(readtext(内存框)) + "M"
+         + " -Dminecraft.launcher.brand=\"C* Launcher\""
+         + " -Dminecraft.launcher.version=1.0"
+         + " -cp \"" + jar + "\""
+         + " "     + TRIM(readtext(主类框))
+         + " --username " + TRIM(readtext(用户名框));
+    目录 = TRIM(readtext(目录框));
+    if (目录 != "") 命令 = "cmd /c cd /d \"" + 目录 + "\" && " + 命令;
+    return 命令;
+}
+
+// ---- 启动失败时逐项诊断，告诉用户具体哪一项不对 ----
+string 诊断(string java, string jar) {
+    string 目录;
+    if (LEN(java) == 0)
+        return "Java 命令是空的：填 javaw 或完整路径";
+    if (VAL(java) == 0 && fileexists(java) == 0
+        && fileexists(java + ".exe") == 0 && fileexists(java + "javaw.exe") == 0) {
+        // java 既不是文件、路径里又没有 java 的样子 —— 交给 PATH 的可能是对的，
+        // 这里只在明显不对（含空格且不是文件）时提示
+        if (FIND(java, " ") > 0)
+            return "Java 路径不存在：" + java;
+    }
+    if (jar == "")
+        return "没找到 client.jar：把 jar 放在本程序旁边，或在输入框里填它的路径";
+    if (fileexists(jar) == 0)
+        return "jar 文件不存在：" + jar;
+    if (LEN(TRIM(readtext(内存框))) == 0 || VALUE(TRIM(readtext(内存框))) <= 0)
+        return "最大内存请填数字（MB），比如 2048";
+    if (LEN(TRIM(readtext(主类框))) == 0)
+        return "主类是空的；原版通常是 net.minecraft.client.main.Main";
+    if (LEN(TRIM(readtext(用户名框))) == 0)
+        return "用户名是空的";
+    目录 = TRIM(readtext(目录框));
+    if (目录 != "" && fileexists(目录) == 0)
+        return "游戏目录不存在：" + 目录;
+    return "";                      // 输入都没问题：多半是 java 不在 PATH
+    //（给一个总提示）
+}
+
+function 存配置() {
+    string 全, appdata;
+    全 = TRIM(readtext(Java框))   + "\n"
+       + TRIM(readtext(内存框))   + "\n"
+       + TRIM(readtext(用户名框)) + "\n"
+       + TRIM(readtext(Jar框))    + "\n"
+       + TRIM(readtext(主类框))   + "\n"
+       + TRIM(readtext(目录框));
+    if (writefile(appdir() + "/mc_launcher.set", 全) != 0)
+        return;                              // exe 目录可写：就存它旁边
+    appdata = envget("APPDATA");             // 只读目录（如 Program Files）：
+    if (LEN(appdata) > 0) {                  // 回落 %APPDATA%\CStarMC\
+        makedir(appdata + "/CStarMC");
+        writefile(appdata + "/CStarMC/mc_launcher.set", 全);
+    }
+}
+
+function on_click(int 控件) {
+    string java, jar, 命令, 问题, 目录;
+    if (控件 == 启动钮) {
+        java = TRIM(readtext(Java框));
+        if (java == "") { java = 找Java(); settext(Java框, java); }
+        jar = 解析Jar();
+        if (jar != TRIM(readtext(Jar框))) settext(Jar框, jar);   // 显示真正用的路径
+        if (jar == "") {
+            cstext(状态, "#F85149");
+            settext(状态, "没找到 client.jar：把 jar 放在本程序旁边，或在框里填路径");
+            return;
+        }
+        问题 = 诊断(java, jar);
+        if (问题 != "") { cstext(状态, "#F85149"); settext(状态, 问题); return; }
+        存配置();
+        命令 = 拼命令(java, jar);
+        settext(预览, 命令);
+        if (launch(命令) != 0) {
+            cstext(状态, "#3FB950");
+            settext(状态, "已启动 —— 启动器可以关掉，游戏会继续跑。");
+        } else {
+            cstext(状态, "#F85149");
+            settext(状态, "启动失败：请检查 Java 与路径（详见下面的命令）");
+        }
+    } else if (控件 == 目录钮) {
+        目录 = TRIM(readtext(目录框));
+        if (目录 == "") { alert("游戏目录还是空的"); return; }
+        if (launch("explorer.exe \"" + 目录 + "\"") == 0) {
+            cstext(状态, "#F85149");
+            settext(状态, "打不开目录：请检查路径。");
+        }
+    } else if (控件 == 退出钮) {
+        destroy(窗口);
+    }
+}
+
+function main() {
+    string c_java, c_mem = "2048", c_user = "Steve";
+    string c_jar  = "", c_main = "net.minecraft.client.main.Main", c_dir = "";
+    string 全, v, p;
+
+    // ---- 有配置就恢复上次的填写 ----
+    p = 配置路径();
+    if (fileexists(p) != 0) {
+        全 = readfile(p);
+        v = TRIM(按行取(全, 1)); if (v != "") c_java = v;
+        v = TRIM(按行取(全, 2)); if (v != "") c_mem   = v;
+        v = TRIM(按行取(全, 3)); if (v != "") c_user  = v;
+        v = TRIM(按行取(全, 4)); if (v != "") c_jar   = v;
+        v = TRIM(按行取(全, 5)); if (v != "") c_main  = v;
+        v = TRIM(按行取(全, 6)); if (v != "") c_dir   = v;
+    }
+    // ---- Java：配置里没有就自动探测一次 ----
+    if (c_java == "") c_java = 找Java();
+
+    // ---- 窗口与控件 ----
+    窗口 = window("C* MC 启动器", 472, 470);
+
+    标题 = label("C* MC 启动器", 14, 12, 300, 30);
+    副题 = label("jar 放程序旁边 → 直接点「启动游戏」", 14, 44, 320, 18);
+    分隔1 = label("", 14, 68, 444, 2);
+
+    J名 = label("Java 命令",   14, 78, 160, 16);
+    M名 = label("内存 MB",    190, 78, 100, 16);
+    U名 = label("用户名",     300, 78, 100, 16);
+    Java框 = textbox(c_java,  14, 96, 170, 24);
+    内存框 = textbox(c_mem,  190, 96, 100, 24);
+    用户名框 = textbox(c_user, 300, 96, 158, 24);
+
+    P名 = label("客户端 jar（留空 = 本程序旁边的 client.jar）", 14, 130, 340, 16);
+    Jar框 = textbox(c_jar,  14, 148, 444, 24);
+
+    C名 = label("主类",       14, 182, 300, 16);
+    主类框 = textbox(c_main, 14, 200, 444, 24);
+
+    D名 = label("游戏目录（可留空；填了会先 cd 过去）", 14, 234, 320, 16);
+    目录框 = textbox(c_dir,  14, 252, 444, 24);
+
+    分隔2 = label("", 14, 286, 444, 2);
+
+    启动钮 = button("启动游戏",    14, 296, 144, 40);
+    目录钮 = button("打开游戏目录", 166, 296, 144, 40);
+    退出钮 = button("退出",       318, 296, 140, 40);
+
+    状态 = label("准备就绪。", 14, 346, 444, 18);
+    预览 = memo("", 14, 368, 444, 84);
+
+    // ---- 深色主题（全部来自 C_OPED + C_CSS 的能力）----
+    csbg(窗口, "1B2129");
+
+    cstext(标题, "#E8EAED");  csfont(标题, 18, 1);
+    cstext(副题, "#8B949E");  csfont(副题, 11, 0);
+    csbg(分隔1, "30363D");
+    csbg(分隔2, "30363D");
+
+    cstext(J名, "#8B949E"); cstext(M名, "#8B949E"); cstext(U名, "#8B949E");
+    cstext(P名, "#8B949E"); cstext(C名, "#8B949E"); cstext(D名, "#8B949E");
+
+    csbg(Java框, "0D1117");  cstext(Java框, "#E6EDF3");
+    csbg(内存框, "0D1117");  cstext(内存框, "#E6EDF3");
+    csbg(用户名框, "0D1117"); cstext(用户名框, "#E6EDF3");
+    csbg(Jar框, "0D1117");   cstext(Jar框, "#E6EDF3");
+    csbg(主类框, "0D1117");  cstext(主类框, "#E6EDF3");
+    csbg(目录框, "0D1117");  cstext(目录框, "#E6EDF3");
+    csfont(Java框, 11, 0); csfont(内存框, 11, 0); csfont(用户名框, 11, 0);
+    csfont(Jar框, 11, 0);  csfont(主类框, 11, 0); csfont(目录框, 11, 0);
+
+    csbg(启动钮, "238636");  cstext(启动钮, "#FFFFFF"); csfont(启动钮, 12, 1);
+    csbg(目录钮, "21262D");  cstext(目录钮, "#C9D1D9"); csfont(目录钮, 12, 0);
+    csbg(退出钮, "8B1E24");  cstext(退出钮, "#F0F0F0"); csfont(退出钮, 12, 0);
+
+    cstext(状态, "#3FB950");  csfont(状态, 11, 0);
+    csbg(预览, "0D1117");     cstext(预览, "#ADBAC7");  csfont(预览, 11, 0);
+
+    run();
+}

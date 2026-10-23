@@ -11,7 +11,7 @@ var SYNTAX = (function () {
 
   var CAT = {
     out: 't-out', var: 't-var', math: 't-math', if: 't-if', loop: 't-loop',
-    fn: 't-fn', text: 't-text', win: 't-win', css: 't-css', misc: 't-misc'
+    fn: 't-fn', text: 't-text', win: 't-win', css: 't-css', io: 't-misc', misc: 't-misc'
   };
 
   /* ---------------- 关键字 ---------------- */
@@ -56,7 +56,7 @@ var SYNTAX = (function () {
   k('fn', 'start { … }', '程序入口，从这里开始跑（`function main()` 也行）。', 'start');
   k('fn', 'return 值;', '结束当前函数并把值交回调用它的地方；没有返回值就直接 return;', 'return');
 
-  k('win', 'use "C_OPED.cash";', '放在程序最上面，引入窗口程序头：之后就能直接写 window、button、label 这些，编译器会自动链接窗口库。', 'use');
+  k('win', 'use "C_OPED.cash";', '放在程序最上面，引入窗口程序头：之后就能直接写 window、button、label 这些，编译器会自动链接窗口库。再写 use "C_IO.cash"; 还能读写文件、取程序目录、launchwait 等外部程序。', 'use');
 
   /* ---------------- 内置函数 ---------------- */
   var BI = {};                       /* 大写名 -> {cat, sig, note} */
@@ -166,6 +166,20 @@ var SYNTAX = (function () {
   g('sleep(毫秒)', '等一会儿再往下走。', 'sleep');
   g('run()', '写完所有控件以后调用，进入事件循环，窗口才真的出现。', 'run');
   g('destroy(控件号)', '关掉一个控件或窗口；关掉主窗口会让 run() 结束、程序退出。', 'destroy');
+  g('launch("命令行")', '启动一个外部程序（比如 java），启动就返回、不等它跑完：1 = 起来了。', 'launch');
+
+  /* ---------------- 文件与系统（C_IO.cash） ---------------- */
+  function gi(sig, note, names) {
+    names.split(' ').forEach(function (n) { GUI[n] = { cat: 'io', sig: sig, note: note }; });
+  }
+  gi('readfile("路径")', '把整个文件读成一段文字；文件不存在给 ""。（上限 1MB）', 'readfile');
+  gi('writefile("路径", 内容)', '把文字整体写进文件（覆盖原内容）：1 = 成功。', 'writefile');
+  gi('appendfile("路径", 内容)', '把文字追加到文件末尾：1 = 成功。', 'appendfile');
+  gi('fileexists("路径")', '文件（或目录）在不在：1 在，0 不在。', 'fileexists');
+  gi('makedir("路径")', '建一个目录；已经有了也算成功（1）。', 'makedir');
+  gi('appdir()', '本程序（exe）所在的完整目录，不带末尾分隔符。', 'appdir');
+  gi('envget("名字")', '读环境变量，没有这个变量给 ""。', 'envget');
+  gi('launchwait("命令行")', '启动外部程序并等它跑完，返回它的退出码（起不来 -1）。', 'launchwait');
 
   /* ---------------- CSS 美化（C_CSS.cash） ---------------- */
   var CSS = {};                      /* 小写名 -> {cat, sig, note} */
@@ -217,6 +231,16 @@ var SYNTAX = (function () {
     sleep: ['等多少毫秒（1000 = 1 秒）'],
     run: [],
     destroy: ['要关掉的控件号／窗口号'],
+    launch: ['完整命令行（路径有空格要加引号）'],
+    /* 文件与系统（C_IO.cash） */
+    readfile: ['文件的完整路径'],
+    writefile: ['文件的完整路径', '要写进去的文字'],
+    appendfile: ['文件的完整路径', '要追加的文字'],
+    fileexists: ['文件的完整路径'],
+    makedir: ['目录的路径'],
+    appdir: [],
+    envget: ['环境变量的名字'],
+    launchwait: ['完整命令行'],
     /* 逻辑（Excel 风格） */
     IF: ['条件（要写比较，比如 x > 3）', '成立时的值', '不成立时的值'],
     AND: ['第一个条件', '第二个条件', '…'], OR: ['第一个条件', '第二个条件', '…'],

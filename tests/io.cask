@@ -1,0 +1,24 @@
+// io.cask -- C_IO.cash 文件与系统头的回归测试
+// 输出必须逐字节一致：只打印状态，不打印任何机器相关路径。
+use "C_IO.cash";
+
+number main() {
+    string 全, back, 追;
+    全 = "第一行" + "\n" + "第二行";
+    print "write=", writefile("build/io_t.txt", 全);
+    back = readfile("build/io_t.txt");
+    print " roundtrip=", IF(back == 全, "yes", "no");
+    print " append=", appendfile("build/io_t.txt", "X");
+    追 = readfile("build/io_t.txt");
+    print " tail=", RIGHT(追, 1);
+    print " exists=", fileexists("build/io_t.txt"), "/", fileexists("build/io_missing.txt");
+    print " makedir=", makedir("build/io_dir"), "/", makedir("build/io_dir");
+    print " appdir=", IF(LEN(appdir()) > 0, "has", "empty");
+    print " env=", LEN(envget("CSTAR_TEST_XYZ"));
+    // 退出码回传：Windows 用 cmd，POSIX 用 sh，两边都得到 7
+    if (envget("OS") == "Windows_NT")
+        print " wait=", launchwait("cmd /c exit 7");
+    else
+        print " wait=", launchwait("sh -c 'exit 7'");
+    return 0;
+}

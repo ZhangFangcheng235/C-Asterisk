@@ -1,6 +1,8 @@
 /* ============================================================
  * caskc.c -- C* (C Asterisk) compiler
- *   .cask source  ->  generated C  ->  native .exe (via gcc/tcc)
+ *   .cask source  ->  x86-64 assembly  ->  as  ->  ld  ->  native .exe
+ *   (no C compiler is invoked when compiling a .cask program; the runtime
+ *    comes from the prebuilt libcastrt.a)
  *
  * build:  gcc -O2 -o caskc.exe caskc.c
  * usage:  caskc file.cask [-o out.exe] [--emit-c out.c] [-O0..3]
@@ -14,7 +16,7 @@
 #include <limits.h>
 #include <setjmp.h>
 
-#define CASK_VERSION "0.4.2"
+#define CASK_VERSION "0.5.0"
 
 /* ---------------- small utilities ---------------- */
 static void *xmalloc(size_t n)
@@ -66,6 +68,7 @@ static int g_check = 0;     /* --check : stop before code generation      */
 static int g_native = 0;    /* use "C_OPED.cash"; -- the native world is open */
 static int g_native_line = 0;   /* where that 'use' was written           */
 static int g_use_css = 0;   /* use "C_CSS.cash"; -- the styling toolkit  */
+static int g_use_io = 0;    /* use "C_IO.cash"; -- files & system        */
 static int g_css_line = 0;
 static int g_console = 0;   /* --console: keep the console in native mode  */
 
@@ -610,9 +613,9 @@ typedef struct NativeApi {
     Type par[8];
 } NativeApi;
 static const NativeApi g_native_api[] = {
-    /* 窗口�?(标题, �? �? */
+    /* 窗口(标题, 宽, 高) */
     { "window",     T_NUM,  3, { T_TEXT, T_NUM, T_NUM } },
-    /* 控件�?(文字, x, y, �? �? -- 放进第一个窗�?*/
+    /* 控件(文字, x, y, 宽, 高) -- 放进第一个窗口 */
     { "label",      T_NUM,  5, { T_TEXT, T_NUM, T_NUM, T_NUM, T_NUM } },
     { "button",     T_NUM,  5, { T_TEXT, T_NUM, T_NUM, T_NUM, T_NUM } },
     { "textbox",    T_NUM,  5, { T_TEXT, T_NUM, T_NUM, T_NUM, T_NUM } },
@@ -620,7 +623,7 @@ static const NativeApi g_native_api[] = {
     { "checkbox",   T_NUM,  5, { T_TEXT, T_NUM, T_NUM, T_NUM, T_NUM } },
     { "listbox",    T_NUM,  4, { T_NUM, T_NUM, T_NUM, T_NUM } },
     { "progress",   T_NUM,  4, { T_NUM, T_NUM, T_NUM, T_NUM } },
-    /* �?/ 写控�?*/
+    /* 读 / 写控件 */
     { "settext",    T_NUM,  2, { T_NUM, T_TEXT } },
     { "readtext",   T_TEXT, 1, { T_NUM } },
     { "settitle",   T_NUM,  2, { T_NUM, T_TEXT } },
@@ -630,6 +633,7 @@ static const NativeApi g_native_api[] = {
     { "setvalue",   T_NUM,  2, { T_NUM, T_NUM } },
     { "getvalue",   T_NUM,  1, { T_NUM } },
     /* 弹窗 / 延时 / 事件循环 */
+    { "launch",     T_NUM,  1, { T_TEXT } },
     { "msgbox",     T_NUM,  2, { T_TEXT, T_TEXT } },
     { "alert",      T_NUM,  1, { T_TEXT } },
     { "ask",        T_NUM,  2, { T_TEXT, T_TEXT } },
@@ -655,6 +659,19 @@ static const NativeApi g_css_api[] = {
     { NULL, 0, 0, { 0 } }
 };
 
+/* C_IO.cash: files & system helpers (opened by `use "C_IO.cash";`) */
+static const NativeApi g_io_api[] = {
+    { "readfile",   T_TEXT, 1, { T_TEXT } },         /* whole file as text ("" if missing) */
+    { "writefile",  T_NUM,  2, { T_TEXT, T_TEXT } }, /* overwrite; 1 = ok                */
+    { "appendfile", T_NUM,  2, { T_TEXT, T_TEXT } }, /* append; 1 = ok                   */
+    { "fileexists", T_NUM,  1, { T_TEXT } },
+    { "makedir",    T_NUM,  1, { T_TEXT } },         /* 1 = created or already there     */
+    { "appdir",     T_TEXT, 0, { 0 } },              /* folder of this exe, no separator */
+    { "envget",     T_TEXT, 1, { T_TEXT } },         /* environment variable ("" if unset)*/
+    { "launchwait", T_NUM,  1, { T_TEXT } },         /* run, wait, return exit code      */
+    { NULL, 0, 0, { 0 } }
+};
+
 static const NativeApi *native_find(const char *n)
 {
     int i;
@@ -663,6 +680,9 @@ static const NativeApi *native_find(const char *n)
     if (g_use_css)
         for (i = 0; g_css_api[i].name; i++)
             if (strcmp(g_css_api[i].name, n) == 0) return &g_css_api[i];
+    if (g_use_io)
+        for (i = 0; g_io_api[i].name; i++)
+            if (strcmp(g_io_api[i].name, n) == 0) return &g_io_api[i];
     return NULL;
 }
 /* names the C world uses: MessageBoxA, MB_OK, WS_VISIBLE ... */
@@ -681,6 +701,7 @@ static int looks_like_c_name(const char *n)
 }
 
 /* ---------------- symbols / scopes ---------------- */
+struct Expr;                    /* forward: expression AST comes later */
 typedef enum { SK_VAR, SK_PARAM, SK_CONST } SymKind;
 typedef struct Sym {
     char *name;
@@ -692,6 +713,10 @@ typedef struct Sym {
     int is_global;
     long long cval;      /* folded value of a constant number */
     int has_cval;
+    int aoff;            /* asm backend: frame offset for locals (0 = unset), -8*slot */
+    int areg;            /* asm backend: -1 = excluded from reg cache, 0 = slot,
+                          * 1..5 = cached in %rbx/%r12/%r13/%r14/%r15 (areg-1) */
+    struct Expr *cinit;  /* asm backend: constant initialiser (for real/text const folding) */
     struct Sym *next;
 } Sym;
 typedef struct Scope {
@@ -740,6 +765,7 @@ static Sym *sym_new(const char *name, SymKind kind, Type t, int line, int is_glo
     Sym *s = (Sym *)xmalloc(sizeof *s);
     s->name = xstrdup(name); s->kind = kind; s->type = t;
     s->ndim = 0; s->line = line; s->is_global = is_global; s->next = NULL;
+    s->aoff = 0; s->cinit = NULL; s->areg = 0;
     name_register(name);
     return s;
 }
@@ -750,14 +776,14 @@ enum {
     BI_LEN, BI_AT, BI_ABS, BI_SQRT, BI_POW, BI_SIN, BI_COS, BI_TAN,
     BI_ASIN, BI_ACOS, BI_ATAN, BI_LOG, BI_LOG10, BI_EXP,
     BI_FLOOR, BI_CEIL, BI_ROUND, BI_RANDOM, BI_NOW,
-    /* Excel-style UPPER-case functions (see docs: Excel 对照�? */
+    /* Excel-style UPPER-case functions (see docs: Excel 对照表) */
     BI_IF, BI_AND, BI_OR, BI_NOT, BI_XTRUE, BI_XFALSE,
     BI_SIGN, BI_XMOD, BI_XROUND, BI_INT, BI_XLN, BI_XLOG,
     BI_PI, BI_RANDBETWEEN,
     BI_SUM, BI_AVG, BI_COUNT, BI_MAX, BI_MIN,
     BI_LEFT, BI_RIGHT, BI_MID, BI_UPPER, BI_LOWER, BI_TRIM, BI_CONCAT,
     BI_VAL, BI_RCL,
-    /* 0.4.2 补充：Excel 数学大写�?/ 常用对数 / 截断 / 反正切二 / 文本处理 */
+    /* 0.4.2 补充：Excel 数学大写名 / 常用对数 / 截断 / 反正切二 / 文本处理 */
     BI_ATAN2, BI_TRUNC, BI_FIND, BI_SUBSTITUTE, BI_REPT,
     BI_EXACT, BI_CHAR, BI_CODE
 };
@@ -786,7 +812,8 @@ static const char *const g_sugg_kw[] = {
     NULL
 };
 
-/* 内置函数的旧写法 -> 现在的规范写法（大写 Excel 名）�? * 旧名字照样能用，只是�?--diag 检查时给一条不计错�?H 提示�?*/
+/* 内置函数的旧写法 -> 现在的规范写法（大写 Excel 名）。
+ * 旧名字照样能用，只是在 --diag 检查时给一条不计错的 H 提示。*/
 static const struct { const char *alias; const char *canon; const char *extra; } g_builtin_dep[] = {
     { "VAL", "VALUE", NULL },
     { "abs", "ABS", NULL },
@@ -947,7 +974,7 @@ static void reg_builtins(void)
     reg_builtin("VAL", 1, T_NUM, BI_VAL);
     reg_builtin("rcl", 1, T_NUM, BI_RCL);   /* easter egg: rcl is 方程235's girlfriend, see cask_rt.h */
 
-    /* 0.4.2 补充：Excel 数学大写名（和小写完全一样，小写是软弃用别名�?*/
+    /* 0.4.2 补充：Excel 数学大写名（和小写完全一样，小写是软弃用别名） */
     reg_builtin("SIN", 1, T_REAL, BI_SIN);
     reg_builtin("COS", 1, T_REAL, BI_COS);
     reg_builtin("TAN", 1, T_REAL, BI_TAN);
@@ -959,15 +986,15 @@ static void reg_builtins(void)
     reg_builtin("CEILING", 1, T_NUM, BI_CEIL);
     reg_builtin("TRUNC", 1, T_NUM, BI_TRUNC);
     reg_builtin("ATAN2", 2, T_REAL, BI_ATAN2);
-    /* 0.4.2 补充：文本处�?*/
-    reg_builtin("FIND", 2, T_NUM, BI_FIND);       /* 2 �?3 个参数，单独检�?*/
+    /* 0.4.2 补充：文本处理 */
+    reg_builtin("FIND", 2, T_NUM, BI_FIND);       /* 2 或 3 个参数，单独检查 */
     reg_builtin("SUBSTITUTE", 3, T_TEXT, BI_SUBSTITUTE);
     reg_builtin("REPT", 2, T_TEXT, BI_REPT);
     reg_builtin("EXACT", 2, T_BOOL, BI_EXACT);
     reg_builtin("CHAR", 1, T_TEXT, BI_CHAR);
     reg_builtin("CODE", 1, T_NUM, BI_CODE);
 
-    /* 参数类型补正（reg_builtin 默认数学函数�?real/int�?*/
+    /* 参数类型补正（reg_builtin 默认数学函数用 real/int） */
     {
         Func *g;
         g = func_find("FIND");
@@ -1058,6 +1085,7 @@ struct Stmt {
     char *iname;          /* S_FOREACH: its name (for emitting)  */
     Case *cases;          /* S_SWITCH: the case list             */
     SList *defbody;       /* S_SWITCH: the 'default' body (or 0) */
+    int tmp;              /* asm backend: hidden slot (switch cond / foreach counter) */
 };
 static Stmt *stmt_new(int k, int line)
 {
@@ -1080,7 +1108,6 @@ static FILE *g_out = NULL;
 static int g_ind = 0;
 static int g_lastline = -1;
 static int g_fast = 0;        /* --fast: no runtime checks */
-static int g_asm = 0;         /* --asm: independent backend, C* -> x86-64 asm -> as + ld (no C compiler) */
 static char *g_lfilepath = NULL; /* escaped source path for #line */
 
 static void w(const char *fmt, ...)
@@ -1604,7 +1631,7 @@ static Type etype(Expr *e)
         for (l = e->args; l; l = l->next) { etype(l->e); n++; }
         if (!f) {
         const char *fix = did_you_mean(e->sv);
-        if (g_native) {
+        if (g_native || g_use_css || g_use_io) {
             const NativeApi *na = native_find(e->sv);
             if (na) {
                 /* the C* window helpers: check the shape, then type it */
@@ -1633,8 +1660,10 @@ static Type etype(Expr *e)
                 e->native_sym = 1; e->napi = na; e->resolved = 1; e->t = na->ret;
                 break;
             }
-            if (!fix) {
-                /* any function from the C / C++ / Win32 headers: call it */
+            if (!fix && g_native) {
+                /* any function from the C / C++ / Win32 headers: call it
+                 * (only while C_OPED.cash is open -- without it an unknown
+                 *  name must stay a spelling error)                       */
                 e->native_sym = 1; e->resolved = 1; e->t = T_NUM;
                 break;
             }
@@ -2728,6 +2757,7 @@ static int fold_const(Expr *e, long long *out)
  * Called while parsing (so later code can use the value, e.g. array sizes). */
 static void analyze_const_init(Sym *sy, Expr *init)
 {
+    if (sy && init) sy->cinit = init;      /* asm backend folds real/text consts at emission */
     etype(init);
     if (init->t == T_ERR) return;
     if (!assignable(sy->type, init->t))
@@ -3137,6 +3167,11 @@ static void add_use(const char *name)
     if (!strcmp(name, "C_CSS.cash") || !strcmp(name, "C_CSS.CASH")) {
         g_use_css = 1;
         name = "C_CSS.cash";
+    }
+    /* C_IO.cash -- files & system: read/write files, appdir, env, launchwait */
+    if (!strcmp(name, "C_IO.cash") || !strcmp(name, "C_IO.CASH")) {
+        g_use_io = 1;
+        name = "C_IO.cash";
     }
     /* keep the caller's brackets:  <stdio.h>  or  "my_helper.h" */
     if (name[0] == '<') snprintf(buf, sizeof buf, "%s", name);
@@ -4081,9 +4116,8 @@ static void emit_slist(SList *l)
 /* ============================================================
  * PART7: driver -- read file, lex, prescan, emit C, invoke gcc
  * ============================================================ */
-static char g_rtdir[1024] = "";
+static char g_rtdir[1200] = "";
 static char g_exedir[1024] = "";
-static char g_last_key[1400] = "";
 
 #ifdef _WIN32
 #include <windows.h>
@@ -4120,22 +4154,6 @@ static int file_exists(const char *p)
     fclose(f);
     return 1;
 }
-
-/* directories can't be tested with fopen; use the platform dir API */
-#ifdef _WIN32
-static int dir_exists(const char *p)
-{
-    DWORD a = GetFileAttributesA(p);
-    return (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY)) != 0;
-}
-#else
-#include <sys/stat.h>
-static int dir_exists(const char *p)
-{
-    struct stat st;
-    return stat(p, &st) == 0 && S_ISDIR(st.st_mode);
-}
-#endif
 
 /* 64-bit FNV-1a over a file: cheap enough to run on every build, and it
  * lets caskc skip gcc when the generated C has not changed at all. */
@@ -4227,698 +4245,8 @@ static void pause_if_console(void)
 }
 #endif
 
-/* ============================================================ *
- * INDEPENDENT BACKEND:  C* -> x86-64 assembly (AT&T) -> as + ld
- * No C compiler anywhere in the pipeline.  Reuses the front-end
- * (lex / parse / type analysis) that already filled the AST; only
- * the code generator differs.
- *
- * Scope: the int/bool control-flow subset that covers most beginner
- * programs -- integer arithmetic & comparisons, if/while/for/until/
- * do/switch, print/input, user functions (<= 4 int params), and the
- * integer math builtins (ABS SIGN MOD INT TRUNC PI RCL ...).  Floating
- * point, strings, arrays and windows set g_asm_int_only = 0 so the
- * driver falls back to the C backend (the program still builds).
- *
- * Naming: C* identifiers may be Chinese, which is illegal in AT&T
- * labels.  Every declared name is indexed in g_allnames (see
- * name_register), so the mangled storage symbol is cask_g<idx> and a
- * user function is cask_fn<idx>.  All scalar storage lives in one .bss
- * block; there is no per-function stack frame and no recursion.
- * ============================================================ */
-static int g_asm_lbl = 0;      /* unique label counter */
-static int g_asm_int_only = 1; /* a non-int construct was hit -> bail out */
-static SBuf g_abuf;           /* where the .s file is assembled */
-static int g_asm_brk = 0, g_asm_cont = 0; /* labels for break / continue */
-
-/* append to the asm buffer (the asm emitter's version of w()) */
-static void wa(const char *fmt, ...)
-{
-    char tmp[4096];
-    va_list ap;
-    va_start(ap, fmt);
-    int n = vsnprintf(tmp, sizeof tmp, fmt, ap);
-    va_end(ap);
-    if (n < 0) return;
-    for (int i = 0; i < n; i++) sb_putc(&g_abuf, tmp[i]);
-}
-
-/* index of `name` in g_allnames (-1 if not found) */
-static int asm_gid(const char *name)
-{
-    int i;
-    if (!name) return -1;
-    for (i = 0; i < g_nallnames; i++)
-        if (strcmp(g_allnames[i], name) == 0) return i;
-    return -1;
-}
-/* position of a user function in the g_funcs list (its mangled id) */
-static int asm_fnid(Func *f)
-{
-    int i = 0; Func *x;
-    if (!f || f->is_builtin) return -1;
-    for (x = g_funcs; x; x = x->next, i++) if (x == f) return i;
-    return -1;
-}
-static int asm_scalar_ok(Type t)
-{
-    return t == T_NUM || t == T_BOOL || t == T_LETTER || t == T_VOID || t == T_UNKNOWN;
-}
-
-static void emit_asm_expr(Expr *e);
-static const char *asm_retlbl(void);
-
-/* value of an expression (int/bool) ends up in %rax */
-static void emit_asm_expr(Expr *e)
-{
-    switch (e->k) {
-    case E_NUM:  wa("movq $%lld, %%rax\n", e->iv); break;
-    case E_TRUE: wa("movq $1, %%rax\n"); break;
-    case E_FALSE: wa("movq $0, %%rax\n"); break;
-    case E_VAR: {
-        Sym *s = e->sym;
-        int g = s ? asm_gid(s->name) : -1;
-        if (g < 0) { g_asm_int_only = 0; wa("movq $0, %%rax\n"); break; }
-        wa("movq cask_g%d(%%rip), %%rax\n", g);
-        break;
-    }
-    case E_ASSIGN: {
-        emit_asm_expr(e->b);
-        if (e->a->k == E_VAR && e->a->sym) {
-            int g = asm_gid(e->a->sym->name);
-            if (g < 0) { g_asm_int_only = 0; break; }
-            wa("movq %%rax, cask_g%d(%%rip)\n", g);
-        } else g_asm_int_only = 0;
-        break;
-    }
-    case E_BIN: {
-        const char *op = e->sv;
-        int L = ++g_asm_lbl;
-        emit_asm_expr(e->a); wa("movq %%rax, cask_t0(%%rip)\n");
-        emit_asm_expr(e->b); wa("movq %%rax, cask_t1(%%rip)\n");
-        if (!strcmp(op, "+"))     { wa("movq cask_t0(%%rip), %%rax\naddq cask_t1(%%rip), %%rax\n"); }
-        else if (!strcmp(op, "-")) { wa("movq cask_t0(%%rip), %%rax\nsubq cask_t1(%%rip), %%rax\n"); }
-        else if (!strcmp(op, "*")) { wa("movq cask_t0(%%rip), %%rax\nimulq cask_t1(%%rip), %%rax\n"); }
-        else if (!strcmp(op, "/")) {
-            wa("movq cask_t1(%%rip), %%rcx\ntestq %%rcx, %%rcx\nje L_dz_%d\n", L);
-            wa("movq cask_t0(%%rip), %%rax\ncqto\nidivq %%rcx\n");
-            wa("jmp L_sk_%d\nL_dz_%d:\nmovq $0, %%rax\nL_sk_%d:\n", L, L, L);
-        }
-        else if (!strcmp(op, "%")) {
-            wa("movq cask_t1(%%rip), %%rcx\ntestq %%rcx, %%rcx\nje L_dz_%d\n", L);
-            wa("movq cask_t0(%%rip), %%rax\ncqto\nidivq %%rcx\nmovq %%rdx, %%rax\n");
-            wa("jmp L_sk_%d\nL_dz_%d:\nmovq $0, %%rax\nL_sk_%d:\n", L, L, L);
-        }
-        else if (!strcmp(op, "<<")) { wa("movq cask_t0(%%rip), %%rax\nmovq cask_t1(%%rip), %%rcx\nsalq %%cl, %%rax\n"); }
-        else if (!strcmp(op, ">>")) { wa("movq cask_t0(%%rip), %%rax\nmovq cask_t1(%%rip), %%rcx\nsarq %%cl, %%rax\n"); }
-        else if (!strcmp(op, "<"))  { wa("movq cask_t0(%%rip), %%rax\ncmpq cask_t1(%%rip), %%rax\nsetl %%al\nmovzbq %%al, %%rax\n"); }
-        else if (!strcmp(op, ">"))  { wa("movq cask_t0(%%rip), %%rax\ncmpq cask_t1(%%rip), %%rax\nsetg %%al\nmovzbq %%al, %%rax\n"); }
-        else if (!strcmp(op, "<=")) { wa("movq cask_t0(%%rip), %%rax\ncmpq cask_t1(%%rip), %%rax\nsetle %%al\nmovzbq %%al, %%rax\n"); }
-        else if (!strcmp(op, ">=")) { wa("movq cask_t0(%%rip), %%rax\ncmpq cask_t1(%%rip), %%rax\nsetge %%al\nmovzbq %%al, %%rax\n"); }
-        else if (!strcmp(op, "==")) { wa("movq cask_t0(%%rip), %%rax\ncmpq cask_t1(%%rip), %%rax\nsete %%al\nmovzbq %%al, %%rax\n"); }
-        else if (!strcmp(op, "!=")) { wa("movq cask_t0(%%rip), %%rax\ncmpq cask_t1(%%rip), %%rax\nsetne %%al\nmovzbq %%al, %%rax\n"); }
-        else if (!strcmp(op, "&"))  { wa("movq cask_t0(%%rip), %%rax\nandq cask_t1(%%rip), %%rax\n"); }
-        else if (!strcmp(op, "|"))  { wa("movq cask_t0(%%rip), %%rax\norq cask_t1(%%rip), %%rax\n"); }
-        else if (!strcmp(op, "^"))  { wa("movq cask_t0(%%rip), %%rax\nxorq cask_t1(%%rip), %%rax\n"); }
-        else if (!strcmp(op, "&&")) {
-            wa("movq cask_t0(%%rip), %%rax\ntestq %%rax, %%rax\nsetne %%al\nmovzbq %%al, cask_t0(%%rip)\n");
-            wa("movq cask_t1(%%rip), %%rax\ntestq %%rax, %%rax\nsetne %%al\nmovzbq %%al, %%rax\nandq cask_t0(%%rip), %%rax\n");
-        }
-        else if (!strcmp(op, "||")) {
-            wa("movq cask_t0(%%rip), %%rax\ntestq %%rax, %%rax\nsetne %%al\nmovzbq %%al, cask_t0(%%rip)\n");
-            wa("movq cask_t1(%%rip), %%rax\ntestq %%rax, %%rax\nsetne %%al\nmovzbq %%al, %%rax\norq cask_t0(%%rip), %%rax\n");
-        }
-        else { g_asm_int_only = 0; wa("movq $0, %%rax\n"); }
-        break;
-    }
-    case E_UN: {
-        const char *op = e->sv;
-        emit_asm_expr(e->a);
-        if (!strcmp(op, "!")) wa("testq %%rax, %%rax\nsete %%al\nmovzbq %%al, %%rax\n");
-        else if (!strcmp(op, "-")) wa("negq %%rax\n");
-        else if (!strcmp(op, "+")) { /* no-op */ }
-        else if (!strcmp(op, "~")) wa("notq %%rax\n");
-        else { g_asm_int_only = 0; }
-        break;
-    }
-    case E_CALL: {
-        Func *f = e->fn;
-        if (!f) { g_asm_int_only = 0; break; }
-        if (!f->is_builtin) {
-            int id = asm_fnid(f), n = 0, i = 0;
-            EList *al;
-            if (id < 0) { g_asm_int_only = 0; wa("movq $0, %%rax\n"); break; }
-            for (al = e->args; al; al = al->next) n++;
-            if (n > 4) { g_asm_int_only = 0; wa("movq $0, %%rax\n"); break; }
-            for (al = e->args; al; al = al->next, i++) {
-                emit_asm_expr(al->e);
-                wa("movq %%rax, cask_a%d(%%rip)\n", i);
-            }
-            if (n >= 1) wa("movq cask_a0(%%rip), %%rcx\n");
-            if (n >= 2) wa("movq cask_a1(%%rip), %%rdx\n");
-            if (n >= 3) wa("movq cask_a2(%%rip), %%r8\n");
-            if (n >= 4) wa("movq cask_a3(%%rip), %%r9\n");
-            wa("call cask_fn%d\n", id);
-            break;
-        }
-        {
-            EList *a1 = e->args, *a2 = a1 ? a1->next : NULL;
-            int L = ++g_asm_lbl;
-            switch (f->bid) {
-            case BI_ABS:
-                if (a1) { emit_asm_expr(a1->e); wa("testq %%rax, %%rax\njge L_a%d\nnegq %%rax\nL_a%d:\n", L, L); }
-                break;
-            case BI_SIGN:
-                if (a1) {
-                    emit_asm_expr(a1->e);
-                    wa("testq %%rax, %%rax\nmovq $0, %%rax\nje L_sg%d\n", L);
-                    wa("movq $-1, %%rax\njle L_sg%d\nmovq $1, %%rax\nL_sg%d:\n", L, L);
-                }
-                break;
-            case BI_XMOD:
-                if (a1 && a2) {
-                    emit_asm_expr(a1->e); wa("movq %%rax, cask_t0(%%rip)\n");
-                    emit_asm_expr(a2->e); wa("movq %%rax, cask_t1(%%rip)\n");
-                    wa("movq cask_t1(%%rip), %%rcx\ntestq %%rcx, %%rcx\nje L_mz%d\n", L);
-                    wa("movq cask_t0(%%rip), %%rax\ncqto\nidivq %%rcx\nmovq %%rdx, %%rax\n");
-                    wa("L_mz%d:\n", L);
-                }
-                break;
-            case BI_INT: case BI_TRUNC:
-                if (a1) emit_asm_expr(a1->e);
-                break;
-            case BI_PI:  wa("movq $3, %%rax\n"); break;
-            case BI_RANDOM: wa("movq $0, %%rax\n"); break;
-            case BI_RCL:
-                if (a1 && a1->next) g_asm_int_only = 0;
-                else { if (a1) emit_asm_expr(a1->e); wa("movq $0, %%rax\n"); }
-                break;
-            default:
-                g_asm_int_only = 0;
-                wa("movq $0, %%rax\n");
-            }
-        }
-        break;
-    }
-    default:
-        g_asm_int_only = 0;
-        wa("movq $0, %%rax\n");
-        break;
-    }
-}
-
-/* ---------------- statement emitter (int/control-flow subset) ---------------- */
-static void emit_asm_stmt(Stmt *s);
-static void emit_asm_slist(SList *l) { for (; l; l = l->next) emit_asm_stmt(l->s); }
-
-static void emit_asm_stmt(Stmt *s)
-{
-    int L, L2;
-    switch (s->k) {
-    case S_DECL: {
-        int i;
-        for (i = 0; i < s->ndecl; i++) {
-            Decl *d = &s->decls[i];
-            if (d->ndim > 0 || !asm_scalar_ok(s->dtype)) { g_asm_int_only = 0; continue; }
-            int g = d->sym ? asm_gid(d->name) : -1;
-            if (g < 0) { g_asm_int_only = 0; continue; }
-            if (d->init && !d->is_const) {
-                emit_asm_expr(d->init);
-                wa("movq %%rax, cask_g%d(%%rip)\n", g);
-            } else if (d->is_const && d->sym && d->sym->has_cval) {
-                wa("movq $%lld, cask_g%d(%%rip)\n", d->sym->cval, g);
-            }
-        }
-        break;
-    }
-    case S_EXPR:
-        emit_asm_expr(s->val);
-        wa("movq %%rax, cask_tv(%%rip)\n");
-        break;
-    case S_IF:
-        L = ++g_asm_lbl; L2 = s->elseb ? ++g_asm_lbl : 0;
-        emit_asm_expr(s->cond);
-        wa("testq %%rax, %%rax\nje L_if0_%d\n", L);
-        emit_asm_slist(s->body);
-        if (s->elseb) {
-            wa("jmp L_if1_%d\nL_if0_%d:\n", L2, L);
-            emit_asm_slist(s->elseb);
-            wa("L_if1_%d:\n", L2);
-        } else wa("L_if0_%d:\n", L);
-        break;
-    case S_WHILE: {
-        int sb, sc;
-        L = ++g_asm_lbl; L2 = ++g_asm_lbl;
-        sb = g_asm_brk; sc = g_asm_cont; g_asm_brk = L2; g_asm_cont = L;
-        wa("L_wl_%d:\n", L);
-        emit_asm_expr(s->cond);
-        wa("testq %%rax, %%rax\nje L_we_%d\n", L2);
-        emit_asm_slist(s->body);
-        wa("jmp L_wl_%d\nL_we_%d:\n", L, L2);
-        g_asm_brk = sb; g_asm_cont = sc;
-        break;
-    }
-    case S_UNTIL: {
-        int sb, sc;
-        L = ++g_asm_lbl; L2 = ++g_asm_lbl;
-        sb = g_asm_brk; sc = g_asm_cont; g_asm_brk = L2; g_asm_cont = L;
-        wa("L_ul_%d:\n", L);
-        emit_asm_slist(s->body);
-        emit_asm_expr(s->cond);
-        wa("testq %%rax, %%rax\nje L_ul_%d\n", L);
-        g_asm_brk = sb; g_asm_cont = sc;
-        break;
-    }
-    case S_DO: {
-        int sb, sc;
-        L = ++g_asm_lbl; L2 = ++g_asm_lbl;
-        sb = g_asm_brk; sc = g_asm_cont; g_asm_brk = L2; g_asm_cont = L;
-        wa("L_do_%d:\n", L);
-        emit_asm_slist(s->body);
-        emit_asm_expr(s->cond);
-        wa("testq %%rax, %%rax\njne L_do_%d\n", L);
-        g_asm_brk = sb; g_asm_cont = sc;
-        break;
-    }
-    case S_FOR: {
-        L = ++g_asm_lbl; L2 = ++g_asm_lbl;
-        int sb = g_asm_brk, sc = g_asm_cont; g_asm_brk = L2; g_asm_cont = L;
-        if (s->initst && s->initst->k == S_DECL) { emit_asm_stmt(s->initst); }
-        wa("L_fr_%d:\n", L);
-        if (s->cond) { emit_asm_expr(s->cond); wa("testq %%rax, %%rax\nje L_fe_%d\n", L2); }
-        emit_asm_slist(s->body);
-        wa("L_fs_%d:\n", L);
-        if (s->step) { emit_asm_expr(s->step); wa("movq %%rax, cask_tv(%%rip)\n"); }
-        wa("jmp L_fr_%d\nL_fe_%d:\n", L, L2);
-        g_asm_brk = sb; g_asm_cont = sc;
-        break;
-    }
-    case S_SWITCH: {
-        L = ++g_asm_lbl;
-        int sb = g_asm_brk; g_asm_brk = L;
-        emit_asm_expr(s->cond);
-        wa("movq %%rax, cask_sv(%%rip)\n");
-        {
-            Case *c; int k = 0;
-            for (c = s->cases; c; c = c->next, k++) {
-                int Lc = ++g_asm_lbl;
-                wa("movq $%lld, %%rcx\n", c->val->k == E_NUM ? c->val->iv : 0);
-                wa("cmpq cask_sv(%%rip), %%rcx\nje L_sc%d\n", Lc);
-                wa("L_sc%d:\n", Lc);
-                emit_asm_slist(c->body);
-                wa("jmp L_swe%d\n", L);
-            }
-            if (s->defbody) emit_asm_slist(s->defbody);
-            wa("L_swe%d:\n", L);
-        }
-        g_asm_brk = sb;
-        break;
-    }
-    case S_BREAK:    wa("jmp L_brk_%d\n", g_asm_brk); break;
-    case S_CONTINUE: wa("jmp L_cont_%d\n", g_asm_cont ? g_asm_cont : g_asm_brk); break;
-    case S_RETURN:
-        if (s->val) emit_asm_expr(s->val); else wa("xorq %%rax, %%rax\n");
-        wa("jmp %s\n", asm_retlbl());
-        break;
-    case S_SAY: {
-        EList *al;
-        for (al = s->args; al; al = al->next) {
-            emit_asm_expr(al->e);      /* result in rax */
-            wa("call cask_pi\n");
-        }
-        if (s->nl) wa("call cask_nl\n");
-        break;
-    }
-    case S_INPUT:
-        /* native Win32 read (ReadFile + atoi) is not wired up yet;
-         * fall back to the C backend rather than emit a silent no-op. */
-        g_asm_int_only = 0;
-        break;
-    case S_BLOCK:
-        emit_asm_slist(s->body);
-        break;
-    case S_EMPTY:
-        break;
-    case S_FOREACH:
-        g_asm_int_only = 0;          /* array traversal: not in the int subset */
-        break;
-    case S_FUNC: case S_START:
-        break;                      /* emitted by emit_asm_backend, not inline */
-    default:
-        g_asm_int_only = 0;
-        break;
-    }
-}
-
-/* ---------------- whole-program builder + as/ld driver ---------------- */
-static char g_asm_libdir[1024] = "";
-static char g_asm_fnsym[64] = "main";   /* the current function being emitted */
-
-/* per-function return-label name: e.g. "mainret" or "cask_fn0ret" */
-static const char *asm_retlbl(void)
-{
-    static char buf[128];
-    snprintf(buf, sizeof buf, "%sret", g_asm_fnsym);
-    return buf;
-}
-
-/* patch S_RETURN to use the current function's return label */
-static void asm_ret_label(void) { /* placeholder kept for clarity */ }
-
-/* find lib dir for as/ld (Windows + a generic fallback). */
-static int find_asm_tools(void)
-{
-#ifdef _WIN32
-    /* try where ld, then the common Strawberry location */
-    {
-        FILE *f = popen("where ld 2>nul", "r");
-        char ldpath[512];
-        if (f && fgets(ldpath, sizeof ldpath, f)) {
-            char *nl = strpbrk(ldpath, "\r\n"); if (nl) *nl = 0;
-            char bin[512]; snprintf(bin, sizeof bin, "%s", ldpath);
-            char *slash = strrchr(bin, '\\');
-            if (slash) {
-                *slash = 0;
-                char root[512]; snprintf(root, sizeof root, "%s", bin);
-                char *b2 = strrchr(root, '\\');
-                if (b2) *b2 = 0;
-                char cand[1200];
-                snprintf(cand, sizeof cand, "%s\\x86_64-w64-mingw32\\lib", root);
-                if (dir_exists(cand)) { snprintf(g_asm_libdir, sizeof g_asm_libdir, "%s", cand); return 1; }
-                snprintf(cand, sizeof cand, "%s\\lib", bin);
-                if (dir_exists(cand)) { snprintf(g_asm_libdir, sizeof g_asm_libdir, "%s", cand); return 1; }
-            }
-        }
-        if (f) pclose(f);
-    }
-    if (dir_exists("C:\\Strawberry\\c\\x86_64-w64-mingw32\\lib"))
-        snprintf(g_asm_libdir, sizeof g_asm_libdir, "C:\\Strawberry\\c\\x86_64-w64-mingw32\\lib");
-    else if (dir_exists("C:\\Strawberry\\c\\lib"))
-        snprintf(g_asm_libdir, sizeof g_asm_libdir, "C:\\Strawberry\\c\\lib");
-    return g_asm_libdir[0] != 0;
-#else
-    if (!have_prog("as") || !have_prog("ld")) return 0;
-    {
-        FILE *f = popen("command -v ld", "r");
-        char ldpath[512];
-        if (f && fgets(ldpath, sizeof ldpath, f)) {
-            char *nl = strchr(ldpath, '\n'); if (nl) *nl = 0;
-            char bin[512]; snprintf(bin, sizeof bin, "%s", ldpath);
-            char *s1 = strrchr(bin, '/'); if (s1) *s1 = 0;
-            char root[512]; snprintf(root, sizeof root, "%s", bin);
-            char *s2 = strrchr(root, '/'); if (s2) *s2 = 0;
-            char cand[1200];
-            snprintf(cand, sizeof cand, "%s/../lib", root);
-            if (dir_exists(cand)) { snprintf(g_asm_libdir, sizeof g_asm_libdir, "%s", cand); return 1; }
-        }
-        if (f) pclose(f);
-    }
-    return 1;
-#endif
-}
-
-/* Emit one function body (S_FUNC) or the main entry (S_START). */
-static void emit_asm_func(Stmt *s, const char *sym)
-{
-    Func *f = (s->k == S_FUNC) ? s->fn : NULL;
-    int i;
-    snprintf(g_asm_fnsym, sizeof g_asm_fnsym, "%s", sym);
-    /* Uniform $40 frame for every function (32 shadow + 8 align).
-       A `call` target sees rsp ≡ 8 (mod16); the image entry main also
-       starts at rsp ≡ 8.  subq $40 (≡8 mod16) therefore leaves every
-       internal `call` site at rsp ≡ 0 (mod16), as MS x64 requires. */
-    wa(".globl %s\n.p2align 4\n", sym);
-    wa("%s:\n", sym);
-    wa("subq $40, %%rsp\n");
-    /* capture the incoming args (MS x64: rcx rdx r8 r9) into each
-     * parameter's .bss slot so the body can read them like any variable */
-    if (f && !f->is_builtin && f->nparam <= 4) {
-        static const char *argreg[4] = { "%rcx", "%rdx", "%r8", "%r9" };
-        for (i = 0; i < f->nparam; i++) {
-            int slot = asm_gid(f->pn[i]);
-            if (slot < 0) { g_asm_int_only = 0; continue; }
-            wa("movq %s, cask_g%d(%%rip)\n", argreg[i], slot);
-        }
-    }
-    emit_asm_slist(s->body);
-    if (f && f->ret != T_VOID)
-        wa("xorl %%eax, %%eax\n");    /* default 0 return */
-#ifdef _WIN32
-    if (!strcmp(sym, "main")) {
-        /* main has no caller: keep its 16-byte-aligned frame (do NOT restore)
-           and terminate via ExitProcess(0).  Restoring first would put rsp at
-           ≡8 (mod16) and fault the final call. */
-        wa("%s:\nxorl %%ecx, %%ecx\ncall ExitProcess\nret\n", asm_retlbl());
-    } else {
-        wa("%s:\naddq $40, %%rsp\n", asm_retlbl());
-        wa("ret\n");
-    }
-#else
-    wa("%s:\naddq $40, %%rsp\n", asm_retlbl());
-    wa("ret\n");
-#endif
-}
-
-/* emit user functions + main entry; returns 0 if not expressible */
-static int emit_asm_all(SList *top)
-{
-    Func *f;
-    int k = 0, have_main = 0;
-
-    /* user functions (cask_fn<idx>), index = position in g_funcs */
-    for (f = g_funcs; f; f = f->next, k++) {
-        SList *sl;
-        if (f->is_builtin || !f->defined) continue;
-        if (!asm_scalar_ok(f->ret)) { g_asm_int_only = 0; continue; }
-        for (sl = top; sl; sl = sl->next) {
-            if (sl->s->k == S_FUNC && sl->s->fn == f) {
-                char sym[64];
-                snprintf(sym, sizeof sym, "cask_fn%d", k);
-                emit_asm_func(sl->s, sym);
-                break;
-            }
-        }
-    }
-
-    /* main entry: either S_START (start{...}) or S_FUNC named "main" */
-    {
-        SList *sl;
-        for (sl = top; sl; sl = sl->next)
-            if (sl->s->k == S_START) { emit_asm_func(sl->s, "main"); have_main = 1; break; }
-    }
-    if (!have_main) {
-        SList *sl;
-        for (sl = top; sl; sl = sl->next)
-            if (sl->s->k == S_FUNC && sl->s->fn && !strcmp(sl->s->fn->name, "main")) {
-                emit_asm_func(sl->s, "main");
-                have_main = 1;
-                break;
-            }
-    }
-    if (!have_main) g_asm_int_only = 0;
-    return g_asm_int_only;
-}
-
-/* Build the program through the assembly pipeline.
- * Returns 1 on success (the exe is ready at `out`), 0 to fall back to C. */
-static int asm_backend_build(SList *top, const char *out, int keep_s)
-{
-    char sbuf[1200], obj[1200];
-
-    sb_init(&g_abuf);
-    g_asm_lbl = 0; g_asm_int_only = 1; g_asm_brk = 0; g_asm_cont = 0;
-
-    /* ---- .rdata: the format strings print uses ----
-     * We link -lmsvcrt (see the ld line below).  msvcrt's DllMain runs at
-     * process start and initialises stdio, so a plain printf works even in
-     * a no-CRT entry point -- exactly what build/probe.s validated. */
-#ifdef _WIN32
-    /* Pure-Win32 (no CRT): print via GetStdHandle + WriteFile, terminate via
-     * ExitProcess.  We deliberately DO NOT link msvcrt -- linking it pulls in
-     * a DLL whose DllMain stream-finalization faults (0xC0000005) when stdout
-     * is a pipe/redirect.  kernel32-only means no stream teardown, so the
-     * process exits cleanly in every I/O mode.  Validated in .agnes/work/probes. */
-    wa(".section .rdata\n.align 8\n");
-    wa("L_nl: .byte 10, 0\n");
-    wa(".section .bss\n.align 8\n");
-    { int i; for (i = 0; i < g_nallnames; i++) wa("cask_g%d: .zero 8\n", i); }
-    wa("cask_t0: .zero 8\ncask_t1: .zero 8\ncask_tv: .zero 8\ncask_sv: .zero 8\n");
-    wa("cask_a0: .zero 8\ncask_a1: .zero 8\ncask_a2: .zero 8\ncask_a3: .zero 8\n");
-    /* scratch for the integer printer */
-    wa("cask_val: .zero 8\n");
-    wa("cask_neg: .zero 4\n");
-    wa("cask_dlen: .zero 8\n");
-    wa("cask_dptr: .zero 8\n");
-    wa("cask_wr:  .zero 8\n");
-    wa("cask_db:  .zero 24\n");
-    wa(".section .text\n");
-    wa(".extern GetStdHandle\n.extern WriteFile\n.extern ExitProcess\n");
-    /* cask_pi: print the signed 64-bit value in rax (no newline).
-     * Value magnitude goes through a div loop that writes digits into cask_db;
-     * the buffer pointer/length are parked in .bss because GetStdHandle/WriteFile
-     * clobber the caller-saved registers.  Each function reserves a $40 frame
-     * (32 shadow + 8 align) so every `call` site is 16-byte aligned. */
-    wa("cask_pi:\n");
-    wa("    subq $40, %%rsp\n");
-    wa("    movq %%rax, cask_val(%%rip)\n");
-    wa("    movq cask_val(%%rip), %%rax\n");
-    wa("    testq %%rax, %%rax\n");
-    wa("    jge   .pi_unsigned\n");
-    wa("    negq %%rax\n");
-    wa("    movl $1, cask_neg(%%rip)\n");
-    wa("    jmp   .pi_digits\n");
-    wa(".pi_unsigned:\n");
-    wa("    movl $0, cask_neg(%%rip)\n");
-    wa(".pi_digits:\n");
-    wa("    leaq cask_db+23(%%rip), %%rdi\n");
-    wa("    movq $0, cask_dlen(%%rip)\n");
-    wa(".pi_dloop:\n");
-    wa("    xorq %%rdx, %%rdx\n");
-    wa("    movabsq $10, %%rcx\n");
-    wa("    divq %%rcx\n");
-    wa("    addb $48, %%dl\n");
-    wa("    decq %%rdi\n");
-    wa("    movb %%dl, (%%rdi)\n");
-    wa("    incq cask_dlen(%%rip)\n");
-    wa("    testq %%rax, %%rax\n");
-    wa("    jne   .pi_dloop\n");
-    wa("    cmpq $0, cask_val(%%rip)\n");
-    wa("    jge   .pi_noseg\n");
-    wa("    cmpq $-1, cask_val(%%rip)\n");
-    wa("    je    .pi_negone\n");
-    wa("    movb $45, -1(%%rdi)\n");
-    wa("    leaq -1(%%rdi), %%rdi\n");
-    wa("    incq cask_dlen(%%rip)\n");
-    wa("    jmp   .pi_write\n");
-    wa(".pi_negone:\n");
-    wa("    movb $45, -1(%%rdi)\n");
-    wa("    leaq -1(%%rdi), %%rdi\n");
-    wa("    incq cask_dlen(%%rip)\n");
-    wa("    jmp   .pi_write\n");
-    wa(".pi_noseg:\n");
-    wa(".pi_write:\n");
-    wa("    movq %%rdi, cask_dptr(%%rip)\n");
-    wa("    movq $-11, %%rcx\n");
-    wa("    call GetStdHandle\n");
-    wa("    movq %%rax, %%rcx\n");
-    wa("    movq cask_dptr(%%rip), %%rdx\n");
-    wa("    movq cask_dlen(%%rip), %%r8\n");
-    wa("    leaq cask_wr(%%rip), %%r9\n");
-    wa("    movq $0, 32(%%rsp)\n");
-    wa("    call WriteFile\n");
-    wa("    addq $40, %%rsp\n");
-    wa("    ret\n");
-    /* cask_nl: print a single newline */
-    wa("cask_nl:\n");
-    wa("    subq $40, %%rsp\n");
-    wa("    movq $-11, %%rcx\n");
-    wa("    call GetStdHandle\n");
-    wa("    movq %%rax, %%rcx\n");
-    wa("    leaq L_nl(%%rip), %%rdx\n");
-    wa("    movq $1, %%r8\n");
-    wa("    leaq cask_wr(%%rip), %%r9\n");
-    wa("    movq $0, 32(%%rsp)\n");
-    wa("    call WriteFile\n");
-    wa("    addq $40, %%rsp\n");
-    wa("    ret\n");
-    /* no native stdin: input falls back to the C backend */
-    wa("cask_in:\n ret\n");
-#else
-    /* Unix: best-effort via libc printf (requires a start that inits stdio). */
-    wa(".section .rdata\n.align 8\n");
-    wa("L_pf:   .asciz \"%%lld\"\n");
-    wa("L_nlf:  .asciz \"\\n\"\n");
-    wa(".section .bss\n.align 8\n");
-    { int i; for (i = 0; i < g_nallnames; i++) wa("cask_g%d: .zero 8\n", i); }
-    wa("cask_t0: .zero 8\ncask_t1: .zero 8\ncask_tv: .zero 8\ncask_sv: .zero 8\n");
-    wa("cask_a0: .zero 8\ncask_a1: .zero 8\ncask_a2: .zero 8\ncask_a3: .zero 8\n");
-    wa(".section .text\n");
-    wa(".extern printf\n.extern scanf\n");
-    wa("cask_pi:\n movq %%rax, %%rdx\n lea L_pf(%%rip), %%rcx\n xorl %%eax, %%eax\n"
-       " movb $1, %%al\n pushfq\nsubq $32, %%rsp\ncall printf\naddq $32, %%rsp\npopfq\n ret\n");
-    wa("cask_nl:\n lea L_nlf(%%rip), %%rcx\n xorl %%eax, %%eax\n"
-       " pushfq\nsubq $32, %%rsp\ncall printf\naddq $32, %%rsp\npopfq\n ret\n");
-    wa("cask_in:\n movq %%rax, %%rdx\n lea L_pf(%%rip), %%rcx\n xorl %%eax, %%eax\n"
-       " movb $1, %%al\n pushfq\nsubq $32, %%rsp\ncall scanf\naddq $32, %%rsp\npopfq\n ret\n");
-#endif
-
-    /* user functions + main entry */
-    if (!emit_asm_all(top)) return 0;   /* not expressible -> fall back */
-
-    /* write the .s file */
-    snprintf(sbuf, sizeof sbuf, "%s.gen.s", out);
-    {
-        FILE *f = fopen(sbuf, "wb");
-        if (!f) { fputs(g_abuf.p, stdout); return 0; }
-        fputs(g_abuf.p, f);
-        fclose(f);
-    }
-
-    if (!find_asm_tools()) {
-        fprintf(stderr, "caskc: 找不到 as / ld（独立汇编后端需要它们）。\n");
-        return 0;
-    }
-
-    /* assemble */
-    snprintf(obj, sizeof obj, "%s.gen.o", out);
-    {
-#ifdef _WIN32
-        char ascmd[4096];
-        snprintf(ascmd, sizeof ascmd, "as --64 \"%s\" -o \"%s\"", sbuf, obj);
-        int rc = run_child(ascmd);
-        if (rc < 0) {
-            fprintf(stderr, "caskc: 启动 as 失败（汇编已保留: %s）\n", sbuf);
-            return 0;
-        }
-        if (rc != 0) {
-            fprintf(stderr, "caskc: as 报了问题。汇编已保留: %s\n", sbuf);
-            fputs(g_abuf.p, stdout);
-            return 0;
-        }
-        /* link */
-        char ldl[4096];
-        if (g_asm_libdir[0])
-            snprintf(ldl, sizeof ldl,
-                "ld -m i386pep -e main --subsystem console -o \"%s\" \"%s\" -L \"%s\" -lkernel32 -lntdll",
-                out, obj, g_asm_libdir);
-        else
-            snprintf(ldl, sizeof ldl,
-                "ld -m i386pep -e main --subsystem console -o \"%s\" \"%s\" -lkernel32 -lntdll",
-                out, obj);
-        rc = run_child(ldl);
-        if (rc < 0) {
-            fprintf(stderr, "caskc: 启动 ld 失败。汇编已保留: %s\n", sbuf);
-            return 0;
-        }
-        if (rc != 0) {
-            fprintf(stderr, "caskc: ld 报了问题。汇编已保留: %s\n", sbuf);
-            fputs(g_abuf.p, stdout);
-            return 0;
-        }
-#else
-        char ascmd[4096], ldl[4096];
-        snprintf(ascmd, sizeof ascmd, "as --64 \"%s\" -o \"%s\"", sbuf, obj);
-        if (system(ascmd) != 0) {
-            fprintf(stderr, "caskc: as 失败。汇编已保留: %s\n", sbuf);
-            fputs(g_abuf.p, stdout);
-            return 0;
-        }
-        if (g_asm_libdir[0])
-            snprintf(ldl, sizeof ldl, "ld -e main -o \"%s\" \"%s\" -L %s -lc -lm -lutil", out, obj, g_asm_libdir);
-        else
-            snprintf(ldl, sizeof ldl, "ld -e main -o \"%s\" \"%s\" -lc -lm -lutil", out, obj);
-        if (system(ldl) != 0) {
-            fprintf(stderr, "caskc: ld 失败。汇编已保留: %s\n", sbuf);
-            fputs(g_abuf.p, stdout);
-            return 0;
-        }
-#endif
-    }
-
-    remove(obj);
-    if (!keep_s) remove(sbuf);
-    return 1;
-}
+/* Full x86-64 backend: C* -> asm -> as -> ld (see asm_backend.inc). */
+#include "asm_backend.inc"
 
 static void usage(void)
 {
@@ -4926,17 +4254,17 @@ static void usage(void)
     puts("");
     puts("用法: caskc <file.cask> [选项]");
     puts("  -o FILE       生成程序的名字（默认: file.exe）");
-    puts("  --emit-c FILE 只写出生成的 C 代码，不编译");
-    puts("  --keep        保留生成的 .c 文件");
+    puts("  --emit-c FILE 只写出生成的 C 代码（调试用，不编译）");
+    puts("  --keep        保留生成的 .s 汇编文件");
     puts("  --fast        关掉溢出 / 下标检查（能快一点）");
     puts("  --check       只检查程序，不生成也不编译");
     puts("  --diag        把问题按  K|line|col|message  的格式列到屏幕上");
     puts("                （K: P 拼写, S 语法, E 严重, H 提示）");
-    puts("  -O0 -O1 -O2 -O3   优化级别（默认 -O2）");
-    puts("  -g            调试版（-O0 -g）");
+    puts("  -O0 -O1 -O2 -O3   保留兼容（优化已内置在汇编后端里）");
+    puts("  -g            保留生成的 .s 汇编文件（同 --keep）");
     puts("  --run         编译成功后运行程序");
     puts("  --console     窗口程序（C_OPED.cash）里保留控制台");
-    puts("  -v            显示 C 编译器的命令行");
+    puts("  -v            显示 as / ld 的命令行");
     puts("  --version     显示版本号并退出");
     puts("  -h            显示这份帮助");
     exit(0);
@@ -4945,15 +4273,14 @@ static void usage(void)
 int main(int argc, char **argv)
 {
     const char *src = NULL, *out = NULL, *emitc = NULL;
-    int keep = 0, run = 0, verbose = 0, optlevel = 2, debug = 0;
+    int keep = 0, run = 0, verbose = 0;
     int i;
-    char gen[1200], cmd[4096], rtinc[1300];
+    char gen[1200], cmd[4096];
     static char outbuf[1200];
     SList *top;
     Func *f;
 
     exe_dir(g_exedir, sizeof g_exedir);
-    rtinc[0] = 0;
     gen[0] = 0;
 
     for (i = 1; i < argc; i++) {
@@ -4967,33 +4294,33 @@ int main(int argc, char **argv)
         else if (!strcmp(a, "--emit-c") && i + 1 < argc) emitc = argv[++i];
         else if (!strcmp(a, "--keep")) keep = 1;
         else if (!strcmp(a, "--fast")) g_fast = 1;
-        else if (!strcmp(a, "--asm")) { g_asm = 1; g_fast = 1; }
+        else if (!strcmp(a, "--asm")) { /* 后端现在始终是汇编，保留选项只为兼容 */ }
         else if (!strcmp(a, "--check")) g_check = 1;
         else if (!strcmp(a, "--diag")) g_diag = 1;
         else if (!strcmp(a, "--run")) run = 1;
         else if (!strcmp(a, "--console")) g_console = 1;
         else if (!strcmp(a, "-v")) verbose = 1;
-        else if (!strcmp(a, "-g")) debug = 1;
-        else if (!strcmp(a, "-O0")) optlevel = 0;
-        else if (!strcmp(a, "-O1")) optlevel = 1;
-        else if (!strcmp(a, "-O2")) optlevel = 2;
-        else if (!strcmp(a, "-O3")) optlevel = 3;
+        else if (!strcmp(a, "-g")) keep = 1;          /* -g: 保留生成的 .s 供检查 */
+        else if (!strcmp(a, "-O0") || !strcmp(a, "-O1") ||
+                 !strcmp(a, "-O2") || !strcmp(a, "-O3"))
+            { /* 优化已内置在汇编后端里，选项保留兼容 */ }
         else if (a[0] == '-' && a[1]) fatal("不认识的选项 '%s'（可以试试 -h）", a);
         else if (!src) src = a;
         else fatal("一次只能编译一个源文件");
     }
+    g_verbose = verbose;
     if (!src) {
 #ifdef _WIN32
         fprintf(stderr,
-            "caskc: 没有输入文件（可以试�?-h 看帮助）\n"
+            "caskc: 没有输入文件（可以试试 -h 看帮助）\n"
             "  用法: caskc file.cask [-o out.exe] [--run]\n"
-            "  注意: caskc.exe 是命令行编译�?—�?双击它\n"
+            "  注意: caskc.exe 是命令行编译器 —— 双击它\n"
             "        没有用；要用图形编辑器请运行\n"
-            "        caskide.exe，或者这样编译一个文�?\n"
+            "        caskide.exe，或者这样编译一个文件:\n"
             "          caskc myfile.cask --run\n");
 #else
         fprintf(stderr,
-            "caskc: 没有输入文件（可以试�?-h 看帮助）\n"
+            "caskc: 没有输入文件（可以试试 -h 看帮助）\n"
             "  用法: caskc file.cask [-o out] [--run]\n"
             "  运行:  ./caskc myfile.cask --run\n"
             "  编辑:  ./bin/caskide.sh\n");
@@ -5015,13 +4342,11 @@ int main(int argc, char **argv)
     if (!out) out = outbuf;
     snprintf(gen, sizeof gen, "%s.gen.c", out);
 
-    if (!find_rt()) {
+    if (!find_rt() && emitc) {
         fprintf(stderr,
-            "caskc: 警告: 找不�?cask_rt.h（C* 的运行时头文件）。\n"
+            "caskc: 警告: 找不到 cask_rt.h（C* 的运行时头文件）。\n"
             "  请把 cask_rt.h 放在 caskc.exe 同一个文件夹里，\n"
             "  或者把环境变量 CASK_RT_DIR 设成放着它的文件夹。\n");
-    } else {
-        snprintf(rtinc, sizeof rtinc, "-I \"%s\"", g_rtdir);
     }
 
     g_file = src;
@@ -5030,9 +4355,9 @@ int main(int argc, char **argv)
     lex();
     if (g_errors) return 1;
 
-    /* --check only analyses: the generated C goes to the null device,
-     * so nothing is left behind and gcc is never started.              */
-    g_out = fopen(g_check ?
+    /* --check and the normal asm path write to the null device; only
+     * --emit-c actually creates the .gen.c file.                       */
+    g_out = fopen((g_check || !emitc) ?
 #ifdef _WIN32
         "NUL"
 #else
@@ -5046,9 +4371,11 @@ int main(int argc, char **argv)
     prescan();
     if (g_errors) { fclose(g_out); remove(gen); return 1; }
 
-    if (g_native) {
-        /* a window program needs C_OPED.cash next to the runtime header */
-        char hp[1200];
+    if (emitc && g_native) {
+        /* --emit-c needs C_OPED.cash next to the runtime header (the asm
+         * path links the prebuilt libcastrt.a instead, which already
+         * contains the toolkit) */
+        char hp[1400];
         int ok = 0;
         if (g_rtdir[0]) {
             snprintf(hp, sizeof hp, "%s\\C_OPED.cash", g_rtdir);
@@ -5060,14 +4387,14 @@ int main(int argc, char **argv)
         }
         if (!ok)
             err(g_native_line ? g_native_line : 1, 0,
-                "找不�?'C_OPED.cash' —�?请把它放�?caskc.exe 旁边�"
-                "或者把 CASK_RT_DIR 设成放着它的文件�");
+                "找不到 'C_OPED.cash' —— 请把它放在 caskc.exe 旁边，"
+                "或者把 CASK_RT_DIR 设成放着它的文件夹");
     }
     if (g_use_css && !g_native)
         err(g_css_line ? g_css_line : 1, 0,
             "'C_CSS.cash' 要配 'C_OPED.cash' 用 —— 请先写 use \"C_OPED.cash\";");
-    if (g_use_css) {
-        char hp[1200];
+    if (emitc && g_use_css) {
+        char hp[1400];
         int ok = 0;
         if (g_rtdir[0]) {
             snprintf(hp, sizeof hp, "%s\\C_CSS.cash", g_rtdir);
@@ -5079,8 +4406,8 @@ int main(int argc, char **argv)
         }
         if (!ok)
             err(g_css_line ? g_css_line : 1, 0,
-                "找不�?'C_CSS.cash' —�?请把它放�?caskc.exe 旁边�"
-                "或者把 CASK_RT_DIR 设成放着它的文件�");
+                "找不到 'C_CSS.cash' —— 请把它放在 caskc.exe 旁边，"
+                "或者把 CASK_RT_DIR 设成放着它的文件夹");
     }
     if (g_errors) { fclose(g_out); remove(gen); return 1; }
 
@@ -5109,258 +4436,61 @@ int main(int argc, char **argv)
         }
         fprintf(g_out, ");\n");
     }
-    if (g_errors) { fclose(g_out); return 1; }
+    if (g_errors) { fclose(g_out); g_out = NULL; remove(gen); return 1; }
 
     /* ---- full parse ---- */
     top = parse_program();
-    if (g_errors) { fclose(g_out); return 1; }
+    if (g_errors) { fclose(g_out); g_out = NULL; remove(gen); return 1; }
 
     for (f = g_funcs; f; f = f->next)
         if (!f->is_builtin && !f->defined && !f->is_proto)
             err(f->line, 0, "函数 '%s' 只声明了，从来没有定义", f->name);
     if (!g_has_start && !g_has_main)
         err(1, 0, "程序没有入口 —— 请加一个 'function main() { ... }' 块（或者 'start { ... }'）");
-    if (g_errors) { fclose(g_out); return 1; }
+    if (g_errors) { fclose(g_out); g_out = NULL; remove(gen); return 1; }
 
     /* ---- analysis ---- */
     analyze_slist(top, g_gscope);
-    if (g_errors) { fclose(g_out); return 1; }
+    if (g_errors) { fclose(g_out); g_out = NULL; remove(gen); return 1; }
 
     /* --check: the caller only wanted the list of problems */
     if (g_check) { fclose(g_out); g_out = NULL; return 0; }
 
-    /* ---- independent assembly backend: C* -> .s -> as + ld (no C compiler) */
-    if (g_asm) {
-        if (asm_backend_build(top, out, keep)) {
-            fclose(g_out);
-            g_out = NULL;
-            remove(gen);
-            printf("已生成 %s（独立汇编后端，未用 C 编译器）\n", out);
-            if (run) {
-#ifdef _WIN32
-                char rcmd[1400];
-                snprintf(rcmd, sizeof rcmd, "\"%s\"", out);
-                int rrc = run_child(rcmd);
-                if (rrc < 0) rrc = 1;
-#else
-                char rcmd[1400];
-                snprintf(rcmd, sizeof rcmd, "./%s", out);
-                int rrc = system(rcmd);
-#endif
-                return rrc == 0 ? 0 : 1;
-            }
-            return 0;
-        }
-        /* not expressible in the int subset (or as/ld missing): fall through
-         * to the C backend below so the program still builds. */
-        if (verbose) printf("[asm] 回退�?C 后端（含 float/字符�?数组 或缺�?as/ld）\n");
-    }
-
-    /* ---- emission ---- */
-    emit_slist(top);
-    if (g_native) {
-        /* a window program: the entry point the OS looks for */
-#ifdef _WIN32
-        fprintf(g_out,
-            "\nint WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lC, int nS)\n"
-            "{\n\t(void)hI; (void)hP; (void)lC; (void)nS;\n"
-            "\tmain();\n\treturn 0;\n}\n");
-#endif
-    }
-    fclose(g_out);
-    g_out = NULL;
-
+    /* ---- --emit-c: keep the old C-emitting path for debugging (the C is
+     *      written out but never compiled by caskc itself). ---- */
     if (emitc) {
+        emit_slist(top);
+        if (g_native) {
+#ifdef _WIN32
+            fprintf(g_out,
+                "\nint WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lC, int nS)\n"
+                "{\n\t(void)hI; (void)hP; (void)lC; (void)nS;\n"
+                "\tmain();\n\treturn 0;\n}\n");
+#endif
+        }
+        fclose(g_out);
+        g_out = NULL;
         remove(emitc);
         if (rename(gen, emitc) != 0) fatal("写不了 '%s'", emitc);
         printf("已写出 %s\n", emitc);
         return 0;
     }
 
-    /* ---- build cache: 生成 C（连同它 include 的头文件）都没变，就直接复用
-     *     上次�?exe，完全跳�?gcc/tcc —�?这是"编译过慢"里最大的一块�?     * 缓存�?= 生成 C 的哈�?+ cask_rt.h/C_OPED.cash/C_CSS.cash 的哈�?     * + 输出�?+ 优化�?调试/fast/console 标志。任何一项变了就重新编译�?*/
-    int skip_cc = 0;
-    {
-        char hex[24], key[1400], side[1400], prev[1400];
-        unsigned long long hh = file_hash(gen, hex, sizeof hex);
-        if (hh) {
-            snprintf(key, sizeof key, "caskc1|%s", hex);
-            if (g_rtdir[0]) {
-                char rp[1200];
-                snprintf(rp, sizeof rp, "%s\\cask_rt.h", g_rtdir);
-                if (!file_exists(rp)) snprintf(rp, sizeof rp, "%s/cask_rt.h", g_rtdir);
-                if (file_exists(rp)) {
-                    char hx[24];
-                    unsigned long long h2 = file_hash(rp, hx, sizeof hx);
-                    if (h2) snprintf(key + strlen(key), sizeof key - strlen(key),
-                                     "|rt:%s", hx);
-                }
-                if (g_native) {
-                    snprintf(rp, sizeof rp, "%s\\C_OPED.cash", g_rtdir);
-                    if (!file_exists(rp)) snprintf(rp, sizeof rp, "%s/C_OPED.cash", g_rtdir);
-                    if (file_exists(rp)) {
-                        char hx[24];
-                        unsigned long long h3 = file_hash(rp, hx, sizeof hx);
-                        if (h3) snprintf(key + strlen(key), sizeof key - strlen(key),
-                                         "|op:%s", hx);
-                    }
-                }
-                if (g_use_css) {
-                    snprintf(rp, sizeof rp, "%s\\C_CSS.cash", g_rtdir);
-                    if (!file_exists(rp)) snprintf(rp, sizeof rp, "%s/C_CSS.cash", g_rtdir);
-                    if (file_exists(rp)) {
-                        char hx[24];
-                        unsigned long long h4 = file_hash(rp, hx, sizeof hx);
-                        if (h4) snprintf(key + strlen(key), sizeof key - strlen(key),
-                                         "|css:%s", hx);
-                    }
-                }
-            }
-            /* key 只含会影�?exe 内容的因素；g_fast 决定 -O0 还是 -O2�?             * 必须�?key —�?用户切换"快编"开关时强制重建一份合适优化级�?exe�?*/
-            snprintf(key + strlen(key), sizeof key - strlen(key),
-                     "|%s|%d|%d|%d|%d", out, optlevel, debug, g_fast, g_console);
-            snprintf(side, sizeof side, "%s.cskc", out);
-            if (file_exists(out)) {
-                FILE *sf = fopen(side, "rb");
-                size_t rl = 0;
-                if (sf) { rl = fread(prev, 1, sizeof prev - 1, sf); fclose(sf); }
-                prev[rl] = 0;
-                if (strcmp(prev, key) == 0) {
-                    skip_cc = 1;
-                    printf("已生成 %s（内容没变，跳过 C 编译）\n", out);
-                }
-            }
-        }
-        /* 要真的编译（没命中缓存）时，记住这次�?key，编译成功后写进 sidecar */
-        if (!skip_cc)
-            memcpy(g_last_key, key, strlen(key) + 1);
+    /* ---- default: full x86-64 backend (C* -> .s -> as -> ld, no C compiler) ---- */
+    fclose(g_out);
+    g_out = NULL;                        /* only the null device was open */
+    if (!asm_backend_build(top, out, keep)) return 1;
+    if (run) {
+        int rrc;
+#ifdef _WIN32
+        snprintf(cmd, sizeof cmd, "\"%s\"", out);
+        rrc = run_child(cmd);
+        if (rrc < 0) rrc = 1;
+#else
+        snprintf(cmd, sizeof cmd, "./%s", out);
+        rrc = system(cmd);
+#endif
+        return rrc < 0 ? 1 : rrc;   /* keep the program's own exit code */
     }
-
-    /* ---- native compilation ---- */
-    {
-        const char *names[3];
-        int nnames = 0, k, started = 0, rc = -1;
-
-        /* --fast: 优先 tcc（毫秒级），没有才退�?gcc */
-        if (g_fast) {
-            names[nnames++] = "tcc";
-            names[nnames++] = "gcc";
-            names[nnames++] = "cc";
-        } else {
-            names[nnames++] = "gcc";
-            names[nnames++] = "cc";
-            names[nnames++] = "tcc";
-        }
-
-        /* 生成 C 和头文件都没�?�?直接复用现成 exe，完全跳�?C 编译�?*/
-        if (skip_cc) {
-            if (!keep) remove(gen);
-            if (run) {
-#ifdef _WIN32
-                snprintf(cmd, sizeof cmd, "\"%s\"", out);
-                rc = run_child(cmd);
-                if (rc < 0) rc = 1;
-#else
-                snprintf(cmd, sizeof cmd, "./%s", out);
-                rc = system(cmd);
-#endif
-                return rc == 0 ? 0 : 1;
-            }
-            return 0;
-        }
-
-        /* Try each compiler directly -- no PATH probing up front: the
-         * attempt itself is the probe (saves ~100ms per build). */
-        for (k = 0; k < nnames && !started; k++) {
-            const char *cc = names[k];
-#ifndef _WIN32
-            if (!have_prog(cc)) continue;
-#endif
-            if (!strcmp(cc, "tcc")) {
-                /* tcc 也按平台补上窗口程序需要的东西�?-fast 下优先用它） */
-#ifdef _WIN32
-                if (g_native && !g_console)
-                    snprintf(cmd, sizeof cmd,
-                        "tcc -mwindows -o \"%s\" \"%s\" %s -lm"
-                        " -luser32 -lgdi32 -lcomctl32 -lole32 -luuid"
-                        " -lshell32 -lcomdlg32 -lmsimg32",
-                        out, gen, g_rtdir[0] ? rtinc : "");
-                else
-                    snprintf(cmd, sizeof cmd, "tcc -o \"%s\" \"%s\" %s -lm",
-                             out, gen, g_rtdir[0] ? rtinc : "");
-#else
-                snprintf(cmd, sizeof cmd, "tcc -o \"%s\" \"%s\" %s -lm%s",
-                         out, gen, g_rtdir[0] ? rtinc : "",
-                         g_native ? " $(pkg-config --libs gtk+-3.0)" : "");
-#endif
-            } else {
-                /* -s (strip) shrinks the exe ~3x for free -- faster to
-                 * write and friendlier to antivirus scans; -g keeps symbols.
-                 * --fast �?-O0：编译速度优先于运行速度�?*/
-                int ol = (g_fast && !debug) ? 0 : optlevel;
-#ifdef _WIN32
-                snprintf(cmd, sizeof cmd, "%s -O%d%s%s%s -o \"%s\" \"%s\" %s -lm%s",
-                         cc, debug ? 0 : ol, debug ? " -g" : "",
-                         debug ? "" : " -s",
-                         (g_native && !g_console) ? " -mwindows" : "",
-                         out, gen, g_rtdir[0] ? rtinc : "",
-                         g_native ? " -luser32 -lgdi32 -lcomctl32 -lole32 -luuid"
-                                    " -lshell32 -lcomdlg32 -lmsimg32" : "");
-#else
-                snprintf(cmd, sizeof cmd, "%s -O%d%s%s -o \"%s\" \"%s\" %s -lm%s",
-                         cc, debug ? 0 : ol, debug ? " -g" : "",
-                         debug ? "" : " -s",
-                         out, gen, g_rtdir[0] ? rtinc : "",
-                         g_native ? " $(pkg-config --libs gtk+-3.0)" : "");
-#endif
-            }
-            if (verbose) printf("正在运行: %s\n", cmd);
-#ifdef _WIN32
-            rc = run_child(cmd);   /* -1 = this compiler is not installed */
-            if (rc >= 0) started = 1;
-#else
-            rc = system(cmd);
-            started = 1;
-#endif
-        }
-        if (!started) {
-            fprintf(stderr,
-                "caskc: 找不�?C 编译器（PATH 里要�?'gcc' �?'tcc'）。\n"
-#ifdef _WIN32
-                "  请安�?MinGW-w64（Dev-C++ / MSYS2 / w64devkit）或 TCC。\n"
-#else
-                "  请安�?gcc / cc（apt install build-essential）或 TCC。\n"
-                "  窗口程序还需�?gtk3 开发包（apt install libgtk-3-dev）。\n"
-#endif
-                "  生成的 C 代码已保留: %s\n", gen);
-            return 1;
-        }
-        if (rc != 0) {
-            fprintf(stderr, "caskc: C 编译器报了问题（见上面）。\n"
-                            "  生成的 C 代码已保留，可以自己看: %s\n", gen);
-            return 1;
-        }
-        if (!keep) remove(gen);
-        /* record the cache key so an unchanged rebuild skips gcc */
-        if (g_last_key[0]) {
-            char side2[1400];
-            FILE *wf;
-            snprintf(side2, sizeof side2, "%s.cskc", out);
-            wf = fopen(side2, "wb");
-            if (wf) { fputs(g_last_key, wf); fclose(wf); }
-        }
-        printf("已生成 %s\n", out);
-        if (run) {
-#ifdef _WIN32
-            snprintf(cmd, sizeof cmd, "\"%s\"", out);
-            rc = run_child(cmd);
-            if (rc < 0) rc = 1;
-#else
-            snprintf(cmd, sizeof cmd, "./%s", out);
-            rc = system(cmd);
-#endif
-            return rc == 0 ? 0 : 1;
-        }
-        return 0;
-    }
+    return 0;
 }

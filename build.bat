@@ -30,6 +30,40 @@ if errorlevel 1 (
     exit /b 1
 )
 
+echo [build] runtime   -^> bin\libcastrt.a
+gcc -O2 -w -c compiler\cask_rt.c -o build\cask_rt.o
+if errorlevel 1 (
+    echo [build] FAILED to build compiler\cask_rt.c.
+    exit /b 1
+)
+gcc -O2 -w -c compiler\cask_gui.c -o build\cask_gui.o
+if errorlevel 1 (
+    echo [build] FAILED to build compiler\cask_gui.c.
+    exit /b 1
+)
+gcc -O2 -w -c compiler\cask_io.c -o build\cask_io.o
+if errorlevel 1 (
+    echo [build] FAILED to build compiler\cask_io.c.
+    exit /b 1
+)
+ar rcs bin\libcastrt.a build\cask_rt.o build\cask_gui.o build\cask_io.o
+if errorlevel 1 (
+    echo [build] FAILED to create bin\libcastrt.a.
+    exit /b 1
+)
+
+rem  libgcc (chkstk / libmingw32 pseudo-relocs need it) is copied next to
+rem  caskc.exe so compiling .cask needs binutils (as/ld) but NOT gcc on the
+rem  user's machine; crt2.o is found at runtime by probing the MinGW lib
+rem  directory next to `where ld`.
+for /f "delims=" %%F in ('gcc -print-libgcc-file-name') do set "LIBGCC=%%F"
+if exist "%LIBGCC%" if /i not "%LIBGCC%"=="libgcc.a" (
+    copy /y "%LIBGCC%" bin\libgcc.a >nul
+    echo [build] libgcc   -^> bin\libgcc.a
+) else (
+    echo [build] WARNING: libgcc.a not found -^> linking .cask programs will fail.
+)
+
 if exist editor\webide.c (
     echo [build] editor    -^> bin\caskide.exe
     rem  C host (window + local web server) and the C++ WebView2 glue,
@@ -69,6 +103,8 @@ echo [build] header    -^> bin\C_OPED.cash
 copy /y compiler\C_OPED.cash bin\C_OPED.cash >nul
 echo [build] header    -^> bin\C_CSS.cash
 copy /y compiler\C_CSS.cash bin\C_CSS.cash >nul
+echo [build] header    -^> bin\C_IO.cash
+copy /y compiler\C_IO.cash bin\C_IO.cash >nul
 if exist build\C_OPED.cash del /q build\C_OPED.cash >nul
 if exist build\C_CSS.cash del /q build\C_CSS.cash >nul
 if exist examples\C_OPED.cash del /q examples\C_OPED.cash >nul

@@ -21,6 +21,23 @@ mkdir -p bin build
 echo "[build] compiler  -> bin/caskc"
 $CC -O2 -Wall -Wextra -o bin/caskc compiler/caskc.c
 
+# Prebuilt runtime library that .cask programs link against (no C compiler
+# is ever invoked when compiling a .cask: as + ld only).
+echo "[build] runtime   -> bin/libcastrt.a"
+$CC -O2 -w -c compiler/cask_rt.c -o build/cask_rt.o
+$CC -O2 -w -c compiler/cask_io.c -o build/cask_io.o
+GUI_OBJ="build/cask_io.o"
+if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists gtk+-3.0; then
+  # window toolkit + css live inside the runtime library too
+  $CC -O2 -w $(pkg-config --cflags gtk+-3.0) -c compiler/cask_gui.c -o build/cask_gui.o
+  GUI_OBJ="build/cask_gui.o build/cask_io.o"
+else
+  echo "[build] note: GTK3 dev not found -- the runtime library will not"
+  echo "        include the window toolkit (console programs still work)."
+fi
+ar rcs bin/libcastrt.a build/cask_rt.o $GUI_OBJ
+echo "[build] runtime   -> bin/libcastrt.a"
+
 # GTK3 is only needed to build window programs; warn, don't fail.
 if command -v pkg-config >/dev/null 2>&1; then
   if ! pkg-config --exists gtk+-3.0; then
@@ -54,10 +71,11 @@ for f in index.html style.css editor.js app.js blocks.js syntax.js header-info.j
   cp web/$f bin/web/$f
 done
 
-# runtime header + window / css headers
+# runtime header + window / css / io headers
 cp compiler/cask_rt.h bin/cask_rt.h
 cp compiler/C_OPED.cash bin/C_OPED.cash
 cp compiler/C_CSS.cash bin/C_CSS.cash
+cp compiler/C_IO.cash bin/C_IO.cash
 # never let a stale copy in build/ shadow the bin/ headers
 rm -f build/C_OPED.cash build/C_CSS.cash examples/C_OPED.cash examples/C_CSS.cash 2>/dev/null || true
 

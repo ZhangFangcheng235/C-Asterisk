@@ -1,5 +1,5 @@
 /* ============================================================
- *  C_OPED.cash -- the C* window header  (C* 0.4.2)
+ *  C_OPED.cash -- the C* window header  (C* 0.5.0)
  *
  *  A C* program that starts with
  *
@@ -65,6 +65,8 @@ static HFONT  cask_op_uifont  = 0;
  * default handling so ordinary labels keep their look. */
 static COLORREF cask_css_fg[CASK_OP_MAX] = { 0 };
 static HBRUSH   cask_css_bg[CASK_OP_MAX] = { 0 };
+static COLORREF cask_css_bgc[CASK_OP_MAX] = { 0 };   /* background colour, for SetBkColor */
+static HBRUSH   cask_css_winbg = NULL;   /* main-window background (csbg on the window) */
 
 static int cask_op_slot(HWND h)
 {
@@ -75,6 +77,7 @@ static int cask_op_slot(HWND h)
     cask_op_hwnd[i] = h;
     cask_css_fg[i] = 0;
     cask_css_bg[i] = 0;
+    cask_css_bgc[i] = 0;
     return i;
 }
 static HWND cask_op_get(long long id)
@@ -142,7 +145,10 @@ static LRESULT CALLBACK cask_op_wndproc(HWND h, UINT m, WPARAM wp, LPARAM lp)
         if (ci >= 0) {
             SetTextColor(dc, cask_css_fg[ci] ? cask_css_fg[ci] : 0x303030);
             if (cask_css_bg[ci]) {
+                /* edits repaint their whole client with ETO_OPAQUE using
+                 * the text background colour -- it must match the brush */
                 SetBkMode(dc, OPAQUE);
+                SetBkColor(dc, cask_css_bgc[ci] ? cask_css_bgc[ci] : 0xFFFFFF);
                 return (LRESULT)cask_css_bg[ci];
             }
             SetBkMode(dc, TRANSPARENT);
@@ -150,6 +156,48 @@ static LRESULT CALLBACK cask_op_wndproc(HWND h, UINT m, WPARAM wp, LPARAM lp)
         }
         break;
     }
+    case WM_DRAWITEM: {
+        /* owner-draw buttons: csbg/cstext fully control the face.
+         * (Win10/11 visual styles ignore WM_CTLCOLORBTN, so standard
+         *  buttons could never be themed -- this is the way.)          */
+        LPDRAWITEMSTRUCT d = (LPDRAWITEMSTRUCT)lp;
+        int ci;
+        if (!d || d->CtlType != ODT_BUTTON) break;
+        ci = cask_op_index_of(d->hwndItem);
+        if (ci >= 0) {
+            COLORREF fg = cask_css_fg[ci];
+            HBRUSH bg = cask_css_bg[ci];
+            wchar_t txt[160];
+            HBRUSH old;
+            if (bg) old = (HBRUSH)SelectObject(d->hDC, bg);
+            else    old = (HBRUSH)SelectObject(d->hDC, GetSysColorBrush(COLOR_BTNFACE));
+            FillRect(d->hDC, &d->rcItem, (HBRUSH)GetCurrentObject(d->hDC, OBJ_BRUSH));
+            SelectObject(d->hDC, old);
+            SetBkMode(d->hDC, TRANSPARENT);
+            if (!fg) fg = GetSysColor(COLOR_BTNTEXT);
+            SetTextColor(d->hDC, fg);
+            txt[0] = 0;
+            GetWindowTextW(d->hwndItem, txt, 160);
+            DrawTextW(d->hDC, txt, -1, &d->rcItem,
+                      DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+            if (d->itemState & ODS_FOCUS) {
+                RECT r = d->rcItem;
+                InflateRect(&r, -3, -3);
+                DrawFocusRect(d->hDC, &r);
+            }
+            return (LRESULT)TRUE;
+        }
+        break;
+    }
+    case WM_ERASEBKGND:
+        if (cask_css_winbg) {
+            RECT r;
+            if (GetClientRect(h, &r)) {
+                FillRect((HDC)wp, &r, cask_css_winbg);
+                return (LRESULT)1;
+            }
+        }
+        break;
     case WM_CLOSE:
         if (on_close) on_close();
         DestroyWindow(h);
@@ -211,7 +259,7 @@ static long long cask_op_make(int kind, const char *text,
     if (!cask_op_main) return -1;
     switch (kind) {
     case 0: cls = L"STATIC";   style = SS_LEFT;  break;
-    case 1: cls = L"BUTTON";   style = BS_PUSHBUTTON; break;
+    case 1: cls = L"BUTTON";   style = BS_PUSHBUTTON | BS_OWNERDRAW; break;
     case 2: cls = L"EDIT";     style = WS_BORDER | ES_AUTOHSCROLL; break;
     case 3: cls = L"EDIT";     style = WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL
                                        | ES_WANTRETURN | WS_VSCROLL; break;
@@ -277,6 +325,27 @@ static long long ask(const char *text, const char *title)
 { return MessageBoxW(NULL, cask_op_wide(text), cask_op_wide(title), MB_YESNO | MB_ICONQUESTION) == IDYES ? 1 : 0; }
 static long long sleep(long long ms) { Sleep((DWORD)(ms < 0 ? 0 : ms)); return 0; }
 static long long destroy(long long id) { HWND h = cask_op_get(id); if (h) { if (h == cask_op_main) PostMessageW(h, WM_CLOSE, 0, 0); else DestroyWindow(h); } return 0; }
+
+/* launch(命令行) -- 启动一个外部程序，不等它退出。
+ * 返回 1 表示启动成功。命令行按 Windows 规则解析，路径里的空格要用
+ * 引号包住；想先 cd 到游戏目录可以写成:
+ *   launch("cmd /c cd /d \"D:\\mc\" && javaw ...")
+ */
+static long long launch(const char *cmd)
+{
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    if (!cmd || !*cmd) return 0;
+    memset(&si, 0, sizeof si);
+    memset(&pi, 0, sizeof pi);
+    si.cb = sizeof si;
+    if (!CreateProcessW(NULL, cask_op_wide(cmd), NULL, NULL, FALSE,
+                        0, NULL, NULL, &si, &pi))
+        return 0;
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    return 1;                       /* 子进程已在跑，立刻返回 */
+}
 
 /* run();  -- show the window and wait for clicks until it is closed */
 static long long run(void)
@@ -635,6 +704,22 @@ static long long GetTickCount(void)
     clock_gettime(CLOCK_MONOTONIC, &ts);
     { long long now = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
       return now - t0; }
+}
+
+/* launch(命令行) -- 启动一个外部程序，不等它退出（fork + sh -c）。
+ * 返回 1 表示启动成功；子进程独立运行，启动器退出后由 init 收养。 */
+static long long launch(const char *cmd)
+{
+    pid_t pid;
+    if (!cmd || !*cmd) return 0;
+    pid = fork();
+    if (pid < 0) return 0;
+    if (pid == 0) {                      /* 子进程：脱离、执行、失败就退出 */
+        setsid();
+        execl("/bin/sh", "sh", "-c", cmd, (char *)NULL);
+        _exit(127);
+    }
+    return 1;                            /* 父进程：不等子进程 */
 }
 
 /* run();  -- enter the GTK event loop until the main window is closed */

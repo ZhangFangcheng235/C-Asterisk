@@ -54,7 +54,7 @@ Or let VS Code do it — add a task that calls the compiler
 From the Marketplace: click **Install**, or from a `.vsix` file:
 
 ```powershell
-code --install-extension c-asterisk-0.4.2.vsix
+code --install-extension c-asterisk-0.5.0.vsix
 ```
 
 ## License

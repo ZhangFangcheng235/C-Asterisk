@@ -24,8 +24,8 @@ var App = (function () {
     view: localStorage.getItem('cs.view') || 'code',
     outShown: localStorage.getItem('cs.out') !== '0',
     probsShown: true,
-    /* 快速编译：优先 tcc / -O0，编译更快；默认开（编辑器 F5 走 --fast），
-     * 想要最高运行性能就关掉走 gcc -O2 */
+    /* 快编：编译走内置汇编后端（as + ld，本身就快）；开关控制的是
+     * 运行时的溢出/越界检查——开着跳过检查（运行更快），关掉带完整检查 */
     fast: localStorage.getItem('cs.fast') !== '0'
   };
 
@@ -401,8 +401,8 @@ var App = (function () {
       state.fast = !state.fast;
       localStorage.setItem('cs.fast', state.fast ? '1' : '0');
       syncFastBtn();
-      toast(state.fast ? '快速编译：开（tcc／-O0，编译更快）'
-                       : '快速编译：关（gcc -O2，运行最快）');
+      toast(state.fast ? '快编：开（跳过溢出/越界检查，运行更快）'
+                       : '快编：关（完整检查，默认）');
     };
     $('btn-stop').onclick = stop;
     $('btn-view-code').onclick = function () { setView('code'); };
@@ -431,8 +431,8 @@ var App = (function () {
       var b = $('btn-fast');
       b.classList.toggle('on', !!state.fast);
       b.title = state.fast
-        ? '快速编译：开（tcc／-O0，编译更快）；点一下关掉走 gcc -O2'
-        : '快速编译：关（gcc -O2，运行最快）；点一下开启 tcc／-O0 快编';
+        ? '快编：开（跳过溢出/越界检查）；点一下关掉走完整检查'
+        : '快编：关（完整检查，默认）；点一下开启跳过检查的快编';
     }
 
     /* the menu bar reuses popup(); every item calls the same function the

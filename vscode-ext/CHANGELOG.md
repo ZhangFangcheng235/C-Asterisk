@@ -1,5 +1,21 @@
 # Change Log
 
+## 0.5.0
+
+- Follows C* 0.5.0. The compiler now emits x86-64 assembly directly
+  (`.cask` → `.s` → `as` → `ld`), so no C compiler is involved when
+  building a `.cask` program; only `as`/`ld` plus `libcastrt.a`.
+- New header `use "C_IO.cash";`: `readfile` `writefile` `appendfile`
+  `fileexists` `makedir` `appdir` `envget` `launchwait` (file and system
+  helpers that also work in console programs).
+- Window styling on Windows is real now: owner-drawn buttons, window
+  background, edit-control background, and DPI-correct `csfont` sizes.
+- New sample `examples/mc_launcher.cask` (Minecraft launcher built with
+  `C_IO.cash` + `C_CSS.cash`).
+- Fixed in the assembly backend: `TRUE()/FALSE()` in expressions, signed
+  `char` operands, excess array initializers, `INT64_MIN % -1`, nested
+  calls to non-ASCII function names, and `--fast` letter range checks.
+
 ## 0.4.2
 
 - Language now builds and runs on **Linux and macOS** as well as Windows:

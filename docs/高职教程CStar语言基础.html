@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>C* 语言基础（高职 · 0.4.2）</title>
+<title>C* 语言基础（高职 · 0.5.0）</title>
 <style>
   body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
          line-height: 1.7; color: #222; background: #fafafa;
@@ -27,10 +27,15 @@
 </style>
 </head>
 <body>
-<h1>C* 语言基础（高职 · 0.4.2）</h1>
+<h1>C* 语言基础（高职 · 0.5.0）</h1>
 <blockquote><p>面向高等职业教育 <strong>软件技术 / 大数据技术 / 人工智能技术应用</strong> 等专业的程序设计入门课。
-语言版本 <strong>0.4.2</strong>；编译器 <code>bin\caskc.exe</code>；配套编辑器 **C* Studio**（<code>bin\caskide.exe</code>）。
-C* 读作 <strong>C Asterisk</strong>（C 加一个星号）。</p></blockquote>
+语言版本 <strong>0.5.0</strong>；编译器 <code>bin\caskc.exe</code>；配套编辑器 **C* Studio**（<code>bin\caskide.exe</code>）。
+C* 读作 <strong>C Asterisk</strong>（C 加一个星号）。
+
+<strong>0.5.0 新增</strong>：第 10 章「文件读写与界面美化」——用 <code>use "C_IO.cash";</code> 让程序读写文件、
+记住配置，用 <code>use "C_CSS.cash";</code> 给窗口界面配色。0.5.0 起 Windows 上的按钮改为自绘，
+美化函数才真正生效。全书把"先翻译成 C 再交给 gcc"的旧说法改成了"直接生成 x86-64 汇编，
+用 <code>as</code> + <code>ld</code> 链接"。</p></blockquote>
 <hr>
 <h2>本书怎么用</h2>
 <p>这本书按"做一个能跑起来的小程序"来组织。每章开头先给一个工作场景里的小任务，再补上完成任务需要的语法，然后动手做出来，最后讲规范、讲坑。</p>
@@ -56,11 +61,11 @@ C* 读作 <strong>C Asterisk</strong>（C 加一个星号）。</p></blockquote>
 <tr><td><code> </code>`<code>bat </code></td><td>在 Windows 命令行（cmd）里敲的命令</td></tr>
 <tr><td><code> </code>`<code>c </code></td><td>生成的 C 代码，或者 C 语言片段（只用来对照）</td></tr>
 </tbody></table>
-<p>全书所有带 <code>function main()</code> 的 C* 程序都在 <strong>0.4.2</strong> 编译器上真实编译过。窗口程序只编译、不自动运行（它要开窗口，会一直等你关掉），正文里会写清楚运行时你会看到什么。</p>
+<p>全书所有带 <code>function main()</code> 的 C* 程序都在 <strong>0.5.0</strong> 编译器上真实编译过。窗口程序只编译、不自动运行（它要开窗口，会一直等你关掉），正文里会写清楚运行时你会看到什么。</p>
 <h3>上机环境</h3>
-<ol><li>Windows 10/11，装机时已经装好 gcc（MinGW-w64，Dev-C++ 或 Strawberry Perl 自带的那份都行）。</li><li>把整个 <code>C_AS</code> 目录拷到本机，比如 <code>D:\C_AS\</code>。目录里要有 <code>bin\caskc.exe</code>、<code>bin\caskide.exe</code>、<code>bin\cask_rt.h</code>、<code>bin\C_OPED.cash</code>。</li><li>在命令行里 <code>cd</code> 到 <code>C_AS</code> 目录，敲 <code>bin\caskc.exe --version</code>，能打出版本号 <code>0.4.2</code> 就算装好了。</li></ol>
-<h3>0.4.2 的类型名（重点）</h3>
-<p>0.4.2 用下面这套类型名。<strong>新写的程序一律用这套</strong>。</p>
+<ol><li>Windows 10/11，装机时已经装好 binutils（<code>as</code> / <code>ld</code>，MinGW-w64 系自带，Dev-C++、MSYS2、w64devkit、Strawberry Perl 里的都行）。<strong>编译 <code>.cask</code> 程序不再需要 gcc</strong>——<code>caskc</code> 直接生成 x86-64 汇编，用 <code>as</code> + <code>ld</code> 链接预编译好的 <code>bin\libcastrt.a</code>；只有构建工具链本身（<code>build.bat</code>）才需要 gcc / g++。</li><li>把整个 <code>C_AS</code> 目录拷到本机，比如 <code>D:\C_AS\</code>。目录里要有 <code>bin\caskc.exe</code>、<code>bin\caskide.exe</code>、<code>bin\cask_rt.h</code>、<code>bin\libcastrt.a</code>、<code>bin\C_OPED.cash</code>、<code>bin\C_CSS.cash</code>、<code>bin\C_IO.cash</code>。</li><li>在命令行里 <code>cd</code> 到 <code>C_AS</code> 目录，敲 <code>bin\caskc.exe --version</code>，能打出版本号 <code>0.5.0</code> 就算装好了。</li></ol>
+<h3>0.5.0 的类型名（重点）</h3>
+<p>0.5.0 用下面这套类型名。<strong>新写的程序一律用这套</strong>。</p>
 <table>
 <thead><tr><th>类型</th><th>含义</th><th>写法示例</th></tr></thead>
 <tbody>
@@ -90,11 +95,11 @@ C* 读作 <strong>C Asterisk</strong>（C 加一个星号）。</p></blockquote>
 <p>这里先记住一条限制：<strong>只有 C 和 C++ 的世界是对你打开的，C# / .NET 没有 C 头文件，用不了。</strong></p>
 <hr>
 <h2>目录</h2>
-<ul><li>第 1 章　认识 C* 与开发环境</li><li>第 2 章　数据类型与变量</li><li>第 3 章　运算符与内置函数</li><li>第 4 章　流程控制</li><li>第 5 章　函数与模块化</li><li>第 6 章　数组与字符串处理</li><li>第 7 章　综合实训一：控制台小程序（学籍成绩统计）</li><li>第 8 章　窗口程序入门</li><li>第 9 章　窗口程序进阶</li><li>第 10 章　调用系统与 C 函数</li><li>第 11 章　综合实训二与项目交付规范</li><li>附录 A　语法速查表</li><li>附录 B　错误分级与调试流程</li><li>附录 C　从 C* 到 C 的对照表</li><li>附录 D　综合项目</li><li>附录 E　部分习题参考答案</li><li>附录 F　彩蛋与暗号：<code>rcl()</code></li></ul>
+<ul><li>第 1 章　认识 C* 与开发环境</li><li>第 2 章　数据类型与变量</li><li>第 3 章　运算符与内置函数</li><li>第 4 章　流程控制</li><li>第 5 章　函数与模块化</li><li>第 6 章　数组与字符串处理</li><li>第 7 章　综合实训一：控制台小程序（学籍成绩统计）</li><li>第 8 章　窗口程序入门</li><li>第 9 章　窗口程序进阶</li><li>第 10 章　文件读写与界面美化</li><li>第 11 章　调用系统与 C 函数</li><li>第 12 章　综合实训二与项目交付规范</li><li>附录 A　语法速查表</li><li>附录 B　错误分级与调试流程</li><li>附录 C　从 C* 到 C 的对照表</li><li>附录 D　综合项目</li><li>附录 E　部分习题参考答案</li><li>附录 F　彩蛋与暗号：<code>rcl()</code></li></ul>
 <hr>
 <h2>第 1 章　认识 C* 与开发环境</h2>
 <h3>学习目标</h3>
-<ul><li>说清 C* 是什么、源文件后缀是什么、编译器和编辑器分别叫什么。</li><li>用 C* Studio 写出、运行第一个程序，会用 F5 运行、Esc 停止。</li><li>分清编辑器状态栏上的四级问题：严重、语法、拼写、提示，会用"问题"面板跳到出错行。</li><li>会在命令行用 <code>bin\caskc.exe</code> 编译和运行程序，会用 <code>--keep</code> 看一眼生成的 C 代码。</li><li>知道中文全角标点为什么会让程序报错。</li></ul>
+<ul><li>说清 C* 是什么、源文件后缀是什么、编译器和编辑器分别叫什么。</li><li>用 C* Studio 写出、运行第一个程序，会用 F5 运行、Esc 停止。</li><li>分清编辑器状态栏上的四级问题：严重、语法、拼写、提示，会用"问题"面板跳到出错行。</li><li>会在命令行用 <code>bin\caskc.exe</code> 编译和运行程序，会用自己的语言说出"<code>--emit-c</code> 是写一份等价的 C 代码来对照，<code>-v</code> 能看到 <code>as</code> / <code>ld</code> 两条命令"。</li><li>知道中文全角标点为什么会让程序报错。</li></ul>
 <h3>任务引入</h3>
 <p>第一天进机房，老师要求每人交一个能跑的程序，屏幕上打印一张"自我介绍卡片"，最后一行写自己的名字。要求用编辑器写、能运行、能保存。</p>
 <p>这个任务只有四行输出，但它把一天的流程都走完了：新建文件、写代码、编译、运行、保存、交作业。做不完这个任务，后面所有实验都无从开始。</p>
@@ -108,9 +113,9 @@ C* 读作 <strong>C Asterisk</strong>（C 加一个星号）。</p></blockquote>
 <tr><td>变量名可以用中文</td><td><code>int 分数 = 90;</code>、<code>string 名字 = "小明";</code></td></tr>
 <tr><td>出错不闷头乱算</td><td>数组越界、除以零、整数溢出都会当场停下并指出出错行</td></tr>
 <tr><td>两种写法</td><td>代码视图写 <code>.cask</code> 文件，积木视图拖积木，两边随时切换</td></tr>
-<tr><td>先翻译成 C 再编译</td><td><code>.cask</code> 先变成 C 代码，再交给 gcc 编成真正的 exe</td></tr>
+<tr><td>直接生成原生 exe</td><td><code>.cask</code> 直接生成 x86-64 汇编，再由 <code>as</code> + <code>ld</code> 链接成 exe，不经过 C 编译器</td></tr>
 </tbody></table>
-<p>最后一条很关键：**C* 程序最后就是 C 程序**。所以第 10 章讲怎么调用 C 函数，附录 C 讲 C* 和 C 的对照关系——你现在写的每一行，都知道它变成 C 是什么样子。</p>
+<p>最后一条很关键：**C* 程序直接生成 x86-64 汇编，再用 <code>as</code> + <code>ld</code> 链接成原生 exe，全程不调用 C 编译器**。<code>--emit-c</code> 仍然能写出一份等价的 C 代码供对照（附录 C 讲 C* 和 C 的对照关系），但正式编译走的是汇编后端。第 11 章讲怎么把 C / Win32 函数借进程序里用。</p>
 <h4>1.2 三个东西：源文件、编译器、编辑器</h4>
 <table>
 <thead><tr><th>名字</th><th>文件</th><th>干什么</th></tr></thead>
@@ -169,14 +174,14 @@ function main() {
 <p><strong>边写边查</strong>：停下打字大约半秒，编辑器会在后台跑一遍检查，把问题列在"问题"面板里，并在行号栏上标出出错的行。点面板里的一条，光标就跳到那一行。</p>
 <h4>1.5 从 .cask 到 .exe，中间发生了什么</h4>
 <p>在命令行里可以自己看一眼这中间的过程。下面命令里的 <code>程序.cask</code> 换成你自己的文件名：</p>
-<pre><code class="lang-bat">bin\caskc.exe 程序.cask                 :: 编译出 程序.exe（默认优化）
+<pre><code class="lang-bat">bin\caskc.exe 程序.cask                 :: 编译出 程序.exe（默认带完整检查）
 bin\caskc.exe 程序.cask --run           :: 编译完立刻运行
 bin\caskc.exe 程序.cask -o 我的.exe      :: 指定输出的 exe 名字
-bin\caskc.exe 程序.cask --keep          :: 保留生成的 C 代码（程序.cask.gen.c）
 bin\caskc.exe 程序.cask --check         :: 只检查，不生成任何文件
-bin\caskc.exe 程序.cask -v              :: 显示真正执行的 gcc 命令
-bin\caskc.exe 程序.cask -g              :: 调试版，带详细信息</code></pre>
-<p><code>--keep</code> 生成的 <code>.gen.c</code> 文件可以用记事本打开，那就是你写的 C* 翻译出来的 C 代码。第一章先知道有这回事，附录 C 会教你怎么读它。</p>
+bin\caskc.exe 程序.cask -v              :: 显示真正执行的 as / ld 命令
+bin\caskc.exe 程序.cask -g             :: 保留生成的 .s 汇编文件
+bin\caskc.exe 程序.cask --emit-c 文件.c  :: 只写出一份等价的 C 代码（对照用，不编译）</code></pre>
+<p>真正生成 <code>.exe</code> 的路径是：<strong><code>.cask</code> 直接生成 x86-64 汇编（<code>.s</code>），再用 <code>as</code> 汇编、用 <code>ld</code> 链接上预编译好的运行时库 <code>bin\libcastrt.a</code>，全程不调用 C 编译器</strong>。<code>-v</code> 能看到这两条命令。<code>--keep</code> / <code>-g</code> 留下中间那份 <code>.s</code> 汇编；<code>--emit-c 文件.c</code> 则是另写一份<strong>等价的 C 代码</strong>——只为对照、调试，正常编译不会用到它。第一章先知道有这回事，附录 C 会讲 C* 和 C 的对照关系。</p>
 <h4>1.6 四级问题：严重、语法、拼写、提示</h4>
 <p>编辑器把发现的问题分成四级，状态栏上一直显示四个计数：</p>
 <table>
@@ -217,9 +222,10 @@ function main() {
 <p>看到的输出和编辑器里一样。</p>
 <p><strong>第 5 步　故意写错一次，认识报错。</strong> 把第 3 行的分号删掉，再按 F5。问题面板会出现一条语法问题，大意是这一行少了分号。这就是"语法"级。</p>
 <p>再把 <code>print</code> 写成 <code>prnt</code>，问题面板给出的是"拼写"级，还会问你"是不是想写 print"。</p>
-<p><strong>第 6 步　看一眼生成的 C。</strong> 在命令行里：</p>
-<pre><code class="lang-bat">bin\caskc.exe card.cask --keep</code></pre>
-<p>旁边会多出一个 <code>card.exe.gen.c</code>。打开看一眼前面的几行就能看到：<code>print "..."</code> 变成了 <code>cask_p_str("...")</code> 加一个换行。不用看懂细节，知道有这么个中间文件就够了。</p>
+<p><strong>第 6 步　看一眼等价的 C（对照用）。</strong> 在命令行里：</p>
+<pre><code class="lang-bat">bin\caskc.exe card.cask --emit-c card.gen.c</code></pre>
+<p>旁边会多出一个 <code>card.gen.c</code>。打开看一眼前面的几行就能看到：<code>print "..."</code> 变成了 <code>cask_p_str("...")</code> 加一个换行。不用看懂细节，知道有这么回事就够了。</p>
+<blockquote><p>记住：<code>--emit-c</code> 只是把程序<strong>翻成一份等价 C 给你看</strong>，正式生成 <code>.exe</code> 走的是另一条路——直接产出 x86-64 汇编，再用 <code>as</code> + <code>ld</code> 链接（见 1.5 节）。</p></blockquote>
 <h3>拓展与规范</h3>
 <p><strong>命名规范。</strong> 变量名、函数名用"看得懂"的名字：<code>总分</code>、<code>平均分</code>、<code>isPassed</code> 都比 <code>a</code>、<code>b</code>、<code>x1</code> 好。小写英文加下划线、或者直接用中文，两种都行，一个项目里保持统一。名字不能以数字开头。</p>
 <p><strong>注释。</strong> <code>//</code> 写一行注释，<code>/* 多行 */</code> 写多行。注释写"为什么这么做"，不要复述代码：</p>
@@ -232,7 +238,7 @@ function main() {
 <p><strong>别把变量名写成关键字。</strong> <code>int print = 1;</code> 不行，<code>print</code>、<code>if</code>、<code>for</code>、<code>int</code> 这些是关键字，还有 <code>IF</code>、<code>SUM</code>、<code>LEN</code> 这些内置函数名也不能当变量名。</p>
 <p><strong>一个程序只能有一个 <code>function main()</code>。</strong> 多了会报错。</p>
 <h3>本章小结</h3>
-<ul><li>源文件后缀是 <code>.cask</code>，编译器是 <code>bin\caskc.exe</code>，编辑器是 <code>bin\caskide.exe</code>（C* Studio）。</li><li>程序从 <code>function main() { }</code> 开始执行；<code>print</code> 输出并换行，<code>show</code> 输出不换行；<code>//</code> 写注释。</li><li>顺序是：写代码 → 编译 → 运行。编辑器按 F5，命令行用 <code>--run</code>；要停按 Esc。</li><li>问题分四级：严重、语法、拼写、提示。前三级必须改掉，提示可以不管但建议改。</li><li><code>.cask</code> 先翻译成 C，再由 gcc 编成 exe；<code>--keep</code> 能留下中间那份 C 代码。</li><li>标点必须用英文半角；中文只用在字符串和名字里。</li></ul>
+<ul><li>源文件后缀是 <code>.cask</code>，编译器是 <code>bin\caskc.exe</code>，编辑器是 <code>bin\caskide.exe</code>（C* Studio）。</li><li>程序从 <code>function main() { }</code> 开始执行；<code>print</code> 输出并换行，<code>show</code> 输出不换行；<code>//</code> 写注释。</li><li>顺序是：写代码 → 编译 → 运行。编辑器按 F5，命令行用 <code>--run</code>；要停按 Esc。</li><li>问题分四级：严重、语法、拼写、提示。前三级必须改掉，提示可以不管但建议改。</li><li><code>.cask</code> 直接生成 x86-64 汇编，再由 <code>as</code> + <code>ld</code> 链接成 exe（不经过 C 编译器）；<code>--keep</code> 留下中间那份 <code>.s</code> 汇编，<code>--emit-c</code> 能另写一份等价的 C 代码供对照。</li><li>标点必须用英文半角；中文只用在字符串和名字里。</li></ul>
 <h3>实训任务</h3>
 <ol><li>做一个 <code>myself.cask</code>，打印五行关于自己的信息，其中至少两行用 <code>show</code> 连在同一行上（例如"姓名：李明　学号：20240101"打在同一行）。</li><li>用积木视图重建第 1 题：切到"积木"，从"输出输入"类里挑输出积木，改黄色格子里的文字，再切回代码视图对照，确认两边一致。</li><li>制造错误：分别造出一处语法错误、一处拼写错误、一处严重错误（例如 <code>int x = "abc";</code>），把编辑器给出的提示原文抄到作业里，并写明每一句的意思。</li></ol>
 <h3>本章测验</h3>
@@ -242,7 +248,7 @@ function main() {
 <ul><li>A. <code>start()</code>　B. <code>function main() { }</code>　C. <code>int main</code>　D. <code>begin</code></li></ul>
 <ol><li>选择题：状态栏上"提示"级的问题（　）。</li></ol>
 <ul><li>A. 程序跑不起来　B. 必须立刻修改　C. 只是建议，不影响运行　D. 表示文件编码错误</li></ul>
-<ol><li>判断题：C* 程序最后会翻译成 C 代码再编译成 exe。（　）</li><li>判断题：变量名 <code>print</code> 可以用。（　）</li><li>判断题：写 <code>print "你好"；</code>（分号是全角）能正常编译。（　）</li><li>编程题：写一个程序，输出三行内容：第一行是你的姓名，第二行是你的专业，第三行是 <code>C* 语言基础</code>。</li><li>编程题：写一个程序，用 <code>show</code> 把 <code>1 + 2 = </code> 和计算结果打在同一行上。（提示：<code>print</code> 可以一次输出多个值，中间用逗号隔开。）</li></ol>
+<ol><li>判断题：生成 <code>.exe</code> 时，<code>caskc</code> 会先把 C* 翻译成 C，再交给 gcc 编译。（　）</li><li>判断题：变量名 <code>print</code> 可以用。（　）</li><li>判断题：写 <code>print "你好"；</code>（分号是全角）能正常编译。（　）</li><li>编程题：写一个程序，输出三行内容：第一行是你的姓名，第二行是你的专业，第三行是 <code>C* 语言基础</code>。</li><li>编程题：写一个程序，用 <code>show</code> 把 <code>1 + 2 = </code> 和计算结果打在同一行上。（提示：<code>print</code> 可以一次输出多个值，中间用逗号隔开。）</li></ol>
 <hr>
 <h2>第 2 章　数据类型与变量</h2>
 <h3>学习目标</h3>
@@ -1153,7 +1159,7 @@ function main() {
 6! = 720</code></pre>
 <p>写递归时先写出口（<code>if (n &lt;= 1) { return 1; }</code>），再写"把问题缩小一步"的那句，顺序不要倒。</p>
 <h4>5.6 数组暂时不能当参数</h4>
-<p>C* 0.4.2 里<strong>函数参数不能是数组</strong>。写下 <code>int 求和(int 数据[4])</code> 会直接报错：</p>
+<p>C* 0.5.0 里<strong>函数参数不能是数组</strong>。写下 <code>int 求和(int 数据[4])</code> 会直接报错：</p>
 <pre><code class="lang-text">错误: 还不支持数组参数（v0.1）</code></pre>
 <p>替代办法有三个：</p>
 <ul><li>用内置的汇总函数：<code>SUM(数组)</code>、<code>AVERAGE(数组)</code>、<code>MAX(数组)</code>、<code>MIN(数组)</code>、<code>COUNT(数组)</code>。</li><li>把数组写成<strong>全局变量</strong>，函数里直接按名字访问。</li><li>把循环写在调用处，不封成函数。</li></ul>
@@ -1183,7 +1189,7 @@ static long long double_it(long long x) { return x * 2; }</code></pre>
 <p>在程序里就可以像自己的函数一样调用 <code>double_it(21)</code>，结果是 42。</p>
 <p>三条要注意的：</p>
 <ul><li>头文件里的函数<strong>必须先声明原型再调用</strong>。忘了写，编译器会提示 <code>不认识的函数 ...（如果它来自 'use' 的头文件，请先声明: int ...(...);）</code>，照着提示补一行就行。</li><li>头文件里的 <code>#define</code> 宏<strong>不能直接当变量名用</strong>。要固定的值，在自己的 <code>.cask</code> 里写 <code>constant</code>。</li><li>头文件路径是相对<strong>生成的 exe</strong> 的目录算的。用了 <code>-o 别的目录\程序.exe</code>，头文件也要放到那个目录里。</li></ul>
-<p>系统头文件里的函数怎么用，第 10 章会用完整的例子讲（那一章还要引 <code>C_OPED.cash</code>）。</p>
+<p>系统头文件里的函数怎么用，第 11 章会用完整的例子讲（那一章还要引 <code>C_OPED.cash</code>）。</p>
 <h3>任务实施</h3>
 <p>任务：把第 3 章的结算单改成函数版，并支持批量结算。</p>
 <p><strong>第 1 步　列出可以拆成函数的活儿。</strong></p>
@@ -1983,7 +1989,7 @@ function main() {
 <tbody>
 <tr><td>引入窗口头文件</td><td>后面就能用 <code>window</code>、<code>label</code>、<code>button</code> 这些函数</td></tr>
 <tr><td>自动链接窗口库</td><td>不用自己写链接参数</td></tr>
-<tr><td>打开 C / C++ / Win32 世界</td><td>第 10 章要用：直接调用 <code>MessageBoxA</code>、<code>GetTickCount</code> 等函数</td></tr>
+<tr><td>打开 C / C++ / Win32 世界</td><td>第 11 章要用：直接调用 <code>MessageBoxA</code>、<code>GetTickCount</code> 等函数</td></tr>
 <tr><td>把生成的程序变成 Windows 图形程序</td><td>编译出来是 <code>WinMain</code> 入口，运行时<strong>没有黑色控制台窗口</strong></td></tr>
 </tbody></table>
 <p>这一行必须在文件最前面。有了它，程序里就<strong>不需要</strong>再写任何 <code>include</code>。</p>
@@ -2463,7 +2469,193 @@ function main() {
 <ul><li>A. <code>value(控件)</code>　B. <code>getvalue(控件)</code>　C. <code>readtext(控件)</code>　D. <code>checked(控件)</code></li></ul>
 <ol><li>判断题：<code>ask("问题？", "标题")</code> 返回 1 表示用户选了"是"。（　）</li><li>判断题：<code>on_close</code> 可以阻止窗口关闭。（　）</li><li>判断题：<code>sleep(1000)</code> 表示暂停一秒。（　）</li><li>编程题：写一个窗口程序，一个输入框加一个"显示"按钮，点按钮后把输入框内容做三件事并显示在三行标签上：原样、去掉两端空格、全部大写。</li><li>编程题：写一个窗口程序，包含一个复选框"显示进度条"，勾上时进度条可见（用 <code>setvalue</code> 和 <code>settext</code> 配合），取消时进度条设为 0；再有一个"加 10%"按钮，每次点把进度加 10，到 100 时用 <code>msgbox</code> 提示"已满"。</li></ol>
 <hr>
-<h2>第 10 章　调用系统与 C 函数</h2>
+<h2>第 10 章　文件读写与界面美化</h2>
+<h3>学习目标</h3>
+<ul><li>说清为什么要把数据写进文件，而不是只放在变量里。</li><li>用 <code>use "C_IO.cash";</code> 打开文件工具箱，会用 <code>readfile</code> / <code>writefile</code> / <code>appendfile</code>。</li><li>会用 <code>fileexists</code> 判断文件存在、<code>appdir()</code> 拼程序所在目录的绝对路径、<code>envget</code> 读环境变量。</li><li>分清 <code>launch</code>（启动就返回）和 <code>launchwait</code>（等程序跑完拿退出码）。</li><li>用 <code>use "C_CSS.cash";</code> 给窗口界面配色，会用 <code>csbg</code> / <code>cstext</code> / <code>csfont</code>。</li><li>知道 0.5.0 起 Windows 上按钮改自绘后，美化函数才真正生效。</li></ul>
+<h3>任务引入</h3>
+<p>第 9 章的"报名登记"窗口功能齐全，但有个绕不开的问题：<strong>数据只住在内存里，一关窗口就没了。</strong> 老师登记完一个班，想第二天接着登记，却要从头再来；做个记录工具，用户当然希望下次打开还能看到上次的内容。</p>
+<p>另一头，同一个"签到计数器"，灰底黑字和一套配色协调的深色界面，给不懂电脑的老师用，体验差很多。</p>
+<p>这一章用两个工具箱解决这两件事：<code>C_IO.cash</code> 让程序<strong>读写文件、记住配置</strong>（控制台程序也能用），<code>C_CSS.cash</code> 让窗口<strong>换上 CSS 式的配色</strong>（必须配 <code>C_OPED.cash</code> 一起用）。</p>
+<h3>知识准备</h3>
+<h4>10.1 打开文件工具箱：C_IO.cash</h4>
+<p>在程序最前面写一行：</p>
+<pre><code class="lang-cask">use "C_IO.cash";</code></pre>
+<p><code>C_IO.cash</code> 不依赖窗口，控制台程序也能用。它提供下面这组函数：</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>返回</th></tr></thead>
+<tbody>
+<tr><td><code>readfile(路径)</code></td><td>把整个文件读成一段文字</td><td>读不到给 <code>""</code>，上限 1MB</td></tr>
+<tr><td><code>writefile(路径, 内容)</code></td><td>覆盖写入（旧内容整个被换掉）</td><td>成功 1，失败 0</td></tr>
+<tr><td><code>appendfile(路径, 内容)</code></td><td>追加到文件末尾</td><td>成功 1，失败 0</td></tr>
+<tr><td><code>fileexists(路径)</code></td><td>文件或目录在不在</td><td>在 1，不在 0</td></tr>
+<tr><td><code>makedir(路径)</code></td><td>建目录（已存在也算成功）</td><td>成功 1，失败 0</td></tr>
+<tr><td><code>appdir()</code></td><td>本程序（exe）所在目录</td><td>不带末尾分隔符</td></tr>
+<tr><td><code>envget("名字")</code></td><td>读环境变量</td><td>没有给 <code>""</code></td></tr>
+<tr><td><code>launchwait("命令行")</code></td><td>启动外部程序并<strong>等它跑完</strong></td><td>退出码，起不来 -1</td></tr>
+</tbody></table>
+<p><code>writefile</code> 是<strong>覆盖</strong>、<code>appendfile</code> 是<strong>追加</strong>，这是最容易用混的两个：日志类要留旧内容就用 <code>appendfile</code>，配置类每次整个重写就用 <code>writefile</code>。</p>
+<h4>10.2 保存和读取设置</h4>
+<p>下面的程序第一次运行时写入默认设置，以后每次都直接读出来，用户改过的内容不会被覆盖：</p>
+<pre><code class="lang-cask">// 设置小工具：第一次写默认值，之后读出来用
+use "C_IO.cash";
+
+function main() {
+    string 文件 = appdir() + "/settings.txt";
+    if (fileexists(文件) == 0) {
+        writefile(文件, "名字=小明\n内存=2048");
+        print "第一次运行，已写入默认设置。";
+    }
+    print "当前设置：";
+    print readfile(文件);
+    return 0;
+}</code></pre>
+<p>逐行看：<code>appdir()</code> 返回 exe 所在目录，拼上 <code>/settings.txt</code>，文件就落在程序旁边（跟着 exe 走，不依赖"当前工作目录"）；<code>fileexists(文件) == 0</code> 表示还没这个文件，这时才写默认值；<code>\n</code> 是换行符，写进文件后 <code>readfile</code> 读出来也带着换行。</p>
+<p>运行一次：</p>
+<pre><code class="lang-text">第一次运行，已写入默认设置。
+当前设置：
+名字=小明
+内存=2048</code></pre>
+<p>再运行一次（文件已存在，走 else 分支）：</p>
+<pre><code class="lang-text">当前设置：
+名字=小明
+内存=2048</code></pre>
+<h4>10.3 追加日志</h4>
+<p>做"账本"这类要不断累加的东西，用 <code>appendfile</code> 追加、再 <code>readfile</code> 整段读回：</p>
+<pre><code class="lang-cask">// 零花钱账本：每次往文件末尾记一笔，再读出来看全部
+use "C_IO.cash";
+
+function main() {
+    string 文件 = appdir() + "/零花钱.txt";
+    appendfile(文件, "3月5日 买笔 -8\n");
+    print "全部记录：";
+    print readfile(文件);
+    return 0;
+}</code></pre>
+<p>跑两次，文件里就有两行记录——这正是"追加"和"覆盖"的区别。</p>
+<h4>10.4 路径怎么写</h4>
+<p>Windows 的路径分隔符是 <code>\</code>，但在 C* 字符串里一个反斜杠要写成 <code>\\</code>：</p>
+<pre><code class="lang-text">"D:\\mc\\client.jar"</code></pre>
+<p>也可以统一写 <code>/</code>，Windows 和 Linux 都认（上面例子里就是 <code>/</code>）。相对路径按<strong>当前工作目录</strong>解析，不一定等于 exe 目录；要稳妥就用 <code>appdir()</code> 拼绝对路径。<code>envget("USERPROFILE")</code> 能拿到用户目录，把配置存到那里也不错。</p>
+<h4>10.5 启动外部程序：launch 与 launchwait</h4>
+<table>
+<thead><tr><th>函数</th><th>所在头文件</th><th>行为</th><th>适合</th></tr></thead>
+<tbody>
+<tr><td><code>launch("命令行")</code></td><td><code>C_OPED.cash</code></td><td>启动就返回</td><td>启动游戏、浏览器、编辑器</td></tr>
+<tr><td><code>launchwait("命令行")</code></td><td><code>C_IO.cash</code></td><td>等程序结束，返回退出码</td><td>批处理、要判断成功失败</td></tr>
+</tbody></table>
+<p>用 <code>launchwait</code> 开一个记事本、等用户关掉再往下走：</p>
+<pre><code class="lang-cask">// 等外部程序跑完
+use "C_IO.cash";
+
+function main() {
+    int 码 = launchwait("notepad.exe");
+    print "记事本退出码 ", 码;
+    return 0;
+}</code></pre>
+<p><code>examples\mc_launcher.cask</code>（Minecraft 启动器）就是 C_IO + C_CSS 的综合范例：自动找 Java、定位 jar、把上次配置记在 exe 旁边、拼命令行并启动。</p>
+<h4>10.6 界面美化：C_CSS.cash</h4>
+<p>同样的功能，换一套配色，观感完全不同。C* 把 CSS 的思路搬进了桌面程序：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";</code></pre>
+<p><code>C_CSS.cash</code> 必须<strong>紧跟</strong>在 <code>C_OPED.cash</code> 后面（它给 <code>C_OPED.cash</code> 建的那些控件上色），只写 CSS 头会编译报错。函数作用在<strong>控件编号</strong>上，所以控件要先创建、再上色。</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>cstext(控件, 颜色)</code></td><td>文字颜色</td><td>颜色写 <code>"#RRGGBB"</code>、<code>"RRGGBB"</code> 或 CSS 颜色名（<code>"red"</code> <code>"gold"</code>…）</td></tr>
+<tr><td><code>csbg(控件, 颜色)</code></td><td>背景颜色</td><td>传<strong>窗口编号</strong>就换整个窗口底色</td></tr>
+<tr><td><code>csfont(控件, 字号, 加粗)</code></td><td>字号（磅）+ 是否加粗</td><td>加粗写 1</td></tr>
+<tr><td><code>cshide(控件)</code> / <code>csshow(控件)</code></td><td>隐藏 / 显示</td><td></td></tr>
+<tr><td><code>cspass(控件)</code></td><td>输入框打码（密码）</td><td></td></tr>
+<tr><td><code>cscolor(名字, 颜色)</code> / <code>csapply(名字, 控件)</code></td><td>给颜色起个名，再涂到别的控件上</td><td>注意改的是<strong>文字颜色</strong>，要给多个控件复用<strong>背景色</strong>仍直接调 <code>csbg</code></td></tr>
+<tr><td><code>csradius(控件, 像素)</code> / <code>csshadow(控件, 0/1)</code></td><td>圆角 / 投影</td><td><strong>只在 Linux 生效</strong>，Windows 上被安全忽略</td></tr>
+</tbody></table>
+<h4>10.7 一套深色主题</h4>
+<pre><code class="lang-cask">// 深色主题示例
+use "C_OPED.cash";
+use "C_CSS.cash";
+
+function main() {
+    int 窗口 = window("主题示例", 440, 260);
+    int 标题 = label("C* 深色主题", 20, 20, 400, 36);
+    int 按钮 = button("确定", 20, 100, 140, 40);
+
+    csbg(窗口, "0D1117");          // 整块窗口底色
+    cstext(标题, "#E6EDF3");
+    csfont(标题, 20, 1);
+    csbg(按钮, "238636");
+    cstext(按钮, "#FFFFFF");
+    csfont(按钮, 12, 1);
+    run();
+}</code></pre>
+<p>把 <code>csbg</code> / <code>cstext</code> / <code>csfont</code> 加到对应控件上，界面就从默认的灰底白框变成一套深色主题。</p>
+<h4>10.8 0.5.0 在 Windows 上的改进</h4>
+<p>老版本在 Windows 上写 <code>csbg(按钮, ...)</code> 常常没效果——系统自带的按钮样式把颜色"吃掉"了。0.5.0 把这一套真正做通：</p>
+<ul><li><strong>按钮改成 owner-draw 自绘</strong>：Win10/11 的视觉样式原本会忽略按钮底色，现在 <code>csbg</code> / <code>cstext</code> / <code>csfont</code> 能真正控制按钮的底色、文字和字号。</li><li><strong><code>csbg(窗口, 颜色)</code> 换窗口底色</strong>：整块客户区的背景刷都会被换掉。</li><li><strong>输入框背景与文字底色一致</strong>：输入区域内部不再是一整块白。</li><li><strong><code>csfont</code> 按 DPI 换算</strong>：把"磅"正确换算成像素（96 DPI 下 12 磅约 16 像素），不再出现超大字号。</li></ul>
+<p>换句话说：0.5.0 起，Windows 上按钮、窗口、输入框都能真正上色；老版本上"配了色却没生效"的情况不再发生。</p>
+<h3>任务实施</h3>
+<p>任务：做一个"口令记事本"窗口——深色界面，在输入框里填一行、点"追加"，就把这行存进文件；状态区实时显示已经存了哪些口令。把 C_IO（存数据）和 C_CSS（配色）合在一个窗口里。</p>
+<p><strong>第 1 步　三个头一起引。</strong> 用 <code>C_OPED.cash</code> 开窗口放控件，用 <code>C_CSS.cash</code> 上色，用 <code>C_IO.cash</code> 存文件。注意 <code>C_CSS.cash</code> 要紧跟在 <code>C_OPED.cash</code> 后面：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";
+use "C_IO.cash";</code></pre>
+<p><strong>第 2 步　写 <code>on_click</code>：读输入、追加、刷新状态。</strong> 先 <code>TRIM</code> 去空格，非空才写；写完把整个文件读回显示。把控件号存进全局变量，事件函数里才看得见：</p>
+<pre><code class="lang-cask">int 口令区;
+int 追加框;
+
+function on_click(int 控件) {
+    string 词 = readtext(追加框);
+    if (LEN(TRIM(词)) &gt; 0) {
+        appendfile(appdir() + "/口令.txt", 词 + "\n");
+    }
+    settext(口令区, "已有口令：\n" + readfile(appdir() + "/口令.txt"));
+}</code></pre>
+<p><strong>第 3 步　写 <code>main</code>，把整段拼起来。</strong> 状态区一开始就把文件里已有的内容显示出来，再给每个控件涂色。完整程序如下（把上面两步的 <code>use</code>、全局变量、<code>on_click</code> 一起写进文件）：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";
+use "C_IO.cash";
+
+int 口令区;
+int 追加框;
+
+function on_click(int 控件) {
+    string 词 = readtext(追加框);
+    if (LEN(TRIM(词)) &gt; 0) {
+        appendfile(appdir() + "/口令.txt", 词 + "\n");
+    }
+    settext(口令区, "已有口令：\n" + readfile(appdir() + "/口令.txt"));
+}
+
+function main() {
+    int 窗口 = window("口令记事本", 460, 320);
+    口令区 = label(readfile(appdir() + "/口令.txt"), 20, 20, 420, 180);
+    追加框 = textbox("新的一行口令…", 20, 210, 300, 32);
+    int 存 = button("追加", 340, 210, 100, 32);
+    csbg(窗口, "0D1117");
+    cstext(口令区, "#E6EDF3");
+    csfont(口令区, 12, 0);
+    csbg(追加框, "161B22");
+    csbg(存, "238636");
+    cstext(存, "#FFFFFF");
+    run();
+}</code></pre>
+<p>编译运行（窗口程序加 <code>--console</code> 才能看到 <code>print</code>）：</p>
+<pre><code class="lang-bat">bin\caskc.exe 口令.cask -o 口令.exe --console</code></pre>
+<h3>拓展与规范</h3>
+<ul><li><strong>数据放文件，状态放全局变量。</strong> 每次点按钮要"接着上次"用的，就 <code>readfile</code> 读回来；只在运行中临时用的，放全局变量。</li><li><strong>路径一律用 <code>appdir()</code> 拼。</strong> 写死 <code>C:\...</code> 或依赖"当前目录"，换个机器就找不着文件。</li><li><strong>写之前判断存在。</strong> <code>writefile</code> 会整个覆盖，想保留旧内容先 <code>fileexists</code> 再决定用 <code>writefile</code> 还是 <code>appendfile</code>。</li><li><strong><code>csradius</code> / <code>csshadow</code> 在 Windows 上没效果</strong>，写进代码不会报错，但只有 Linux 看得到；在 Windows 做主题时别把圆角投影当成"配好了"。</li><li><strong>按钮改色在 0.5.0 前不生效。</strong> 见 10.8，老版本上按钮底色会被系统样式吃掉。</li></ul>
+<h3>本章小结</h3>
+<ul><li><code>C_IO.cash</code> 让程序读写文件、判断存在、建目录、取程序目录和环境变量；<code>writefile</code> 覆盖、<code>appendfile</code> 追加、<code>readfile</code> 整段读回。</li><li><code>appdir()</code> 拼绝对路径最稳；字符串里的 <code>\</code> 要写成 <code>\\</code>。<code>launch</code> 启动就返回，<code>launchwait</code> 等待并返回退出码。</li><li><code>C_CSS.cash</code> 依赖 <code>C_OPED.cash</code>，两个头要一起用；<code>cstext</code> 改字色、<code>csbg</code> 改底色、<code>csfont</code> 改字号，窗口本身也能用 <code>csbg</code> 上色。</li><li>0.5.0 起 Windows 上按钮、窗口、输入框都能真正上色。</li></ul>
+<h3>实训任务</h3>
+<ol><li>把 10.2 的"设置小工具"升级成"记住上次输入的名字"：启动时若有 <code>settings.txt</code> 就 <code>readfile</code> 出来 <code>print</code>，没有就提示"第一次使用"。</li><li>做一个"打卡器"：点一次按钮就往 <code>打卡.txt</code> 里 <code>appendfile</code> 一行时间（用第 11 章的 <code>GetTickCount</code>），再 <code>readfile</code> 数出共打了几次并 <code>print</code>。</li><li>给第 9 章的"报名登记"加一套深色主题：窗口 <code>1B2129</code>、标题 <code>#E8EAED</code>、输入框 <code>0D1117</code>、按钮 <code>238636</code> 白字，把 <code>csbg</code> / <code>cstext</code> / <code>csfont</code> 加到对应控件上。</li></ol>
+<h3>本章测验</h3>
+<ol><li>选择题：把数据在程序关掉后还留着，应该用（　）。</li></ol>
+<ul><li>A. 全局变量　B. 文件（<code>writefile</code> / <code>appendfile</code>）　C. <code>constant</code>　D. <code>--fast</code></li></ul>
+<ol><li>选择题：要保留文件旧内容、只在末尾加一行，用（　）。</li></ol>
+<ul><li>A. <code>writefile</code>　B. <code>appendfile</code>　C. <code>readfile</code>　D. <code>makedir</code></li></ul>
+<ol><li>选择题：稳妥地拿到"本程序（exe）所在目录"，用（　）。</li></ol>
+<ul><li>A. <code>envget("CWD")</code>　B. 写死 <code>C:\</code>　C. <code>appdir()</code>　D. <code>readfile</code></li></ul>
+<ol><li>判断题：<code>C_CSS.cash</code> 可以单独 <code>use</code>，不必配 <code>C_OPED.cash</code>。（　）</li><li>判断题：<code>csradius</code> / <code>csshadow</code> 在 Windows 上也能让控件出现圆角和投影。（　）</li><li>判断题：<code>launchwait("cmd")</code> 会等外部程序跑完才返回，并给出它的退出码。（　）</li><li>编程题：写一个"计数存档"控制台程序——启动时若 <code>count.txt</code> 存在就 <code>readfile</code> 读出数字并加 1，再 <code>writefile</code> 存回去；没有就从 1 开始。用 <code>appdir()</code> 拼路径。</li><li>编程题：做一个"留言墙"窗口——输入框加"提交"按钮，点一下把留言 <code>appendfile</code> 进 <code>留言.txt</code>，并把整个文件内容显示在多行文本框里；界面用一套 <code>C_CSS.cash</code> 配色。</li></ol>
+<hr>
+<h2>第 11 章　调用系统与 C 函数</h2>
 <h3>学习目标</h3>
 <ul><li>分清 <code>use &lt;头文件&gt;;</code> 和 <code>use "头文件.h";</code> 两种引入方式的区别。</li><li>会在 <code>use "C_OPED.cash";</code> 打开的世界里，直接调用 C 标准库函数和 Windows 系统函数。</li><li>会用 <code>GetTickCount()</code> 给一段代码计时，用 <code>MessageBoxA()</code> 弹原生消息框。</li><li>会给自定义头文件写原型声明，在程序里调用自己写的 C 函数。</li><li>会看 <code>--emit-c</code> 生成的 C 代码，能按类型对照表排查参数错误。</li><li>记住 C# / .NET 用不了这条限制。</li></ul>
 <h3>任务引入</h3>
@@ -2472,35 +2664,35 @@ function main() {
 <p>这些不必自己造——它们本来就是操作系统和 C 标准库里现成的函数。C* 直接编译成 C，完全可以把它们借过来用。</p>
 <p>本章任务：<strong>给成绩统计接上系统能力</strong>。做一个"成绩快报"窗口程序，点一下按钮就算出总分、最高分、最低分，用标签显示，再用原生消息框报一次用时。动手之前，先把"借用"的规矩讲清楚。</p>
 <h3>知识准备</h3>
-<h4>10.1 两种 use：尖括号和引号</h4>
+<h4>11.1 两种 use：尖括号和引号</h4>
 <p><code>use</code> 有两条路：</p>
 <pre><code class="lang-cask">use &lt;stdio.h&gt;;        // 尖括号：系统头文件 → 生成 #include &lt;stdio.h&gt;
 use &lt;math.h&gt;;</code></pre>
 <pre><code class="lang-cask">use "my_helper.h";    // 引号带 .h：自己的头文件 → 生成 #include "my_helper.h"</code></pre>
 <ul><li>尖括号里的名字，编译器去<strong>系统目录</strong>找，像 <code>stdio.h</code>、<code>math.h</code>、<code>string.h</code>。</li><li>引号里的名字，先从<strong>程序所在目录</strong>找，找不到再找系统目录，通常放你自己写的 <code>.h</code>。</li></ul>
 <p><code>use</code> 只能写在文件最上面，要在函数定义之前。</p>
-<h4>10.2 第三行 use "C_OPED.cash";：打开直通调用</h4>
+<h4>11.2 第三行 use "C_OPED.cash";：打开直通调用</h4>
 <p><code>use "C_OPED.cash";</code> 是个例外：它不是让你自己去翻头文件，而是一次把系统头文件全包含进来、把窗口库全链接上。之后：</p>
 <table>
 <thead><tr><th>效果</th><th>说明</th></tr></thead>
 <tbody>
 <tr><td>头文件已经包含</td><td>不用再写 <code>use &lt;windows.h&gt;;</code></td></tr>
 <tr><td>函数不用声明就能调</td><td>直接写 <code>GetTickCount()</code>、<code>MessageBoxA(...)</code></td></tr>
-<tr><td>常量也能直接用</td><td>像 <code>MB_OK</code>、<code>MB_OKCANCEL</code> 这类 Win32 常量</td></tr>
+<tr><td>常量要写数值</td><td>Win32 的 <code>#define</code> 常量（<code>MB_OK</code> 等）在汇编后端不展开，直接写数值（<code>MB_OK</code>=0、<code>MB_OKCANCEL</code>=1）</td></tr>
 <tr><td>自动链接窗口库</td><td>user32、gdi32、comctl32 等不用自己写</td></tr>
 </tbody></table>
 <p>代价是：程序变成<strong>窗口式程序</strong>，运行时不再有黑色控制台窗口，<code>print</code> 的输出也就没地方显示（调试时加 <code>--console</code>，见"拓展与规范"）。</p>
-<h4>10.3 计时：GetTickCount</h4>
+<h4>11.3 计时：GetTickCount</h4>
 <p><code>GetTickCount()</code> 返回"开机到现在的毫秒数"，是个整数。用它夹住一段代码，两头相减就是耗时：</p>
 <pre><code class="lang-cask">int 开始 = GetTickCount();
 // ……要计时的代码……
 int 用时 = GetTickCount() - 开始;</code></pre>
 <p><code>用时</code> 的单位是毫秒。系统计时器的精度大约是 10 到 16 毫秒，所以很短的计算量出来常常是 0。</p>
-<h4>10.4 原生消息框：MessageBoxA</h4>
-<pre><code class="lang-cask">MessageBoxA(0, "正文", "标题", MB_OK);</code></pre>
-<p>四个参数：窗口句柄（没有就写 0）、正文、标题、按钮和图标选项。<code>MB_OK</code> 表示"只有一个确定按钮"，这些常量来自 <code>C_OPED.cash</code> 打开的系统头文件。</p>
+<h4>11.4 原生消息框：MessageBoxA</h4>
+<pre><code class="lang-cask">MessageBoxA(0, "正文", "标题", 0);   // 第 4 个参数 0 = 只放一个"确定"按钮（Win32 里的 MB_OK）</code></pre>
+<p>四个参数：窗口句柄（没有就写 0）、正文、标题、按钮和图标选项。<strong>0.5.0 直接生成 x86-64 汇编，不走 C 预处理器，Win32 的 <code>#define</code> 常量（<code>MB_OK</code>、<code>MB_OKCANCEL</code> 这类）不会被自动展开，要写它们的数值</strong>：<code>MB_OK</code> 是 0，<code>MB_OKCANCEL</code> 是 1。</p>
 <p>弹出框以后程序会停在那里，等用户点按钮，再继续往下走。</p>
-<h4>10.5 调 C 标准库函数：puts 和 strlen</h4>
+<h4>11.5 调 C 标准库函数：puts 和 strlen</h4>
 <p><code>C_OPED.cash</code> 打开以后，标准库函数也能直接调：</p>
 <pre><code class="lang-cask">use "C_OPED.cash";
 
@@ -2512,7 +2704,7 @@ function main() {
 }</code></pre>
 <p><code>puts</code> 打印一行文字，效果接近 <code>print</code>。<code>strlen</code> 数的是<strong>字节数</strong>，和 C* 的 <code>LEN</code> 结果一样（一个汉字 3 个字节）。</p>
 <blockquote><p><code>printf</code> 不要用：这个名字和 C* 自己的 <code>print</code> 太像，编译器会报 <code>不认识的函数 'printf'，是不是想写 'print'？</code>。要格式化输出就用 <code>print</code>，要打一行原始文字就用 <code>puts</code>。</p></blockquote>
-<h4>10.6 调用自己写的 C 函数：加头文件，写原型</h4>
+<h4>11.6 调用自己写的 C 函数：加头文件，写原型</h4>
 <p>想把自己写好的 C 函数搬进来，分两步。</p>
 <p>第一步：把函数写进一个头文件，比如和程序放同一个目录的 <code>my_lib.h</code>：</p>
 <pre><code class="lang-c">/* my_lib.h —— 自己写的工具函数 */
@@ -2524,7 +2716,7 @@ int double_it(int x);      // 原型：名字和参数要和 my_lib.h 一致</co
 <p>要点有三个：</p>
 <ul><li><code>use "my_lib.h";</code> 负责把内容包含进来。</li><li>那一行 <code>int double_it(int x);</code> 是<strong>原型声明</strong>，告诉编译器"这个函数存在、参数是什么类型"。</li><li>C* 的 <code>int</code> 对应的 C 类型是 <code>long long</code>，所以头文件里的参数和返回值要写成 <code>long long</code>。</li></ul>
 <p>漏了原型，编译器会提示 <code>不认识的函数 'double_it'（如果它来自 'use' 的头文件，请先声明: ...）</code>。另外，自定义头文件要<strong>和生成的可执行文件放在同一个目录</strong>，否则编译时会报找不到这个头文件。</p>
-<h4>10.7 类型对照：写错就报错</h4>
+<h4>11.7 类型对照：写错就报错</h4>
 <p>直通调用时，C* 把值按下面的规则翻译成 C 类型。自己写 C 函数时也要照着对：</p>
 <table>
 <thead><tr><th>C* 类型</th><th>C 类型</th><th>说明</th></tr></thead>
@@ -2536,7 +2728,7 @@ int double_it(int x);      // 原型：名字和参数要和 my_lib.h 一致</co
 <tr><td><code>bool</code></td><td><code>int</code></td><td>1 表示真，0 表示假</td></tr>
 <tr><td><code>none</code></td><td><code>void</code></td><td>无返回值</td></tr>
 </tbody></table>
-<h4>10.8 C# 用不了</h4>
+<h4>11.8 C# 用不了</h4>
 <p><code>use</code> 只能打开 <strong>C</strong> 和 <strong>C++</strong> 两个世界。C# 和 .NET 没有 C 头文件，<strong>不能</strong>用 <code>use</code> 引入，也别指望在 <code>.cask</code> 里写 C# 代码。这一章借来的东西，都来自 C 语言这一边。</p>
 <h3>任务实施</h3>
 <p><strong>第 1 步　写界面骨架。</strong> 一个窗口、一行说明、一个显示结果的标签、一个按钮：</p>
@@ -2602,7 +2794,7 @@ function on_click(int 控件) {
     int 用时 = GetTickCount() - 开始;
     string 报告 = "总分 " + 总 + " 分，最高 " + MAX(成绩) + " 分，最低 " + MIN(成绩) + " 分";
     settext(结果标签, 报告);
-    MessageBoxA(0, 报告, "统计完成（用时 " + 用时 + " 毫秒）", MB_OK);
+    MessageBoxA(0, 报告, "统计完成（用时 " + 用时 + " 毫秒）", 0);  // Win32 里这是 MB_OK
 }
 
 function main() {
@@ -2634,7 +2826,7 @@ function main() {
 <tr><td>连点多次"开始统计"</td><td>每次都弹一个框，结果一致</td></tr>
 <tr><td>关掉消息框后再关窗口</td><td><code>run()</code> 返回，程序正常退出</td></tr>
 <tr><td>忘了加 <code>use "C_OPED.cash";</code></td><td>提示 <code>不认识的函数 'GetTickCount'</code></td></tr>
-<tr><td><code>MB_OK</code> 拼成 <code>MB_Ok</code></td><td>C 编译器报未定义标识符，行号指回 <code>.cask</code></td></tr>
+<tr><td>把 Win32 常量 <code>MB_OK</code> 当标识符写进去</td><td>汇编后端不展开 <code>#define</code>，报"不认识的名称"，改写成数值（<code>MB_OK</code>=0）</td></tr>
 </tbody></table>
 <h3>拓展与规范</h3>
 <p><strong>窗口程序想保留控制台，编译时加 <code>--console</code>。</strong> 加了这个参数，<code>print</code> 的输出就能在黑色窗口里看到，调试特别有用：</p>
@@ -2649,7 +2841,7 @@ report.cask:4:2: error: too few arguments to function 'MessageBoxA'</code></pre>
 <p><strong>借来的东西越多，程序越只认 Windows。</strong> 用了 <code>MessageBoxA</code>、<code>GetTickCount</code> 这类系统函数，程序就绑死在 Windows 上了。写通用的练习时，能用 C* 自带函数就用自带的。</p>
 <p><strong>参数顺序要查文档。</strong> Win32 函数有一千多个，C* 不替你背。用哪个、参数什么顺序、常量怎么拼，去查函数说明或 MSDN，抄准了再用。</p>
 <h3>本章小结</h3>
-<ul><li><code>use &lt;名字&gt;;</code> 引系统头文件，<code>use "名字.h";</code> 引自己的头文件，都写在文件最上面。</li><li><code>use "C_OPED.cash";</code> 一次打开 C / C++ / Win32：头文件全包含、库全链接、函数不用声明就能调。</li><li><code>GetTickCount()</code> 取毫秒计数，两头相减就是耗时；计时器精度约十几毫秒。</li><li><code>MessageBoxA(0, 正文, 标题, MB_OK)</code> 弹原生消息框，<code>MB_OK</code> 是系统常量。</li><li><code>puts</code>、<code>strlen</code> 这些标准库函数可以直接调；<code>printf</code> 因为和 <code>print</code> 撞名不能用。</li><li>调自己写的 C 函数要两步：<code>use "xxx.h";</code> 加一行 <code>int 函数名(...);</code> 原型。</li><li>直通调用 C* 不查参数，类型错误由 C 编译器报，行号仍指回源文件。</li><li>C# / .NET 用不了。</li></ul>
+<ul><li><code>use &lt;名字&gt;;</code> 引系统头文件，<code>use "名字.h";</code> 引自己的头文件，都写在文件最上面。</li><li><code>use "C_OPED.cash";</code> 一次打开 C / C++ / Win32：头文件全包含、库全链接、函数不用声明就能调。</li><li><code>GetTickCount()</code> 取毫秒计数，两头相减就是耗时；计时器精度约十几毫秒。</li><li><code>MessageBoxA(0, 正文, 标题, 0)</code> 弹原生消息框；第 4 个参数是按钮选项（Win32 里 <code>MB_OK</code>=0、<code>MB_OKCANCEL</code>=1），汇编后端要写数值。</li><li><code>puts</code>、<code>strlen</code> 这些标准库函数可以直接调；<code>printf</code> 因为和 <code>print</code> 撞名不能用。</li><li>调自己写的 C 函数要两步：<code>use "xxx.h";</code> 加一行 <code>int 函数名(...);</code> 原型。</li><li>直通调用 C* 不查参数，类型错误由 C 编译器报，行号仍指回源文件。</li><li>C# / .NET 用不了。</li></ul>
 <h3>实训任务</h3>
 <ol><li>把"成绩快报"改成"秒表"：一个按钮开始计时、另一个按钮停止，用两个标签分别显示起点时刻、终点时刻和差值，最后用 <code>MessageBoxA</code> 报总耗时。</li><li>用 <code>strlen</code> 和 <code>LEN</code> 各数一遍"Hello 世界"的字节数，用一个窗口把两个数字并列显示出来，核对是否相等。</li><li>按 10.6 的做法自己写一个 <code>tools.h</code>，里面放一个求两个整数最大值的 C 函数，在程序里用原型声明后调用它，并和自带的 <code>MAX(3, 5)</code> 比较结果。</li></ol>
 <h3>本章测验</h3>
@@ -2661,7 +2853,7 @@ report.cask:4:2: error: too few arguments to function 'MessageBoxA'</code></pre>
 <ul><li>A. 当前时间的小时数　B. 开机到现在的毫秒数　C. 程序运行的秒数　D. 当前日期</li></ul>
 <ol><li>判断题：<code>printf</code> 可以在 C* 里直接调用。（　）</li><li>判断题：调用自己写的 C 函数，只要 <code>use</code> 了头文件就够了，不用写原型。（　）</li><li>判断题：加了 <code>use "C_OPED.cash";</code> 又没加 <code>--console</code>，<code>print</code> 的输出看不到。（　）</li><li>编程题：写一个窗口程序，一个按钮，点一下用 <code>GetTickCount</code> 记录时刻并显示到标签上；再点一下算出两次点击之间隔了多少毫秒并显示。</li><li>编程题：用 <code>MessageBoxA</code> 加 <code>MB_OKCANCEL</code> 弹一个"是否继续"的框，根据返回值用标签显示用户点了"确定"还是"取消"。</li></ol>
 <hr>
-<h2>第 11 章　综合实训二与项目交付规范</h2>
+<h2>第 12 章　综合实训二与项目交付规范</h2>
 <h3>学习目标</h3>
 <ul><li>独立完成一个 100 行以上、带界面的窗口程序项目。</li><li>会按"需求分析 → 界面设计 → 数据结构与函数划分 → 编码 → 测试 → 交付"的流程组织一次完整的开发。</li><li>会写测试用例表，并覆盖正常、边界、异常三类情况。</li><li>会按命名、注释、缩进、文件组织四方面的规范整理代码。</li><li>会打包一组可以交付的文件：源文件、可执行文件、说明文档、测试记录。</li></ul>
 <h3>任务引入</h3>
@@ -2678,20 +2870,20 @@ report.cask:4:2: error: too few arguments to function 'MessageBoxA'</code></pre>
 </tbody></table>
 <p>要分析的三件事：<strong>界面有哪些控件</strong>、<strong>数据存在哪里</strong>、<strong>每件事由谁做</strong>。</p>
 <h3>知识准备</h3>
-<h4>11.1 开发流程：六步走</h4>
+<h4>12.1 开发流程：六步走</h4>
 <p>一个能交付的小项目，不是"坐下来就敲代码"，而是六步：</p>
 <table>
 <thead><tr><th>步骤</th><th>做什么</th><th>本项目的产物</th></tr></thead>
 <tbody>
 <tr><td>1 需求分析</td><td>把口头需求变成功能表</td><td>上面那张 F1 到 F4 的功能表</td></tr>
-<tr><td>2 界面设计</td><td>画控件表，定好坐标</td><td>11.2 的控件表</td></tr>
-<tr><td>3 数据结构与函数划分</td><td>定全局变量和函数职责</td><td>11.3 的表</td></tr>
+<tr><td>2 界面设计</td><td>画控件表，定好坐标</td><td>12.2 的控件表</td></tr>
+<tr><td>3 数据结构与函数划分</td><td>定全局变量和函数职责</td><td>12.3 的表</td></tr>
 <tr><td>4 编码</td><td>按划分把函数一个个写出来</td><td><code>attend.cask</code></td></tr>
-<tr><td>5 测试</td><td>按用例表逐条验证</td><td>11.5 的测试表</td></tr>
-<tr><td>6 交付</td><td>整理文件、写说明</td><td>11.6 的交付清单</td></tr>
+<tr><td>5 测试</td><td>按用例表逐条验证</td><td>12.5 的测试表</td></tr>
+<tr><td>6 交付</td><td>整理文件、写说明</td><td>「拓展与规范」的交付清单</td></tr>
 </tbody></table>
 <p>前四步里，<strong>最容易被跳过、也最容易翻车的是第 2、3 步</strong>。界面位置没想清楚，控件会挤成一团；函数职责没分清，<code>on_click</code> 会写成一锅粥。</p>
-<h4>11.2 界面设计：先画控件表</h4>
+<h4>12.2 界面设计：先画控件表</h4>
 <p>窗口按 620×480 设计，控件都按"文字, x, y, 宽, 高"来放：</p>
 <table>
 <thead><tr><th>控件</th><th>类型</th><th>位置与大小</th><th>用途</th></tr></thead>
@@ -2706,7 +2898,7 @@ report.cask:4:2: error: too few arguments to function 'MessageBoxA'</code></pre>
 </tbody></table>
 <p>两点说明：</p>
 <ul><li>名单用 <code>memo</code> 而不是 <code>listbox</code>，因为<strong>要能整体清空</strong>。<code>memo</code> 直接 <code>settext(名单框, "")</code> 就空了，<code>listbox</code> 没有"清空"这个函数。</li><li>每个要读要写的控件，都要用全局变量把控件号存住。</li></ul>
-<h4>11.3 数据结构与函数划分</h4>
+<h4>12.3 数据结构与函数划分</h4>
 <p>数据只有三个整数：</p>
 <table>
 <thead><tr><th>变量</th><th>含义</th></tr></thead>
@@ -2727,7 +2919,7 @@ report.cask:4:2: error: too few arguments to function 'MessageBoxA'</code></pre>
 <tr><td><code>main()</code></td><td>建窗口、建控件、进事件循环</td><td>程序入口</td></tr>
 </tbody></table>
 <p><strong>关键原则：事件函数只做分发，真正的活交给普通函数。</strong> <code>on_click</code> 里只写 <code>if (控件 == 登记按钮) { ... }</code>，具体的校验和录入放到 <code>登记()</code> 里，这样界面部分和业务部分分得开，改哪块都不牵连另一块。界面统一的更新只走 <code>刷新()</code> 一个出口。</p>
-<h4>11.4 一次全局变量的读写顺序</h4>
+<h4>12.4 一次全局变量的读写顺序</h4>
 <p>窗口程序里，全局变量在函数之前声明；<code>main</code> 里要先建控件，再读控件的初始值：</p>
 <pre><code class="lang-cask">应到 = VALUE(readtext(应到框));
 if (应到 &lt;= 0) { 应到 = 60; }
@@ -2795,7 +2987,7 @@ function 登记(string 学号) {
             return;
         }
         int 用时 = (GetTickCount() - 开始时刻) / 1000;
-        MessageBoxA(0, "本次上机共登记 " + 已到 + " 人，用时约 " + 用时 + " 秒。", "考勤小结", MB_OK);
+        MessageBoxA(0, "本次上机共登记 " + 已到 + " 人，用时约 " + 用时 + " 秒。", "考勤小结", 0);  // Win32 里这是 MB_OK
     }
 }
 
@@ -2804,7 +2996,7 @@ function on_close() {
         msgbox("还有 " + (应到 - 已到) + " 人没有登记。", "提醒");
     }
 }</code></pre>
-<p><strong>第 4 步　写 main，把窗口搭起来。</strong> 在 <code>main</code> 里建窗口、按 11.2 的表摆控件、读出应到人数、<code>刷新()</code> 一次，最后 <code>run()</code>。把前面几段接在 <code>use</code> 行下面、按顺序排好，就是完整的 <code>attend.cask</code>：</p>
+<p><strong>第 4 步　写 main，把窗口搭起来。</strong> 在 <code>main</code> 里建窗口、按 12.2 的表摆控件、读出应到人数、<code>刷新()</code> 一次，最后 <code>run()</code>。把前面几段接在 <code>use</code> 行下面、按顺序排好，就是完整的 <code>attend.cask</code>：</p>
 <pre><code class="lang-cask">// attend.cask —— 机房上机考勤登记
 // 功能：登记学号、显示已到名单与到课率、结束小结、关闭提醒
 use "C_OPED.cash";
@@ -2859,7 +3051,7 @@ function on_click(int 控件) {
             return;
         }
         int 用时 = (GetTickCount() - 开始时刻) / 1000;
-        MessageBoxA(0, "本次上机共登记 " + 已到 + " 人，用时约 " + 用时 + " 秒。", "考勤小结", MB_OK);
+        MessageBoxA(0, "本次上机共登记 " + 已到 + " 人，用时约 " + 用时 + " 秒。", "考勤小结", 0);  // Win32 里这是 MB_OK
     }
 }
 
@@ -2890,9 +3082,9 @@ function main() {
 }</code></pre>
 <p><strong>运行时你会看到什么：</strong></p>
 <ul><li>一个 620×480 的窗口，标题"机房考勤登记"。</li><li>左上角是"学号："输入框；右边是"应到人数："输入框（默认 60）和"登记"按钮。</li><li>左下是一块大的空白多行框（名单），右边是进度条、"已到 0 人 / 应到 60 人，到课率 0%"的状态文字，最下面是"结束并小结"按钮。</li><li>在学号框里输入 <code>2024001</code> 点"登记"，名单里出现"1. 2024001"，状态变成"已到 1 人 / 应到 60 人，到课率 1%"，进度条前进 1 格，学号框自动清空。</li><li>什么都不填就点"登记"，弹出"学号不能为空。"。</li><li>一个都没登记就点"结束并小结"，弹出"还没有人登记。"。</li><li>登记满 60 人后再"登记"，弹出"应到人数已满，不能再登记。"。</li><li>点右上角 × 关闭时，如果还有 59 人没到，先弹出"还有 59 人没有登记。"。</li></ul>
-<p><strong>第 5 步　按测试表逐条验证。</strong> 见 11.5。</p>
-<p><strong>第 6 步　整理交付文件。</strong> 见 11.6。</p>
-<h4>11.5 测试用例表</h4>
+<p><strong>第 5 步　按测试表逐条验证。</strong> 见 12.5。</p>
+<p><strong>第 6 步　整理交付文件。</strong> 见「拓展与规范」里的交付清单。</p>
+<h4>12.5 测试用例表</h4>
 <p>每做完一个项目，都要留一张能"照着点一遍"的测试表：</p>
 <table>
 <thead><tr><th>编号</th><th>测试内容</th><th>操作</th><th>期望结果</th></tr></thead>
@@ -3204,7 +3396,7 @@ bin\caskc.exe 程序.cask --fast           关闭越界 / 溢出检查</code></p
 </tbody></table>
 <hr>
 <h2>附录 C　从 C* 到 C 的对照表</h2>
-<p>C* 先翻译成 C，再由 gcc 编译成 exe。看懂生成的 C，能帮你理解为什么有些规则是那样。</p>
+<p>正式编译走的是 <strong>x86-64 汇编后端</strong>：<code>.cask</code> 直接生成汇编，再由 <code>as</code> + <code>ld</code> 链接成 exe，<strong>不经过 C 编译器</strong>。但 <code>--emit-c</code> 仍然能写出一份<strong>等价的 C 代码</strong>——看懂这份 C，能帮你理解为什么有些规则是那样（比如溢出检查、类型转换对应到哪一步）。</p>
 <h3>C.1 类型对照</h3>
 <table>
 <thead><tr><th>C*</th><th>C</th><th>说明</th></tr></thead>
@@ -3272,12 +3464,14 @@ int main(void)
 <p>要看的几点：</p>
 <ul><li><code>int</code> 变成了 <code>long long</code>，常量带上了 <code>LL</code>。</li><li><code>print</code> 拆成了 <code>cask_p_str</code>、<code>cask_p_num</code>，最后加一个 <code>cask_nl()</code> 换行。</li><li>乘法变成了 <code>cask_mul(单价, 数量, __FILE__, 5)</code>，多传了文件名和行号——越界、溢出、除零的报错就是从这里拿到位置的。</li><li><code>#line</code> 让 C 编译器报错时指向 <code>.cask</code> 源文件，而不是生成的 <code>.c</code>。</li></ul>
 <h3>C.4 编译命令</h3>
-<p>只看生成的 C：</p>
+<p>想看等价 C：</p>
 <pre><code class="lang-text">bin\caskc.exe 程序.cask --emit-c out.c</code></pre>
-<p>编译器背后调用的 gcc 大致是：</p>
-<pre><code class="lang-text">gcc -O2 -s -o out.exe out.exe.gen.c -I "…\bin" -lm</code></pre>
-<p>窗口程序会加上 <code>-mwindows</code> 和一组窗口库：</p>
-<pre><code class="lang-text">-mwindows -luser32 -lgdi32 -lcomctl32 -lole32 -luuid -lshell32 -lcomdlg32 -lmsimg32</code></pre>
+<p><strong>注意</strong>：<code>--emit-c</code> 只是写出一份等价的 C 给你<strong>对照</strong>，它本身不编译。真正生成 <code>.exe</code> 走的是汇编后端，<code>-v</code> 能看到实际执行的两条命令，大致是：</p>
+<pre><code class="lang-text">as --64 out.gen.s -o out.gen.o
+ld -m i386pep --subsystem console -o "out.exe" "…\crt2.o" out.gen.o "…\libcastrt.a" -L "…" -lmingw32 -lgcc -lmingwex -lmsvcrt -lkernel32</code></pre>
+<p>窗口程序会把子系统换成 <code>windows</code>，并额外链接一组窗口库：</p>
+<pre><code class="lang-text">-luser32 -lgdi32 -lcomctl32 -lole32 -luuid -lshell32 -lcomdlg32 -lmsimg32</code></pre>
+<p><code>libcastrt.a</code> 是工具链在 <code>build.bat</code> 时预编译好的运行时库（含 <code>cask_rt.h</code> / <code>C_OPED.cash</code> / <code>C_CSS.cash</code> / <code>C_IO.cash</code> 的实现），用户机器上编译 <code>.cask</code> 不需要 gcc、g++。</p>
 <h3>C.5 从 C* 转到 C 要注意</h3>
 <ul><li>C* 的越界、溢出、除零检查，到了 C 里全都没有；C 出这类问题是未定义行为，可能不报错、可能乱跑。</li><li>字符串在 C 里就是 <code>char *</code>，长度要自己算，内存要自己管。</li><li><code>bool</code> 在 C 里是 <code>int</code>，打印要用 <code>cask_p_bool</code>，不能当普通整数随便打。</li><li>C 的 <code>printf</code> 格式必须自己配对（<code>%lld</code> 对 <code>long long</code>），配错了不报错，直接输出乱码。</li></ul>
 <hr>
@@ -3541,7 +3735,7 @@ function on_click(int 控件) {
         }
         int 用时 = GetTickCount() - 开始时刻;
         string 报告 = "共 " + 人数 + " 人\n总分 " + 总分 + "\n平均 " + ROUND(总分 * 1.0 / 人数, 1) + "\n最高 " + 最高分 + "\n最低 " + 最低分;
-        MessageBoxA(0, 报告, "成绩统计（运行 " + 用时 + " 毫秒）", MB_OK);
+        MessageBoxA(0, 报告, "成绩统计（运行 " + 用时 + " 毫秒）", 0);  // Win32 里这是 MB_OK
         return;
     }
     if (控件 == 清空按钮) {
@@ -3596,9 +3790,9 @@ function main() {
 <table>
 <thead><tr><th>题号</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
 <tbody>
-<tr><td>答案</td><td>B</td><td>B</td><td>C</td><td>对</td><td>错</td><td>错</td></tr>
+<tr><td>答案</td><td>B</td><td>B</td><td>C</td><td>错</td><td>错</td><td>错</td></tr>
 </tbody></table>
-<p>第 5 题：<code>print</code> 是关键字，不能当变量名。第 6 题：全角分号 <code>；</code> 编译不过。</p>
+<p>第 4 题：不翻译成 C、也不交给 gcc——<code>caskc</code> 直接生成 x86-64 汇编，再用 <code>as</code> + <code>ld</code> 链接成 exe。第 5 题：<code>print</code> 是关键字，不能当变量名。第 6 题：全角分号 <code>；</code> 编译不过。</p>
 <p><strong>第 7 题</strong></p>
 <pre><code class="lang-cask">function main() {
     print "姓名：李明";
@@ -3970,6 +4164,38 @@ function main() {
 <table>
 <thead><tr><th>题号</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
 <tbody>
+<tr><td>答案</td><td>B</td><td>B</td><td>C</td><td>错</td><td>错</td><td>对</td></tr>
+</tbody></table>
+<p>第 1 题：关掉程序后还留得下的只有文件；全局变量、<code>constant</code> 都在内存里。第 4 题：<code>C_CSS.cash</code> 必须紧跟 <code>C_OPED.cash</code>，单用会编译报错。第 5 题：<code>csradius</code> / <code>csshadow</code> 只在 Linux 生效，Windows 上被安全忽略。</p>
+<p><strong>第 7 题</strong>　启动时读旧值、加 1、再存回去；没有就从 1 开始（C* 没有"数字转文字"的现成函数，用 <code>CHAR</code> + 拼接自己拼）：</p>
+<pre><code class="lang-cask">use "C_IO.cash";
+
+string 整转文字(int 数字) {
+    string 结果;
+    if (数字 == 0) return "0";
+    结果 = "";
+    while (数字 &gt; 0) {
+        结果 = CHAR(48 + 数字 % 10) + 结果;
+        数字 = 数字 / 10;
+    }
+    return 结果;
+}
+
+function main() {
+    string 文件 = appdir() + "/count.txt";
+    int n = 1;
+    if (fileexists(文件) == 1) {
+        n = VALUE(readfile(文件)) + 1;
+    }
+    writefile(文件, 整转文字(n));
+    print "第 ", n, " 次运行";
+    return 0;
+}</code></pre>
+<p><strong>第 8 题</strong>　输入框加"提交"按钮，点一下把留言追加进文件、再把整个文件读回显示在多行框里；界面用 <code>csbg</code> / <code>cstext</code> 涂一套深色配色（写法见 10.7 节）。</p>
+<h3>E.11 第 11 章</h3>
+<table>
+<thead><tr><th>题号</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
+<tbody>
 <tr><td>答案</td><td>B</td><td>B</td><td>B</td><td>错</td><td>错</td><td>对</td></tr>
 </tbody></table>
 <p>第 4 题：<code>printf</code> 和 <code>print</code> 撞名，会报"未知函数"。第 5 题：用了头文件还要写原型。</p>
@@ -4004,7 +4230,7 @@ function main() {
 int 结果标签;
 
 function on_click(int 控件) {
-    int 答 = MessageBoxA(0, "要继续吗？", "询问", MB_OKCANCEL);
+    int 答 = MessageBoxA(0, "要继续吗？", "询问", 1);  // Win32 里这是 MB_OKCANCEL
     if (答 == 1) {
         settext(结果标签, "你点了「确定」");
     } else {
@@ -4018,7 +4244,7 @@ function main() {
     button("弹一个询问框", 24, 104, 160, 34);
     run();
 }</code></pre>
-<h3>E.11 第 11 章</h3>
+<h3>E.12 第 12 章</h3>
 <table>
 <thead><tr><th>题号</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
 <tbody>
@@ -4154,7 +4380,7 @@ function main() {
 方程235永远爱rcl！</code></pre>
 <p>最后那句 <code>收尾：保存数据、关闭文件。</code> <strong>没有</strong>打出来，这正是 <code>rcl()</code> 和正常退出的区别：它是"立刻断"，不走收尾。</p>
 <h3>F.6 任务实施三：给考勤登记藏一个暗号</h3>
-<p>最后把它用进第 11 章那种窗口程序里。这次暗号是学号 <code>235</code>：填这个学号不走正常登记，而是打开"开发者模式"。</p>
+<p>最后把它用进第 12 章那种窗口程序里。这次暗号是学号 <code>235</code>：填这个学号不走正常登记，而是打开"开发者模式"。</p>
 <pre><code class="lang-cask">use "C_OPED.cash";
 
 int 姓名框;
@@ -4200,7 +4426,7 @@ function main() {
 <ul><li>窗口程序<strong>默认没有控制台</strong>，<code>rcl</code> 打的那行字看不见。想看到它，编译运行时加 <code>--console</code>：<code>bin\caskc.exe 考勤.cask --run --console</code>。如果希望不依赖控制台，把暗号的反馈写在界面上（上面用 <code>settext(状态标签, …)</code> 就是这么做的）。</li><li>暗号判断要放在<strong>正常流程之前</strong>，判断成立后 <code>return</code>，这样彩蛋就不会污染正常登记逻辑。</li></ul>
 <h3>F.7 拓展与规范</h3>
 <p>彩蛋代码和业务代码混在一起，很容易变成"没人看得懂的怪代码"。下面几条是交付经验：</p>
-<ul><li><strong>彩蛋要能被一眼认出来</strong>：包成单独的函数（比如 <code>隐藏口令(口令)</code>），加一行注释说明它是彩蛋，别把 <code>rcl</code> 散落在业务逻辑里。</li><li><strong>不要用 <code>rcl()</code> 当正常退出</strong>：业务程序该保存的保存、该关的关，<code>rcl()</code> 会跳过全部收尾代码，只适合急停和演示。</li><li><strong>别用它绕开循环</strong>：从 <code>while (true)</code> 里退出应该用条件判断或 <code>break</code>，<code>rcl()</code> 是"把程序整个关掉"，不是"结束循环"。</li><li><strong>交付说明里写一句</strong>：如果有暗号，在 README 或演示文档里写一句"输入 235 有惊喜"，不然下一个维护的人只会以为程序写错了。</li><li><strong>注意版本</strong>：<code>rcl</code> 是 0.4.2 的内置函数。把程序交给别人之前，用 <code>bin\caskc.exe --version</code> 确认对方也是 0.4.2，否则会报"未知函数"。</li><li><strong>别忘了测试</strong>：暗号分支也要跑一遍，确认它对上暗号时只是多说一句话，不会破坏正常功能。</li></ul>
+<ul><li><strong>彩蛋要能被一眼认出来</strong>：包成单独的函数（比如 <code>隐藏口令(口令)</code>），加一行注释说明它是彩蛋，别把 <code>rcl</code> 散落在业务逻辑里。</li><li><strong>不要用 <code>rcl()</code> 当正常退出</strong>：业务程序该保存的保存、该关的关，<code>rcl()</code> 会跳过全部收尾代码，只适合急停和演示。</li><li><strong>别用它绕开循环</strong>：从 <code>while (true)</code> 里退出应该用条件判断或 <code>break</code>，<code>rcl()</code> 是"把程序整个关掉"，不是"结束循环"。</li><li><strong>交付说明里写一句</strong>：如果有暗号，在 README 或演示文档里写一句"输入 235 有惊喜"，不然下一个维护的人只会以为程序写错了。</li><li><strong>注意版本</strong>：<code>rcl</code> 是 0.5.0 的内置函数。把程序交给别人之前，用 <code>bin\caskc.exe --version</code> 确认对方也是 0.5.0，否则会报"未知函数"。</li><li><strong>别忘了测试</strong>：暗号分支也要跑一遍，确认它对上暗号时只是多说一句话，不会破坏正常功能。</li></ul>
 <h3>F.8 本章小结</h3>
 <table>
 <thead><tr><th>想做的事</th><th>写法</th></tr></thead>
@@ -4213,9 +4439,9 @@ function main() {
 </tbody></table>
 <p><code>rcl</code> 不改变程序的业务逻辑，它只是给程序留了一个只有自己人才知道的入口。用得好是彩蛋，用不好是坑。</p>
 <h3>F.9 实训任务</h3>
-<ol><li>写一个"暗号打卡"程序：循环问用户今天学了什么，其中一题要求输入数字暗号，对上了用 <code>rcl(235)</code> 回一句，对不上就提示"再想想"。</li><li>把 F.6 的考勤登记改成"学号填 <code>FC235</code> 打开开发者模式"，并在开发者模式下在状态标签里显示当前条数、最后一个学号和程序运行时间（用第 10 章的 <code>GetTickCount</code>）。</li><li>找一个你以前写过的小程序，给它加一个急停开关 <code>rcl();</code>，然后写三行说明：开关按下时程序从哪里结束、哪些收尾代码被跳过了、为什么这样用是安全的。</li></ol>
+<ol><li>写一个"暗号打卡"程序：循环问用户今天学了什么，其中一题要求输入数字暗号，对上了用 <code>rcl(235)</code> 回一句，对不上就提示"再想想"。</li><li>把 F.6 的考勤登记改成"学号填 <code>FC235</code> 打开开发者模式"，并在开发者模式下在状态标签里显示当前条数、最后一个学号和程序运行时间（用第 11 章的 <code>GetTickCount</code>）。</li><li>找一个你以前写过的小程序，给它加一个急停开关 <code>rcl();</code>，然后写三行说明：开关按下时程序从哪里结束、哪些收尾代码被跳过了、为什么这样用是安全的。</li></ol>
 <h3>F.10 本章测验</h3>
-<ol><li>判断题：<code>rcl(235);</code> 会结束整个程序。</li><li>判断题：<code>rcl();</code> 后面的语句还会执行。</li><li>选择题：下面哪个写法会输出 <code>方程235 爱 rcl</code>。A. <code>rcl();</code> B. <code>rcl(1);</code> C. <code>rcl("JF");</code> D. <code>rcl("hello");</code></li><li>选择题：想让程序在任何位置立刻结束，应该用。A. <code>return;</code> B. <code>break;</code> C. <code>rcl();</code> D. <code>continue;</code></li><li>编程题：写一个程序，先问用户一个数字，输入 <code>235</code> 就输出暗号，输入其它数字就照常把它打印出来。</li><li>编程题：给第 11 章的"机房考勤登记"补一个隐藏命令，并在交付说明里写一句给使用者看的提示。</li></ol>
+<ol><li>判断题：<code>rcl(235);</code> 会结束整个程序。</li><li>判断题：<code>rcl();</code> 后面的语句还会执行。</li><li>选择题：下面哪个写法会输出 <code>方程235 爱 rcl</code>。A. <code>rcl();</code> B. <code>rcl(1);</code> C. <code>rcl("JF");</code> D. <code>rcl("hello");</code></li><li>选择题：想让程序在任何位置立刻结束，应该用。A. <code>return;</code> B. <code>break;</code> C. <code>rcl();</code> D. <code>continue;</code></li><li>编程题：写一个程序，先问用户一个数字，输入 <code>235</code> 就输出暗号，输入其它数字就照常把它打印出来。</li><li>编程题：给第 12 章的"机房考勤登记"补一个隐藏命令，并在交付说明里写一句给使用者看的提示。</li></ol>
 <p><strong>测验参考答案</strong></p>
 <table>
 <thead><tr><th>题号</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
