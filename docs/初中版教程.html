@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>初中版教程 · `C*` 语言（0.4.2）</title>
+<title>初中版教程 · `C*` 语言（0.5.0）</title>
 <style>
   body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
          line-height: 1.7; color: #222; background: #fafafa;
@@ -27,9 +27,12 @@
 </style>
 </head>
 <body>
-<h1>初中版教程 · <code>C*</code> 语言（0.4.2）</h1>
-<blockquote><p>这是一本写给初中生的编程入门书，从零开始，一直写到能做出带按钮的窗口程序。
-书里的语言叫 <code>C*</code>，读作 <strong>C Asterisk</strong>。</p></blockquote>
+<h1>初中版教程 · <code>C*</code> 语言（0.5.0）</h1>
+<blockquote><p>这是一本写给初中生的编程入门书，从零开始，一直写到能做出带按钮、能存盘、有主题配色的窗口程序。
+书里的语言叫 <code>C*</code>，读作 <strong>C Asterisk</strong>。
+
+<strong>0.5.0 新增</strong>：第九单元「文件与美化」——第 22 课把数据存进文件，第 23 课给窗口配色，
+最后做一个会记住内容的待办清单。</p></blockquote>
 <hr>
 <h2>这本书怎么用</h2>
 <ul><li><strong>读者</strong>：学过一点数学，编程零基础或刚起步，年龄大约 12 到 15 岁。</li><li><strong>每一课的结构固定</strong>：先看"这一课学什么"，再读能直接运行的程序，然后是逐行解释、易错点、练习。</li><li><strong>代码块</strong>：标着 <code>cask</code> 的代码就是 <code>C*</code> 源文件的内容，保存成后缀为 <code>.cask</code> 的文件（例如 <code>hello.cask</code>）就能编译。</li><li><strong>单元小项目</strong>：每个单元末尾会有一个完整的程序，把这一单元学到的东西合起来用一次。</li><li><strong>想查细节</strong>：随时翻 <code>docs\CStar手册.md</code>，那里有关键字总表和全部内置函数。</li></ul>
@@ -43,7 +46,7 @@
 <p>屏幕上出现 <code>你好，C*！</code>，第一个程序就成了。不加 <code>--run</code> 只会编译出 <code>hello.exe</code>，需要自己双击运行。</p>
 <p>不想敲命令也可以双击 <code>bin\caskide.exe</code> 打开 <strong><code>C*</code> Studio 编辑器</strong>，把代码粘进去，按 <code>F5</code> 运行、按 <code>Esc</code> 停止。编辑器用的是和命令行一样的编译器，结果完全一致。</p>
 <h2>六种基本类型</h2>
-<p>程序里的每份数据都有"类型"，类型决定它能装什么。<code>C*</code> 0.4.2 一共六种：</p>
+<p>程序里的每份数据都有"类型"，类型决定它能装什么。<code>C*</code> 0.5.0 一共六种：</p>
 <table>
 <thead><tr><th>类型</th><th>装什么</th><th>例子</th></tr></thead>
 <tbody>
@@ -55,7 +58,7 @@
 <tr><td><code>none</code></td><td>不返回任何东西，只用于函数</td><td><code>none 问候() { ... }</code></td></tr>
 </tbody></table>
 <h2>一个版本约定</h2>
-<p><code>C*</code> 0.4.2 统一使用上面这六个类型名。更早的版本里，同样的东西写作 <code>number</code>（整数）、<code>real</code>（小数）、<code>text</code>（文字）、<code>letter</code>（字符）。</p>
+<p><code>C*</code> 0.5.0 统一使用上面这六个类型名。更早的版本里，同样的东西写作 <code>number</code>（整数）、<code>real</code>（小数）、<code>text</code>（文字）、<code>letter</code>（字符）。</p>
 <p>这四个老名字现在叫<strong>软弃用别名</strong>：写出来<strong>照样能编译、能运行</strong>，只是编辑器会给你一条"提示"级的信息，建议换成新名字。本书一律用新名字 <code>int / float / string / char / bool / none</code>。</p>
 <hr>
 <h2>第一单元　起步</h2>
@@ -1369,7 +1372,7 @@ function main() {
 <ol><li>把成绩改成从键盘一个个输入（用第 13、14 课的办法）。</li><li>加上"及格人数"和"不及格名单"。</li><li>把名次榜改成只打印前 3 名，并加一句"恭喜上榜"。</li></ol>
 <hr>
 <h2>第八单元　窗口程序</h2>
-<p>前面所有程序都在黑底白字的控制台里跑。<code>C*</code> 0.4.2 可以直接做出<strong>带窗口、按钮、输入框</strong>的程序。这个单元用三课讲清楚。</p>
+<p>前面所有程序都在黑底白字的控制台里跑。<code>C*</code> 0.5.0 可以直接做出<strong>带窗口、按钮、输入框</strong>的程序。这个单元用三课讲清楚。</p>
 <h3>第 19 课　第一个窗口</h3>
 <p><strong>这一课学什么</strong>：用 <code>C*</code> 自己的窗口函数做出一个能点的窗口。</p>
 <p>窗口程序的第一行必须是这一句：</p>
@@ -1387,7 +1390,7 @@ function main() {
 }</code></pre>
 <p><strong>逐行解释</strong>：</p>
 <ul><li><code>use "C_OPED.cash";</code> 引入窗口工具包。必须在程序最前面。</li><li><code>window(标题, 宽, 高)</code> 建一个窗口，返回一个<strong>控件编号</strong>（一个整数），存进 <code>窗口</code> 里备用。</li><li><code>label(...)</code> 放一段静态文字；<code>button(...)</code> 放一个按钮。它们的参数都是"文字, x, y, 宽, 高"，<code>x, y</code> 是相对窗口左上角的坐标，单位是像素。</li><li><code>run()</code> 让窗口显示出来，并<strong>进入事件循环</strong>：程序停在这里，等你点按钮、关窗口。窗口关闭后 <code>run()</code> 才返回，程序结束。</li></ul>
-<p><strong>怎么运行</strong>：窗口程序其实是先翻译成 C，再编译成 exe。和别的程序一样：</p>
+<p><strong>怎么运行</strong>：窗口程序和其他程序走同一条编译链——<code>.cask</code> 直接生成 x86-64 汇编，再用 <code>as</code> + <code>ld</code> 链接成 exe。和别的程序一样：</p>
 <pre><code class="lang-bat">bin\caskc.exe 程序.cask --run</code></pre>
 <p>窗口程序默认<strong>不带黑窗口</strong>。开发时如果想同时看到控制台里 <code>print</code> 的内容，加一个 <code>--console</code>：</p>
 <pre><code class="lang-bat">bin\caskc.exe 程序.cask --run --console</code></pre>
@@ -1592,6 +1595,168 @@ function main() {
 <p><strong>动手改一改</strong>：</p>
 <ol><li>加一个"清空清单"按钮。（提示：<code>listbox</code> 的项不好逐个删，简单办法是记下内容，重建一个新列表。）</li><li>给每条待办前面加上 <code>[ ]</code>，完成一项就在输入框里写编号、点"完成"改成 <code>[x]</code>。</li><li>加一个 <code>progress</code> 显示"今天完成了百分之几"。</li></ol>
 <hr>
+<h2>第九单元　文件与美化</h2>
+<p>前八单元的程序一关就忘事，界面也一直是系统默认的灰色。这个单元解决这两件事：
+把数据写进文件，让它下次还在；用 <code>C_CSS.cash</code> 给窗口换一套自己的配色。</p>
+<h3>第 22 课　文件读写：让程序记住数据</h3>
+<p><strong>这一课学什么</strong>：用 <code>C_IO.cash</code> 把文字存进文件、再读回来，并认识"程序目录"和"环境变量"。</p>
+<p>变量和数组都在内存里，程序结束就没了。文件不一样：写进去以后一直在，下次打开还能读。
+<code>C*</code> 用 <code>use "C_IO.cash";</code> 打开文件与系统工具箱，<strong>控制台程序也能用</strong>，不必开窗口。</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>readfile(路径)</code></td><td>把整个文件读成一段文字；不存在给 <code>""</code>，上限 1MB</td></tr>
+<tr><td><code>writefile(路径, 内容)</code></td><td>覆盖写入，成功返回 1</td></tr>
+<tr><td><code>appendfile(路径, 内容)</code></td><td>追加到文件末尾，成功返回 1</td></tr>
+<tr><td><code>fileexists(路径)</code></td><td>文件或目录在不在：1 / 0</td></tr>
+<tr><td><code>makedir(路径)</code></td><td>建目录（已存在也算成功）</td></tr>
+<tr><td><code>appdir()</code></td><td>本程序（exe）所在目录，拼路径最省事</td></tr>
+<tr><td><code>envget("名字")</code></td><td>读环境变量，比如 <code>envget("USERPROFILE")</code></td></tr>
+<tr><td><code>launchwait("命令行")</code></td><td>启动外部程序并<strong>等它跑完</strong>，返回退出码（起不来 -1）</td></tr>
+</tbody></table>
+<pre><code class="lang-cask">// 文件读写演示
+use "C_IO.cash";
+
+number main() {
+    string 文件 = appdir() + "/成绩.txt";
+
+    writefile(文件, "小明 92\n小红 95\n");   // 覆盖写入
+    appendfile(文件, "小刚 88\n");          // 追加一行
+
+    if (fileexists(文件) != 0) {
+        print "文件内容：";
+        print readfile(文件);
+    } else {
+        print "文件不见了";
+    }
+    return 0;
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>appdir() + "/成绩.txt"</code> 把文件放在 exe 旁边；Windows 和 Linux 都认 <code>/</code>。</li><li><code>writefile</code> 是<strong>覆盖</strong>：原来有什么都先清掉，再写新的。</li><li><code>appendfile</code> 是<strong>追加</strong>：保留原来的内容，把新内容接到末尾。</li><li><code>readfile</code> 返回一整段文字，里面有换行符，<code>print</code> 会原样输出。</li><li><code>fileexists</code> 用来避免"读一个根本不存在的文件"。</li></ul>
+<p><strong>路径要注意</strong>：路径里的分隔符写作 <code>/</code> 或 <code>\\</code>（在字符串里一个 <code>\</code> 要写成 <code>\\</code>）。
+比如 <code>"D:\\mc\\client.jar"</code>。写相对路径时，程序会按<strong>当前工作目录</strong>找，不一定是你 exe 所在目录；
+要稳妥就用 <code>appdir()</code> 拼绝对路径。</p>
+<p><strong><code>launch</code> 和 <code>launchwait</code> 的区别</strong>：</p>
+<table>
+<thead><tr><th>函数</th><th>来自</th><th>行为</th></tr></thead>
+<tbody>
+<tr><td><code>launch("命令行")</code></td><td><code>C_OPED.cash</code></td><td>启动就返回，适合启动游戏、编辑器</td></tr>
+<tr><td><code>launchwait("命令行")</code></td><td><code>C_IO.cash</code></td><td>等程序跑完，能拿到退出码，适合批处理</td></tr>
+</tbody></table>
+<p><strong>练习</strong>：</p>
+<ol><li>做一个"记账本"：每次运行往 <code>账本.txt</code> 追加一行"日期 金额"，再读出来打印。</li><li>用 <code>makedir(appdir() + "/data")</code> 建一个目录，把文件写进 <code>data/</code> 里。</li><li>用 <code>envget("USERPROFILE")</code> 找到用户目录，把配置写到那里（只读目录也能保存）。</li></ol>
+<p><strong>小结</strong>：<code>C_IO.cash</code> 提供读、写、追加、判断存在、建目录、程序目录、环境变量和等待外部程序；
+数据写进文件后，程序关掉再打开还能读回来。</p>
+<hr>
+<h3>第 23 课　给窗口化妆：CSS 美化</h3>
+<p><strong>这一课学什么</strong>：用 <code>C_CSS.cash</code> 改文字色、背景色和字号，做一套深色主题。</p>
+<p><code>C_CSS.cash</code> 要跟 <code>C_OPED.cash</code> 一起用，位置是紧跟其后：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";</code></pre>
+<table>
+<thead><tr><th>函数</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>cstext(控件, 颜色)</code></td><td>改文字颜色</td></tr>
+<tr><td><code>csbg(控件, 颜色)</code></td><td>改背景颜色（控件或窗口都行）</td></tr>
+<tr><td><code>csfont(控件, 字号, 加粗)</code></td><td>字号按<strong>磅</strong>算，加粗写 1 / 0</td></tr>
+<tr><td><code>cshide(控件)</code> / <code>csshow(控件)</code></td><td>隐藏 / 显示</td></tr>
+<tr><td><code>cspass(控件)</code></td><td>把输入框变成密码框（打码）</td></tr>
+<tr><td><code>csradius(控件, 像素)</code> / <code>csshadow(控件, 0/1)</code></td><td>圆角 / 投影（只在 Linux 生效）</td></tr>
+</tbody></table>
+<p>颜色写 <code>"#RRGGBB"</code>、<code>"RRGGBB"</code>，或者 CSS 颜色名（<code>"red"</code>、<code>"gold"</code>…）。</p>
+<pre><code class="lang-cask">// 深色主题登录框
+use "C_OPED.cash";
+use "C_CSS.cash";
+
+int 输入框;
+int 提示;
+
+function on_click(int 控件) {
+    settext(提示, "你好，" + readtext(输入框) + "！");
+}
+
+function main() {
+    int 窗口 = window("深色登录", 460, 300);
+    int 标题 = label("欢迎回来", 24, 20, 412, 36);
+    输入框 = textbox("小明", 24, 80, 300, 28);
+    int 按钮 = button("登录", 24, 130, 140, 40);
+    提示 = label("", 24, 196, 412, 24);
+
+    csbg(窗口, "0D1117");                 // 窗口底色
+    cstext(标题, "#E6EDF3");
+    csfont(标题, 22, 1);
+    csbg(输入框, "161B22");               // 输入框深色底
+    cstext(输入框, "#E6EDF3");
+    csbg(按钮, "238636");                 // 绿色按钮
+    cstext(按钮, "#FFFFFF");
+    csfont(按钮, 12, 1);
+    cstext(提示, "#3FB950");
+    run();
+}</code></pre>
+<p><strong>0.5.0 的关键改进</strong>：</p>
+<ul><li>Windows 10/11 的视觉样式原本会无视按钮颜色；0.5.0 把按钮改成<strong>自绘</strong>，</li></ul>
+<p><code>csbg</code> / <code>cstext</code> / <code>csfont</code> 现在真的能控制按钮。</p>
+<ul><li><code>csbg(窗口, ...)</code> 会换掉窗口背景刷，整个窗口底都变色。</li><li>输入框返回背景刷时会同时设置文字底色，输入区内部不再是一块白。</li><li><code>csfont</code> 按屏幕 DPI 把磅换算成像素，12 磅约 16 像素，不会再出现超大字号。</li></ul>
+<p><strong>易错点</strong>：</p>
+<ul><li><code>C_CSS.cash</code> 不能单独用，必须先 <code>use "C_OPED.cash";</code>，否则编译器会报错。</li><li>控件编号要先用变量存住；<code>cstext</code> 传的是编号，不是控件名字。</li><li>颜色写错（比如少一位）不会让程序崩，但会退回默认灰色。</li></ul>
+<p><strong>练习</strong>：</p>
+<ol><li>把窗口底色改成 <code>"0B1020"</code>，标题改成 <code>"#4FC3F7"</code>，做一套"夜空"主题。</li><li>用 <code>cscolor("主色", "1E88E5")</code> 给主色起名，再用 <code>csapply("主色", 按钮)</code> 涂到按钮上。</li><li>用 <code>cshide</code> / <code>csshow</code> 做一个"显示更多"按钮，点一下露出第二行说明。</li></ol>
+<p><strong>小结</strong>：<code>C_CSS.cash</code> 用 CSS 的思路管理颜色和字体；0.5.0 起 Windows 上的按钮、窗口、
+输入框都能真正上色，深色主题可以完整做出来。</p>
+<hr>
+<h3>单元小项目 9　会记住内容的待办清单</h3>
+<p>把文件读写和美化合起来：便签内容保存在 exe 旁边，下次打开自动读回来；按钮和窗口用深色主题。</p>
+<pre><code class="lang-cask">// 会记住内容的待办清单
+use "C_OPED.cash";
+use "C_CSS.cash";
+use "C_IO.cash";
+
+int 便签;
+int 状态行;
+int 保存钮;
+int 清空钮;
+string 文件;
+
+function on_click(int 控件) {
+    if (控件 == 保存钮) {
+        if (writefile(文件, readtext(便签)) != 0)
+            settext(状态行, "已保存到：" + 文件);
+        else
+            settext(状态行, "保存失败，检查文件夹权限");
+    } else if (控件 == 清空钮) {
+        settext(便签, "");
+        settext(状态行, "已清空，记得再点保存");
+    }
+}
+
+function main() {
+    int 窗口 = window("会记住内容的待办清单", 520, 430);
+    int 标题 = label("今天要做的事", 24, 16, 460, 30);
+
+    文件 = appdir() + "/待办.txt";
+    便签 = memo("", 24, 56, 460, 260);
+    保存钮 = button("保存", 24, 330, 130, 38);
+    清空钮 = button("清空", 170, 330, 130, 38);
+    状态行 = label("内容会自动读入，改完点保存", 24, 382, 460, 24);
+
+    if (fileexists(文件) != 0) settext(便签, readfile(文件));
+
+    csbg(窗口, "0D1117");
+    cstext(标题, "#E6EDF3");
+    csfont(标题, 18, 1);
+    csbg(便签, "161B22");
+    cstext(便签, "#C9D1D9");
+    csbg(保存钮, "238636");
+    cstext(保存钮, "#FFFFFF");
+    csfont(保存钮, 12, 1);
+    csbg(清空钮, "21262D");
+    cstext(清空钮, "#C9D1D9");
+    cstext(状态行, "#8B949E");
+    run();
+}</code></pre>
+<p><strong>可以继续加</strong>：</p>
+<ol><li>关窗口时自动保存：写一个 <code>function on_close() { writefile(文件, readtext(便签)); }</code>。</li><li>加一个"打开所在文件夹"按钮，用 <code>launch("explorer.exe \"" + appdir() + "\"")</code>。</li><li>用 <code>envget("APPDATA")</code> 把文件改存到用户配置目录，避免 exe 所在目录不可写。</li></ol>
+<hr>
 <h2>附录 A　语法速查表</h2>
 <p><strong>六种类型</strong>：</p>
 <table>
@@ -1634,14 +1799,14 @@ function main() {
 <table>
 <thead><tr><th>类别</th><th>函数</th><th>说明</th></tr></thead>
 <tbody>
-<tr><td>数学（0.4.2 大写）</td><td><code>SIN</code> <code>COS</code> <code>TAN</code> <code>ASIN</code> <code>ACOS</code> <code>ATAN</code></td><td>三角 / 反三角（弧度）</td></tr>
-<tr><td>数学（0.4.2 大写）</td><td><code>FLOOR</code> <code>CEILING</code> <code>TRUNC</code></td><td>向下取整 / 向上取整 / 向零取整（<code>TRUNC(-2.7)=-2</code>）</td></tr>
-<tr><td>数学（0.4.2 大写）</td><td><code>LOG10</code> <code>ATAN2(y, x)</code></td><td>常用对数 / 两参反切</td></tr>
+<tr><td>数学（大写）</td><td><code>SIN</code> <code>COS</code> <code>TAN</code> <code>ASIN</code> <code>ACOS</code> <code>ATAN</code></td><td>三角 / 反三角（弧度）</td></tr>
+<tr><td>数学（大写）</td><td><code>FLOOR</code> <code>CEILING</code> <code>TRUNC</code></td><td>向下取整 / 向上取整 / 向零取整（<code>TRUNC(-2.7)=-2</code>）</td></tr>
+<tr><td>数学（大写）</td><td><code>LOG10</code> <code>ATAN2(y, x)</code></td><td>常用对数 / 两参反切</td></tr>
 <tr><td>Excel 数学</td><td><code>ABS</code> <code>SIGN</code> <code>MOD</code> <code>ROUND</code> <code>INT</code> <code>SQRT</code> <code>POWER</code> <code>PI()</code></td><td><code>MOD(-3,10)=7</code>，<code>INT(-2.7)=-3</code></td></tr>
 <tr><td>随机时间</td><td><code>RAND()</code> <code>RANDBETWEEN(a,b)</code> <code>now()</code></td><td>随机小数、随机整数、时间戳</td></tr>
 <tr><td>汇总</td><td><code>SUM</code> <code>AVERAGE</code> <code>MAX</code> <code>MIN</code> <code>COUNT</code></td><td>传<strong>数组名</strong></td></tr>
 <tr><td>文本</td><td><code>LEN</code> <code>at</code> <code>LEFT</code> <code>RIGHT</code> <code>MID</code> <code>UPPER</code> <code>LOWER</code> <code>TRIM</code> <code>CONCAT</code></td><td><code>at</code> 从 0 数，<code>LEFT/MID/RIGHT</code> 从 1 数</td></tr>
-<tr><td>文本（0.4.2 新增）</td><td><code>FIND(文字, 要找的)</code> <code>SUBSTITUTE(文字, 旧, 新)</code> <code>REPT(文字, 次数)</code> <code>EXACT(甲, 乙)</code> <code>CHAR(码)</code> <code>CODE(文字)</code></td><td>查找 / 替换 / 重复 / 逐字节相等 / 码互转</td></tr>
+<tr><td>文本（大写）</td><td><code>FIND(文字, 要找的)</code> <code>SUBSTITUTE(文字, 旧, 新)</code> <code>REPT(文字, 次数)</code> <code>EXACT(甲, 乙)</code> <code>CHAR(码)</code> <code>CODE(文字)</code></td><td>查找 / 替换 / 重复 / 逐字节相等 / 码互转</td></tr>
 <tr><td>逻辑</td><td><code>IF</code> <code>AND</code> <code>OR</code> <code>NOT</code></td><td><code>IF(条件, 真值, 假值)</code></td></tr>
 <tr><td>彩蛋</td><td><code>rcl()</code> <code>rcl(235)</code> <code>rcl("FC235")</code></td><td>空参结束整个程序；对上暗号回一句话（见文末彩蛋）</td></tr>
 </tbody></table>
@@ -1816,7 +1981,7 @@ function main() {
 <hr>
 <h2>彩蛋时间：<code>rcl</code></h2>
 <p><code>C*</code> 里藏着一个内置函数 <code>rcl</code>：不用 <code>use</code>、不用写函数体，直接调用。</p>
-<ul><li><code>rcl(235);</code>、<code>rcl("FC235");</code> 等对上暗号时，打印 <code>方程235 爱 rcl</code>，程序继续往下走。</li><li><code>rcl("rcl");</code> 打印 <code>rcl，方程235永远爱你！</code>。</li><li>空参 <code>rcl();</code> 打印 <code>方程235永远爱rcl！</code>，然后<strong>立刻结束整个程序</strong>——后面的语句一句都不执行。可以当"急停"用，哪怕它写在被调用的函数里也一样。</li><li>其它值（<code>rcl(1);</code>、<code>rcl("hello");</code>）什么都不做，程序照常跑。</li></ul>
+<ul><li><code>rcl(235);</code>、<code>rcl("FC235");</code> 等对上暗号时，打印 <code>rcl 爱 方程235</code>，程序继续往下走。</li><li><code>rcl("rcl");</code> 打印 <code>方程235，rcl永远爱你！</code>。</li><li>空参 <code>rcl();</code> 打印 <code>rcl永远爱方程235！</code>，然后<strong>立刻结束整个程序</strong>——后面的语句一句都不执行。可以当"急停"用，哪怕它写在被调用的函数里也一样。</li><li>其它值（<code>rcl(1);</code>、<code>rcl("hello");</code>）什么都不做，程序照常跑。</li></ul>
 <p>它认的字符串暗号（不分大小写）：<code>235</code>、<code>方程235</code>、<code>FangCheng235</code>、<code>ZFC235</code>、<code>JF235</code>、<code>JF</code>、<code>FC235</code>、<code>FC</code>、<code>ZFC</code>、<code>FangCheng</code>。数字 <code>235</code>（或 <code>235.0</code>）也认。</p>
 <p>试试看：给第 20 课的输入控件加一行 <code>if (口令 == "FC235") { rcl(235); }</code>，藏一个只有你知道的小开关。</p>
 <hr>
@@ -1824,7 +1989,7 @@ function main() {
 <p>你已经把 <code>C*</code> 的主要功能走了一遍。想继续往前走，可以从这几件事入手：</p>
 <ol><li><strong>通读手册</strong>：<code>docs\CStar手册.md</code> 里有本书没细讲的细节，比如位运算、<code>use</code> 引入自定义头文件、积木视图。</li><li><strong>读别人的程序</strong>：<code>examples\</code> 目录里有 <code>hello</code> <code>fizzbuzz</code> <code>guess</code> <code>primes</code> <code>excel</code> <code>win_hello</code> 六个示例，<code>tests\</code> 里还有一批小测试程序，都是很好的练习材料。改一改、跑一跑。</li><li><strong>自己出题</strong>：把身边的事写成程序——班费账本、单词卡片、复习计划。有用就是好程序。</li><li><strong>走向 C 语言</strong>：<code>C*</code> 的语法和 C 几乎一样。以后学 C / C++ 时，<code>if</code>、<code>for</code>、<code>while</code>、数组、函数都还是这个样子，只需要学新类型和新库。</li></ol>
 <hr>
-<p><em>初中版教程 · <code>C*</code> 语言（0.4.2）。配套速查手册见 <code>docs\CStar手册.md</code>。检查本书里的例子能否编译：<code>python docs\check_doc_code.py docs\初中版教程.md</code>。</em></p>
+<p><em>初中版教程 · <code>C*</code> 语言（0.5.0）。配套速查手册见 <code>docs\CStar手册.md</code>。检查本书里的例子能否编译：<code>python docs\check_doc_code.py docs\初中版教程.md</code>。</em></p>
 <hr>
 <p style="color:#888;font-size:0.9em;">由 docs/md2html.py 从 初中版教程.md 生成</p>
 </body>

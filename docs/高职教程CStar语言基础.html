@@ -4292,10 +4292,10 @@ function main() {
 <table>
 <thead><tr><th>写法</th><th>结果</th></tr></thead>
 <tbody>
-<tr><td><code>rcl();</code></td><td>输出一行 <code>方程235永远爱rcl！</code>，然后<strong>立刻结束整个程序</strong>，它后面的语句一句都不执行</td></tr>
-<tr><td><code>rcl(235);</code></td><td>输出一行 <code>方程235 爱 rcl</code></td></tr>
-<tr><td><code>rcl("FC235");</code></td><td>输出一行 <code>方程235 爱 rcl</code></td></tr>
-<tr><td><code>rcl("rcl");</code></td><td>输出一行 <code>rcl，方程235永远爱你！</code></td></tr>
+<tr><td><code>rcl();</code></td><td>输出一行 <code>rcl永远爱方程235！</code>，然后<strong>立刻结束整个程序</strong>，它后面的语句一句都不执行</td></tr>
+<tr><td><code>rcl(235);</code></td><td>输出一行 <code>rcl 爱 方程235</code></td></tr>
+<tr><td><code>rcl("FC235");</code></td><td>输出一行 <code>rcl 爱 方程235</code></td></tr>
+<tr><td><code>rcl("rcl");</code></td><td>输出一行 <code>方程235，rcl永远爱你！</code></td></tr>
 <tr><td>别的值，例如 <code>rcl(1);</code>、<code>rcl("hello");</code></td><td><strong>什么也不做</strong>，程序继续往下跑</td></tr>
 </tbody></table>
 <p>一句话记住：空着调用是"说完就走"，对上暗号是"回一句"，别的值就是"没听见"。</p>
@@ -4321,7 +4321,7 @@ function main() {
 <p>先输入 <code>FC235</code>：</p>
 <pre><code class="lang-text">请输入口令：
 FC235
-方程235 爱 rcl
+rcl 爱 方程235
 程序继续运行。</code></pre>
 <p>再输入 <code>12345</code>：</p>
 <pre><code class="lang-text">请输入口令：
@@ -4351,7 +4351,7 @@ function main() {
 <p>运行结果：</p>
 <pre><code class="lang-text">开始
 内层的结束语
-方程235永远爱rcl！</code></pre>
+rcl永远爱方程235！</code></pre>
 <p>把它和 <code>return</code> 比一比，区别就清楚了：</p>
 <table>
 <thead><tr><th>写法</th><th>结束谁</th><th>适合用在哪</th></tr></thead>
@@ -4377,7 +4377,7 @@ function main() {
 收到：7
 输入数字（-1 立刻退出）：
 -1
-方程235永远爱rcl！</code></pre>
+rcl永远爱方程235！</code></pre>
 <p>最后那句 <code>收尾：保存数据、关闭文件。</code> <strong>没有</strong>打出来，这正是 <code>rcl()</code> 和正常退出的区别：它是"立刻断"，不走收尾。</p>
 <h3>F.6 任务实施三：给考勤登记藏一个暗号</h3>
 <p>最后把它用进第 12 章那种窗口程序里。这次暗号是学号 <code>235</code>：填这个学号不走正常登记，而是打开"开发者模式"。</p>
@@ -4404,7 +4404,7 @@ function on_click(int 控件) {
     string 学号 = readtext(学号框);
     if (LEN(学号) == 0) { settext(状态标签, "学号不能为空"); return; }
     if (VALUE(学号) == 235) {                 // 隐藏暗号：学号填 235
-        rcl(235);                             // 说一句「方程235 爱 rcl」
+        rcl(235);                             // 说一句「rcl 爱 方程235」
         settext(状态标签, "开发者模式已打开");
         return;
     }
@@ -4441,14 +4441,14 @@ function main() {
 <h3>F.9 实训任务</h3>
 <ol><li>写一个"暗号打卡"程序：循环问用户今天学了什么，其中一题要求输入数字暗号，对上了用 <code>rcl(235)</code> 回一句，对不上就提示"再想想"。</li><li>把 F.6 的考勤登记改成"学号填 <code>FC235</code> 打开开发者模式"，并在开发者模式下在状态标签里显示当前条数、最后一个学号和程序运行时间（用第 11 章的 <code>GetTickCount</code>）。</li><li>找一个你以前写过的小程序，给它加一个急停开关 <code>rcl();</code>，然后写三行说明：开关按下时程序从哪里结束、哪些收尾代码被跳过了、为什么这样用是安全的。</li></ol>
 <h3>F.10 本章测验</h3>
-<ol><li>判断题：<code>rcl(235);</code> 会结束整个程序。</li><li>判断题：<code>rcl();</code> 后面的语句还会执行。</li><li>选择题：下面哪个写法会输出 <code>方程235 爱 rcl</code>。A. <code>rcl();</code> B. <code>rcl(1);</code> C. <code>rcl("JF");</code> D. <code>rcl("hello");</code></li><li>选择题：想让程序在任何位置立刻结束，应该用。A. <code>return;</code> B. <code>break;</code> C. <code>rcl();</code> D. <code>continue;</code></li><li>编程题：写一个程序，先问用户一个数字，输入 <code>235</code> 就输出暗号，输入其它数字就照常把它打印出来。</li><li>编程题：给第 12 章的"机房考勤登记"补一个隐藏命令，并在交付说明里写一句给使用者看的提示。</li></ol>
+<ol><li>判断题：<code>rcl(235);</code> 会结束整个程序。</li><li>判断题：<code>rcl();</code> 后面的语句还会执行。</li><li>选择题：下面哪个写法会输出 <code>rcl 爱 方程235</code>。A. <code>rcl();</code> B. <code>rcl(1);</code> C. <code>rcl("JF");</code> D. <code>rcl("hello");</code></li><li>选择题：想让程序在任何位置立刻结束，应该用。A. <code>return;</code> B. <code>break;</code> C. <code>rcl();</code> D. <code>continue;</code></li><li>编程题：写一个程序，先问用户一个数字，输入 <code>235</code> 就输出暗号，输入其它数字就照常把它打印出来。</li><li>编程题：给第 12 章的"机房考勤登记"补一个隐藏命令，并在交付说明里写一句给使用者看的提示。</li></ol>
 <p><strong>测验参考答案</strong></p>
 <table>
 <thead><tr><th>题号</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
 <tbody>
 <tr><td>答案</td><td>错</td><td>错</td><td>C</td><td>C</td></tr>
 </tbody></table>
-<p>第 1 题：<code>rcl(235)</code> 只输出一句话，不会结束程序，结束程序要用空参数的 <code>rcl()</code>。第 2 题：<code>rcl();</code> 会立刻结束程序，后面的语句不会执行。第 3 题：只有 <code>rcl("JF")</code> 是认得的字符串暗号；<code>rcl()</code> 输出的是 <code>方程235永远爱rcl！</code>，<code>rcl(1)</code> 和 <code>rcl("hello")</code> 什么也不做。第 4 题：<code>return</code> 只结束当前函数，<code>break</code> 和 <code>continue</code> 只影响循环，能让程序从任何位置整体结束的只有 <code>rcl()</code>。</p>
+<p>第 1 题：<code>rcl(235)</code> 只输出一句话，不会结束程序，结束程序要用空参数的 <code>rcl()</code>。第 2 题：<code>rcl();</code> 会立刻结束程序，后面的语句不会执行。第 3 题：只有 <code>rcl("JF")</code> 是认得的字符串暗号；<code>rcl()</code> 输出的是 <code>rcl永远爱方程235！</code>，<code>rcl(1)</code> 和 <code>rcl("hello")</code> 什么也不做。第 4 题：<code>return</code> 只结束当前函数，<code>break</code> 和 <code>continue</code> 只影响循环，能让程序从任何位置整体结束的只有 <code>rcl()</code>。</p>
 <p>第 5 题参考代码：</p>
 <pre><code class="lang-cask">function main() {
     int 数字;

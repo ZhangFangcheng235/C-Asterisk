@@ -34,7 +34,7 @@
 - Lowercase legacy spellings (`abs` `len` `sin` `floor` `ceil` `log10` …) still
   highlight; the compiler marks them soft-deprecated with a blue H-hint, so new
   code should use the uppercase names.
-- The `rcl` easter egg (方程235 永远爱 rcl) highlights as a built-in.
+- The `rcl` easter egg (rcl永远爱方程235) highlights as a built-in.
 - New window-program snippets: `win` (`use "C_OPED.cash";` + window + `run()`),
   `winuse`, `winonclick`.
 - New snippets: `atan2`, `trunc`, `find`, `subst`, `rept`.

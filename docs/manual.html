@@ -28,7 +28,7 @@
 </head>
 <body>
 <h1>C*（C Asterisk）编程语言 · 使用说明书</h1>
-<blockquote><p>版本 <strong>0.4.2</strong> — 一门语法像 C、关键字贴近初中英语词汇的小语言。
+<blockquote><p>版本 <strong>0.5.0</strong> — 一门语法像 C、关键字贴近初中英语词汇的小语言。
 源文件后缀：<code>.cask</code>　编译器：<code>bin\caskc.exe</code>　编辑器：<code>bin\caskide.exe</code>
 
 本文件是<strong>速查手册</strong>，把语言的每一处细节都列清楚。想跟着课学，选一本：
@@ -41,24 +41,25 @@
 | C* 语言 选修一 | <code>docs\普高选修一.md</code> | 高中选修：算法与窗口程序进阶 |
 | C* 语言基础 | <code>docs\高职教程CStar语言基础.md</code> | 高职，面向就业 |
 
-<strong>0.4.2 相对 0.3 的变化</strong>
+<strong>0.5.0 相对 0.4.2 的变化</strong>
 
-* 类型的规范名字改成 C 风格的 <code>int</code> / <code>float</code> / <code>string</code> / <code>char</code>；老名字
-<code>number</code> / <code>real</code> / <code>text</code> / <code>letter</code> 仍然能用（<strong>软弃用</strong>，只是提示你换新名）。
-* 新增 <code>use "C_OPED.cash";</code>：一行打开 C / C++ / Win32 世界，可以写<strong>窗口式程序</strong>（第 5 章）。
-* 新增 <code>use "C_CSS.cash";</code>：一行打开 CSS 式<strong>美化工具箱</strong>（给窗口控件上色、改字号、
-圆角、投影、密码打码），要配 <code>C_OPED.cash</code> 一起用（见 5.6）。
-* 积木视图：「窗口程序」「CSS 美化」两类积木做成<strong>头文件插件</strong>——程序里 <code>use</code> 了对应
-<code>.cash</code> 才出现，没 <code>use</code> 就不显示；注释行变成可编辑的绿色积木；<code>use</code> 积木会拉一条线
-连到画布右侧的头文件概述卡片（见 3.4）。
-* 示例新增 <code>examples\calc.cask</code>：用 C_OPED＋C_CSS 做的一台桌面整数计算器（见 5.6）。
-* 新增 <code>VALUE("42")</code>（= Excel 的 <code>VALUE</code>）：把一段文字变成整数。
-* 编辑器工具栏新增「<strong>⚡ 快编</strong>」开关（默认开）：走 tcc／<code>-O0</code> 编译更快，关掉走
-gcc <code>-O2</code> 运行最快。编译器加了<strong>构建缓存</strong>——程序没改动时直接复用上次的
-exe、跳过 C 编译器；也修了 <code>--fast</code> 模式下 <code>MOD</code>／<code>%</code> 取余生成 C 丢 <code>%</code> 的 bug。
-* 常用快捷键全通：代码视图 <code>Ctrl+C/V/X/Z/Y</code>（复制/粘贴/剪切/撤销/重做）原生可用；
-积木视图选中一块积木后 <code>Ctrl+C/X/V/Z/Y</code> 也能用（见 3.4）。
-* 编辑器换成 <strong>Visual Studio 2026 深色风格</strong>的外观与布局。</p></blockquote>
+* <strong>新增 <code>use "C_IO.cash";</code></strong>：打开"文件与系统"工具箱——<code>readfile</code> / <code>writefile</code> /
+<code>appendfile</code> / <code>fileexists</code> / <code>makedir</code> / <code>appdir</code> / <code>envget</code> / <code>launchwait</code>。
+控制台程序也能用，不必先开窗口（见 5.4b）。
+* <strong>界面美化在 Windows 上真正生效</strong>：按钮改成 owner-draw 自绘，<code>csbg</code> / <code>cstext</code> /
+<code>csfont</code> 能改按钮底色与文字；<code>csbg(窗口, 色)</code> 改窗口底色；输入框背景与文字底色
+一致；<code>csfont</code> 按 DPI 把磅换算成像素，不再出现超大字号（见 5.6）。
+* 新增完整示例 <code>examples\mc_launcher.cask</code>：自动探测 Java、自动找 jar、记住配置、
+启动 Minecraft，是 C_IO + C_CSS 的综合范例。
+* 汇编后端修正：<code>TRUE()</code> / <code>FALSE()</code> 参与表达式、<code>char</code> 右操作数符号扩展、
+数组初始化超出长度、<code>INT64_MIN % -1</code> 崩溃、中文函数嵌套调用、
+<code>--fast</code> 下字符自增漏检查；<code>--run</code> 现在会透传被运行程序的退出码。
+* 教材同步修订：五本教材新增文件读写与界面美化内容，并把"先翻译成 C 再交给 gcc"
+的旧说明改为"直接生成 x86-64 汇编，用 as + ld 链接"。
+
+更早的 0.4.2 带来了 C 风格类型名 <code>int / float / string / char</code>（旧名
+<code>number / real / text / letter</code> 仍可用）、<code>C_OPED.cash</code> 窗口头、<code>C_CSS.cash</code>
+美化头、积木视图头文件插件和 Visual Studio 2026 深色编辑器界面。</p></blockquote>
 <hr>
 <h2>1. C* 是什么</h2>
 <p>C*（读作 "C Asterisk"）是一门<strong>入门友好</strong>的编程语言：</p>
@@ -71,7 +72,7 @@ exe、跳过 C 编译器；也修了 <code>--fast</code> 模式下 <code>MOD</co
 <tr><td>运行安全</td><td>溢出、除零、数组越界都会<strong>报错并指出出错行</strong>，而不是乱算或崩溃</td></tr>
 <tr><td>整洁易懂</td><td>局部变量自动初始化为 <code>0</code> / 空，先用后赋不会读到垃圾值</td></tr>
 <tr><td>名字好写</td><td>变量名、函数名<strong>可以用中文</strong>（<code>number 苹果 = 3;</code>）</td></tr>
-<tr><td>跑得快</td><td><code>.cask</code> 先翻译成 C，再由 gcc 编译成原生 exe</td></tr>
+<tr><td>跑得快</td><td><code>.cask</code> 直接生成 x86-64 汇编，再用 <code>as</code> + <code>ld</code> 链接成原生 exe（不经过 C 编译器）</td></tr>
 </tbody></table>
 <p>一个完整的例子：</p>
 <pre><code class="lang-cask">// guess.cask -- 猜数字
@@ -89,13 +90,21 @@ function main() {
 <hr>
 <h2>2. 安装与目录</h2>
 <h3>2.1 需要什么</h3>
-<ul><li>Windows 10/11（也支持 Linux/macOS，路径按 <code>/</code> 处理）</li><li><strong>gcc</strong>（MinGW-w64：Dev-C++、MSYS2、w64devkit、Strawberry Perl 里的 gcc 都行），要能在命令行输入 <code>gcc --version</code> 看到版本</li><li>可选：Python 3（只在重新生成网页版说明书时需要）</li></ul>
+<ul><li>Windows 10/11（也支持 Linux/macOS，路径按 <code>/</code> 处理）</li><li><strong>binutils</strong>（<code>as</code> / <code>ld</code>；MinGW-w64：Dev-C++、MSYS2、w64devkit、Strawberry Perl 里都自带）。</li></ul>
+<p>编译 <code>.cask</code> 只需要它们，<strong>不需要 gcc</strong></p>
+<ul><li>只有<strong>构建工具链本身</strong>（<code>build.bat</code> / <code>build.sh</code>）才需要 gcc、g++</li><li>可选：Python 3（只在重新生成网页版说明书时需要）</li></ul>
 <h3>2.2 目录结构</h3>
 <pre><code>C_AS\
 ├─ compiler\
-│   ├─ caskc.c        编译器源码（C 语言写成）
-│   ├─ cask_rt.h      运行时（生成的程序会 #include 它）
-│   └─ C_OPED.cash    窗口程序头（use "C_OPED.cash"; 打开 C / Win32 世界）
+│   ├─ caskc.c        编译器源码（C 语言写成；前端 + 汇编后端入口）
+│   ├─ asm_backend.inc  x86-64 汇编后端（.cask → .s，Windows/Linux 双 ABI）
+│   ├─ cask_rt.c      控制台运行时（编译进 libcastrt.a）
+│   ├─ cask_gui.c     窗口 / CSS 运行时（编译进 libcastrt.a）
+│   ├─ cask_io.c      文件与系统运行时（编译进 libcastrt.a）
+│   ├─ cask_rt.h      运行时语义基准与内建声明
+│   ├─ C_OPED.cash    窗口程序头（use "C_OPED.cash"; 打开 C / Win32 世界）
+│   ├─ C_CSS.cash     美化头（配 C_OPED 用）
+│   └─ C_IO.cash      文件与系统头（控制台程序也能用）
 ├─ editor\
 │   ├─ webide.c       C* Studio 编辑器宿主（原生窗口 + 本机网页服务 + 编译运行桥）
 │   ├─ wv2.cpp        WebView2 接入层（把网页放进原生窗口里）
@@ -112,15 +121,18 @@ function main() {
 ├─ tests\             测试程序 + 期望输出
 ├─ vscode-ext\        VS Code 插件（让 .cask 有高亮和补全）
 ├─ dist\              打包好的发行文件（zip / vsix）
-├─ bin\               build.bat 生成：caskc.exe、caskide.exe、cask_rt.h、C_OPED.cash、web\、WebView2Loader.dll
+├─ bin\               build.bat 生成：caskc.exe、caskide.exe、libcastrt.a、libgcc.a、
+│                     cask_rt.h、C_OPED.cash / C_CSS.cash / C_IO.cash、web\、WebView2Loader.dll
 ├─ build.bat          一键构建整个工具链
 ├─ run_tests.bat      跑全部测试
 └─ README.md</code></pre>
 <h3>2.3 构建</h3>
 <pre><code class="lang-bat">build.bat</code></pre>
-<p>会依次生成 <code>bin\caskc.exe</code>（编译器）、<code>bin\caskide.exe</code>（编辑器），把 <code>cask_rt.h</code> 和
-编辑器界面（<code>web\</code> → <code>bin\web\</code>、<code>WebView2Loader.dll</code>）复制进 <code>bin\</code>。
-需要 <code>gcc</code> 和 <code>g++</code> 两个都在 PATH 里（它们本来就是同一个安装包里的）。
+<p>会依次生成 <code>bin\caskc.exe</code>（编译器）、<code>bin\libcastrt.a</code>（预编译运行时）、
+<code>bin\caskide.exe</code>（编辑器），并把 <code>libgcc.a</code>、<code>cask_rt.h</code>、三个 <code>.cash</code> 头和编辑器界面
+（<code>web\</code> → <code>bin\web\</code>、<code>WebView2Loader.dll</code>）复制进 <code>bin\</code>。
+构建工具链需要 <code>gcc</code> 和 <code>g++</code>；但<strong>用户编译 <code>.cask</code> 时只需要 <code>as</code> / <code>ld</code></strong>，
+链接的是已经编好的 <code>libcastrt.a</code>，不会再调用 C 编译器。
 运行测试用：</p>
 <pre><code class="lang-bat">run_tests.bat</code></pre>
 <p>重新生成网页版说明书（需要 Python 3）：</p>
@@ -129,8 +141,8 @@ function main() {
 小学版教程、初中版教程、普高教材必修一、普高选修一、高职教程，一次全部更新。
 想检查教材里每个完整例子是否都能编译（<strong>窗口程序只编译、不运行</strong>，免得弹出窗口），可以跑：</p>
 <pre><code class="lang-bat">python docs\check_doc_code.py docs\小学版教程.md</code></pre>
-<p><code>build.bat</code> 还会把 <code>cask_rt.h</code> 和 <code>C_OPED.cash</code> 复制到 <code>bin\</code>，
-这两个文件必须和 <code>caskc.exe</code> 放在一起，编译出来的程序才跑得起来。</p>
+<p><code>build.bat</code> 还会把 <code>cask_rt.h</code>、<code>C_OPED.cash</code>、<code>C_CSS.cash</code>、<code>C_IO.cash</code> 和
+<code>libcastrt.a</code> 复制到 <code>bin\</code>。这些文件必须和 <code>caskc.exe</code> 放在一起，编译出来的程序才跑得起来。</p>
 <hr>
 <h2>3. 快速上手</h2>
 <h3>3.1 第一个程序</h3>
@@ -143,7 +155,7 @@ function main() {
 <p>看到 <code>Hello, world!</code> 就成功了。<code>--run</code> 会先编译再运行；不加 <code>--run</code> 则只编译出 <code>hello.exe</code>。</p>
 <blockquote><p>老写法 <code>start { say "Hello, world!"; }</code> 效果完全一样，<code>say</code> = <code>print</code>、<code>start { }</code> = <code>function main() { }</code>。</p></blockquote>
 <h3>3.2 编译器常用命令</h3>
-<pre><code class="lang-bat">bin\caskc.exe 程序.cask              :: 编译成 程序.exe（默认 -O2）
+<pre><code class="lang-bat">bin\caskc.exe 程序.cask              :: 编译成 程序.exe（生成 .s 后调用 as + ld）
 bin\caskc.exe 程序.cask --run        :: 编译完立刻运行
 bin\caskc.exe 程序.cask --console    :: 窗口程序里保留黑色控制台（方便 print 调试）
 bin\caskc.exe 程序.cask -o 我的.exe  :: 指定输出文件名
@@ -151,7 +163,7 @@ bin\caskc.exe 程序.cask --emit-c 文件.c  :: 只写出生成的 C 代码（�
 bin\caskc.exe 程序.cask --keep       :: 编译成功后保留生成的 .s 汇编文件
 bin\caskc.exe 程序.cask --fast       :: 关闭运行时检查（更快，但不安全）
 bin\caskc.exe 程序.cask -g           :: 保留生成的 .s 汇编文件
-bin\caskc.exe 程序.cask -v           :: 显示内部执行的 gcc 命令
+bin\caskc.exe 程序.cask -v           :: 显示内部执行的 as / ld 命令行
 bin\caskc.exe 程序.cask --check      :: 只检查不编译（不留下任何文件），有错退出码非 0
 bin\caskc.exe 程序.cask --check --diag :: 再把每条问题按 P|行|列|信息 打出来</code></pre>
 <p><code>--diag</code> 是给编辑器看的机器格式，一条问题一行，行首一个字母分级别：</p>
@@ -437,14 +449,14 @@ input 年龄;                    // 读一行，自动按类型解析</code></pr
 <code>--check --diag</code> 时会提示改大写的规范名。</p>
 <h4>彩蛋函数 <code>rcl</code></h4>
 <p><code>rcl</code> 是一个内置的彩蛋函数：不用 <code>use</code>、不用写函数体，直接调用。语义：
-<strong>空参 <code>rcl();</code> 打印 <code>方程235永远爱rcl！</code> 并立刻结束整个程序</strong>；对上暗号则回一句话；其它值什么都不做。</p>
+<strong>空参 <code>rcl();</code> 打印 <code>rcl永远爱方程235！</code> 并立刻结束整个程序</strong>；对上暗号则回一句话；其它值什么都不做。</p>
 <table>
 <thead><tr><th>写法</th><th>结果</th></tr></thead>
 <tbody>
-<tr><td><code>rcl();</code></td><td>打印 <code>方程235永远爱rcl！</code>，然后<strong>立刻结束整个程序</strong></td></tr>
-<tr><td><code>rcl(235);</code> / <code>rcl(235.0);</code></td><td>打印 <code>方程235 爱 rcl</code></td></tr>
-<tr><td><code>rcl("FC235");</code> 等认得的字符串</td><td>打印 <code>方程235 爱 rcl</code></td></tr>
-<tr><td><code>rcl("rcl");</code></td><td>打印 <code>rcl，方程235永远爱你！</code></td></tr>
+<tr><td><code>rcl();</code></td><td>打印 <code>rcl永远爱方程235！</code>，然后<strong>立刻结束整个程序</strong></td></tr>
+<tr><td><code>rcl(235);</code> / <code>rcl(235.0);</code></td><td>打印 <code>rcl 爱 方程235</code></td></tr>
+<tr><td><code>rcl("FC235");</code> 等认得的字符串</td><td>打印 <code>rcl 爱 方程235</code></td></tr>
+<tr><td><code>rcl("rcl");</code></td><td>打印 <code>方程235，rcl永远爱你！</code></td></tr>
 <tr><td>别的值（<code>rcl(1);</code>、<code>rcl("hello");</code>）</td><td>什么也不做，程序继续</td></tr>
 </tbody></table>
 <p>认得的字符串暗号（<strong>不分大小写</strong>）：<code>235</code>、<code>方程235</code>、<code>FangCheng235</code>、<code>ZFC235</code>、<code>JF235</code>、<code>JF</code>、<code>FC235</code>、<code>FC</code>、<code>ZFC</code>、<code>FangCheng</code>。
@@ -682,6 +694,29 @@ function main() {
 <tr><td><code>cscolor(名, 色)</code> / <code>csapply(名, 控件)</code></td><td>给样式起个名，再涂到别的控件上</td><td><code>cscolor("主题","1E88E5")</code></td></tr>
 </tbody></table>
 <p>颜色写法和 CSS 一样：<code>"#RRGGBB"</code>、<code>"RRGGBB"</code>，或者颜色名（<code>"blue"</code> <code>"gold"</code> …）。</p>
+<p><strong>0.5.0 起 Windows 上真正能改的地方</strong>：</p>
+<ul><li>按钮：改成自绘（owner-draw），<code>csbg</code> 改按钮底色、<code>cstext</code> 改文字色、<code>csfont</code> 改字号，</li></ul>
+<p>不再被 Win10/11 的视觉样式盖掉。</p>
+<ul><li>窗口：<code>csbg(窗口, "1B2129")</code> 会换掉窗口背景刷，整块底色都变。</li><li>输入框 / 多行框：返回背景刷的同时设置文字底色，内部不再是一块白。</li><li><code>csfont</code> 的字号按 <strong>磅</strong> 解释，并按屏幕 DPI 换算成像素（96 DPI 下 12 磅 ≈ 16 像素），</li></ul>
+<p>不会再把 12 磅当成 240 像素。</p>
+<ul><li><code>csradius</code> / <code>csshadow</code> 仍只在 Linux（GTK）生效；Windows 上安全地当作没写。</li></ul>
+<p>深色主题的最小写法：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";
+
+function main() {
+    int 窗口, 标题, 启动钮;
+    窗口 = window("深色示例", 420, 260);
+    标题 = label("C* 0.5.0", 20, 20, 380, 40);
+    启动钮 = button("开始", 20, 90, 160, 40);
+    csbg(窗口, "1B2129");
+    cstext(标题, "#E8EAED");
+    csfont(标题, 22, 1);
+    csbg(启动钮, "238636");
+    cstext(启动钮, "#FFFFFF");
+    csfont(启动钮, 12, 1);
+    run();
+}</code></pre>
 <pre><code class="lang-cask">use "C_OPED.cash";
 use "C_CSS.cash";
 
@@ -729,7 +764,7 @@ calc.exe                                                  # 运行，点按键�
 <tr><td>移位检查</td><td>移位位数不在 0…63，或左移负数/溢出</td><td><code>1 &lt;&lt; 99</code></td></tr>
 <tr><td>字符范围</td><td><code>int</code> 赋给 <code>char</code> 超出 -128…127</td><td><code>char c = 999;</code></td></tr>
 </tbody></table>
-<ul><li>错误信息里的文件和行号指向 <strong><code>.cask</code> 源文件</strong>（因为翻译成 C 时用了 <code>#line</code>）。</li><li>追求速度、并且确认逻辑正确时可以 <code>--fast</code> 关闭这些检查（省一点点开销，出错行为不再保证）。</li><li>编译期问题分<strong>三级</strong>：严重 / 语法 / 拼写（另有不计错的"提示"）。都带</li></ul>
+<ul><li>错误信息里的文件和行号指向 <strong><code>.cask</code> 源文件</strong>（汇编后端为每条检查记录了源码行号）。</li><li>追求速度、并且确认逻辑正确时可以 <code>--fast</code> 关闭这些检查（省一点点开销，出错行为不再保证）。</li><li>编译期问题分<strong>三级</strong>：严重 / 语法 / 拼写（另有不计错的"提示"）。都带</li></ul>
 <p><code>文件:行:列: 错误:</code> 格式；<code>--check --diag</code> 时按 <code>E|行|列|…</code>、<code>S|…</code>、<code>P|…</code> 打出。
 在 C* Studio 里点「问题」面板中的一条即可跳到出错的那一行。</p>
 <hr>
@@ -762,8 +797,9 @@ calc.exe                                                  # 运行，点按键�
 窗口程序默认是"窗口式"的，没有控制台，所以 <code>print</code> 的输出没地方显示。
 调试时加 <code>--console</code>（或干脆用 <code>alert()</code> / 标签显示结果）：</p>
 <pre><code class="lang-bat">bin\caskc.exe 我的窗口.cask --run --console</code></pre>
-<p><strong>Q：编译时提示 <code>找不到 C 编译器</code>？</strong>
-把 gcc 所在目录加进 PATH，或直接用 Dev-C++ 自带的 gcc。</p>
+<p><strong>Q：编译时提示找不到 <code>as</code> / <code>ld</code>？</strong>
+把 binutils 所在目录（MinGW-w64 的 <code>bin</code>）加进 PATH，或直接用 Dev-C++ 自带的 binutils。
+编译 <code>.cask</code> 不需要 gcc；<code>gcc</code> 只在构建工具链本身时用到。</p>
 <p><strong>Q：提示 <code>找不到 cask_rt.h</code>？</strong>
 把 <code>cask_rt.h</code> 放在 <code>caskc.exe</code> 同目录（<code>build.bat</code> 已自动复制），或设置环境变量 <code>CASK_RT_DIR</code> 指向它。</p>
 <p><strong>Q：中文输出乱码？</strong>
@@ -786,8 +822,9 @@ calc.exe                                                  # 运行，点按键�
 老项目可以慢慢改，不用一次性大改。</p>
 <p><strong>Q：常量报"必须是……表达式"？</strong>
 常量是<strong>编译期求值</strong>的，只能放字面量、算术和其它常量；要运行期算的值请用普通变量。</p>
-<p><strong>Q：想看翻译出来的 C 代码？</strong>
-<code>bin\caskc.exe 程序.cask --emit-c out.c</code>，得到 <code>out.c</code>（正常编译不产生 C，也不调用 C 编译器）。</p>
+<p><strong>Q：想看等价的老式 C 代码？</strong>
+<code>bin\caskc.exe 程序.cask --emit-c out.c</code> 会写出一份仅供阅读的 C 参考代码；
+正常编译走汇编后端，不产生 C，也不调用 C 编译器。想看真正生成的汇编用 <code>--keep</code>。</p>
 <hr>
 <h2>9. 关键字总表</h2>
 <table>
@@ -823,12 +860,12 @@ calc.exe                                                  # 运行，点按键�
 <h2>10. 在 VS Code 里写 C*</h2>
 <p><code>vscode-ext\</code> 里是一个 VS Code 扩展（<code>c-asterisk</code>）：装上以后，<code>.cask</code> 文件会有</p>
 <ul><li>语法高亮（关键字、类型、内建函数、字符串、注释）</li><li>代码片段（输入 <code>main</code>、<code>print</code>、<code>for</code>、<code>if</code>… 按 Tab 就能展开成完整骨架）</li><li>括号自动配对、<code>//</code> 自动注释</li></ul>
-<p>安装方法：在 VS Code 里按 <code>Ctrl+Shift+P</code> → 输入 <code>Install from VSIX</code> → 选 <code>dist\c-asterisk-0.4.2.vsix</code>。
+<p>安装方法：在 VS Code 里按 <code>Ctrl+Shift+P</code> → 输入 <code>Install from VSIX</code> → 选 <code>dist\c-asterisk-0.5.0.vsix</code>。
 （在 <code>vscode-ext\</code> 目录里运行 <code>npx @vscode/vsce package</code> 也可以自己重新打包。）</p>
 <p>想让它也能一键编译/运行，可以在 VS Code 的 <code>tasks.json</code> 里加一条调用 <code>bin\caskc.exe</code> 的任务，
 或者在 VS Code 的集成终端里直接用 <code>bin\caskc.exe 程序.cask --run</code>。</p>
 <hr>
-<p><em>C</em> 0.4.2 · 源码与问题反馈见 <code>README.md</code>。*</p>
+<p><em>C</em> 0.5.0 · 源码与问题反馈见 <code>README.md</code>。*</p>
 <hr>
 <p style="color:#888;font-size:0.9em;">由 docs/md2html.py 从 CStar手册.md 生成</p>
 </body>

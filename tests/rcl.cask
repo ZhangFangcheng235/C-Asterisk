@@ -1,11 +1,11 @@
-// rcl.cask -- 彩蛋 rcl()：rcl 是方程235 的女朋友，方程235 永远爱 rcl
+// rcl.cask -- 彩蛋 rcl()：rcl 是方程235 的女朋友，rcl 永远爱方程235
 function main() {
     rcl(1);                 // 不是 235 -> 什么也不做
     rcl("hello");           // 不认识 -> 什么也不做
     print "前两个都略过了";
-    rcl(235);               // 方程235 爱 rcl
-    rcl("FC235");           // 方程235 爱 rcl
-    rcl("rcl");             // rcl，方程235永远爱你！
-    rcl("方程235");         // 方程235 爱 rcl
+    rcl(235);               // rcl 爱 方程235
+    rcl("FC235");           // rcl 爱 方程235
+    rcl("rcl");             // 方程235，rcl永远爱你！
+    rcl("方程235");         // rcl 爱 方程235
     print "结束";
 }

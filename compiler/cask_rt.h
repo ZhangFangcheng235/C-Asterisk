@@ -205,11 +205,11 @@ static long long cask_len(const char *s) { return s ? (long long)strlen(s) : 0; 
 static long long cask_val(const char *s) { return s ? atoll(s) : 0; }
 
 /* ---------------- rcl() ----------------
- * 一个彩蛋（easter egg）：rcl 是方程235的女朋友，方程235永远爱 rcl。
- *   rcl();            -- 打印「方程235永远爱rcl！」，然后结束程序
- *   rcl(235);         -- 打印「方程235 爱 rcl」
- *   rcl("rcl");       -- 打印「rcl，方程235永远爱你！」
- *   rcl("方程235");   -- 打印「方程235 爱 rcl」
+ * 一个彩蛋（easter egg）：rcl 是方程235的女朋友，rcl 永远爱方程235。
+ *   rcl();            -- 打印「rcl永远爱方程235！」，然后结束程序
+ *   rcl(235);         -- 打印「rcl 爱 方程235」
+ *   rcl("rcl");       -- 打印「方程235，rcl永远爱你！」
+ *   rcl("方程235");   -- 打印「rcl 爱 方程235」
  *     还认这些写法（不分大小写）：235 / FangCheng235 / ZFC235 / JF235 / JF / FC235 / FC / ZFC / FangCheng
  *   别的值            -- 什么也不做（程序照常往下跑）
  */
@@ -224,20 +224,20 @@ static int cask_rcl_eq(const char *a, const char *b)
 }
 static void cask_rcl_ask(void)
 {
-    printf("\u65b9\u7a0b235\u6c38\u8fdc\u7231rcl\uff01\n");   /* 方程235永远爱rcl！ */
+    printf("rcl\u6c38\u8fdc\u7231\u65b9\u7a0b235\uff01\n");   /* rcl永远爱方程235！ */
     fflush(stdout);
     exit(0);
 }
 static long long cask_rcl_num(double n)
 {
-    if (n == 235.0) { printf("\u65b9\u7a0b235 \u7231 rcl\n"); fflush(stdout); }
+    if (n == 235.0) { printf("rcl \u7231 \u65b9\u7a0b235\n"); fflush(stdout); }
     return 0;
 }
 static long long cask_rcl_text(const char *s)
 {
     if (!s) return 0;
     if (cask_rcl_eq(s, "rcl")) {
-        printf("rcl\uff0c\u65b9\u7a0b235\u6c38\u8fdc\u7231\u4f60\uff01\n");  /* rcl，方程235永远爱你！ */
+        printf("\u65b9\u7a0b235\uff0crcl\u6c38\u8fdc\u7231\u4f60\uff01\n");  /* 方程235，rcl永远爱你！ */
         fflush(stdout);
         return 0;
     }
@@ -246,7 +246,7 @@ static long long cask_rcl_text(const char *s)
         cask_rcl_eq(s, "JF235") || cask_rcl_eq(s, "JF") ||
         cask_rcl_eq(s, "FC235") || cask_rcl_eq(s, "FC") ||
         cask_rcl_eq(s, "ZFC") || cask_rcl_eq(s, "FangCheng")) {
-        printf("\u65b9\u7a0b235 \u7231 rcl\n");   /* 方程235 爱 rcl */
+        printf("rcl \u7231 \u65b9\u7a0b235\n");   /* rcl 爱 方程235 */
         fflush(stdout);
     }
     return 0;

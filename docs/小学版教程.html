@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>小学版教程 · C* 语言（0.4.2）</title>
+<title>小学版教程 · C* 语言（0.5.0）</title>
 <style>
   body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
          line-height: 1.7; color: #222; background: #fafafa;
@@ -27,10 +27,12 @@
 </style>
 </head>
 <body>
-<h1>小学版教程 · C* 语言（0.4.2）</h1>
+<h1>小学版教程 · C* 语言（0.5.0）</h1>
 <blockquote><p>C* 读作 <strong>C Asterisk</strong>。程序文件的后缀是 <code>.cask</code>。
 这本教程写给第一次学编程的同学：会打字、会数数就够了，不需要任何基础。
-一共 16 课，每课都有能直接按 F5 跑起来的小例子。
+一共 18 课，每课都有能直接按 F5 跑起来的小例子。
+
+<strong>0.5.0 新增</strong>：第 17 课「把东西存进文件」、第 18 课「给窗口穿上彩衣」。
 想查细节，翻 <code>docs\CStar手册.md</code>；想练更难的题，接着看《C* 初中版教程》。</p></blockquote>
 <hr>
 <h2>开始之前：先认识两个程序</h2>
@@ -690,6 +692,94 @@ int 数 = atoi("42");            // 把文字 "42" 变成整数 42</code></pre>
 <h3>动手试一试</h3>
 <ol><li>加一个按钮，点一下把提示标签换成一句鼓励的话。</li><li>加一个勾选框"只显示今天要做的"。</li><li>加一个 <code>memo</code> 多行框，让你能写一条详细说明。</li><li>把窗口标题改成"我的第一件作品"，运行给家里人看看。</li></ol>
 <hr>
+<h2>第 17 课　把东西存进文件</h2>
+<p><strong>这一课学什么</strong>：让程序记住东西——关掉再打开，写过的内容还在。</p>
+<p>前面程序里的变量都住在内存里，程序一关就全没了。想让"我的记录本"下次打开还在，
+要把内容写进<strong>文件</strong>。C* 用 <code>use "C_IO.cash";</code> 打开文件工具箱：</p>
+<table>
+<thead><tr><th>写法</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td><code>writefile(路径, 内容)</code></td><td>把整段文字写进文件（覆盖原来的），成功返回 1</td></tr>
+<tr><td><code>readfile(路径)</code></td><td>把整个文件读成一段文字；文件不存在时是 <code>""</code></td></tr>
+<tr><td><code>fileexists(路径)</code></td><td>文件在不在：在是 1，不在是 0</td></tr>
+<tr><td><code>appdir()</code></td><td>本程序（exe）所在的文件夹，用它拼路径最省事</td></tr>
+</tbody></table>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_IO.cash";
+
+int 记录框;
+int 状态;
+
+function on_click(int 控件) {
+    string 文件 = appdir() + "/我的记录.txt";
+    if (writefile(文件, readtext(记录框)) != 0)
+        settext(状态, "已经保存到：" + 文件);
+    else
+        settext(状态, "保存失败，看看这个文件夹能不能写");
+}
+
+function main() {
+    string 文件 = appdir() + "/我的记录.txt";
+    int 窗口 = window("我的记录本", 460, 330);
+    label("写点想记住的事：", 20, 16, 420, 24);
+    记录框 = memo("", 20, 48, 420, 190);
+    状态 = label("", 20, 246, 420, 24);
+    button("保存", 20, 280, 120, 34);
+    if (fileexists(文件) != 0) settext(记录框, readfile(文件));
+    run();
+}</code></pre>
+<p><strong>新东西</strong>：</p>
+<ul><li><code>memo</code> 是多行输入框，适合写一段话；<code>readtext(记录框)</code> 一次读出全部内容。</li><li><code>appdir() + "/我的记录.txt"</code> 把文件放在 exe 旁边，不用自己猜路径。</li><li>程序启动时先用 <code>fileexists</code> 问一句：有旧文件就 <code>readfile</code> 读出来，填回输入框。</li><li>点「保存」才写文件；不点就什么都不改，很安全。</li></ul>
+<p><strong>注意</strong>：<code>readfile</code> 一次最多读 1MB，写日记、记名单足够用。</p>
+<h3>动手试一试</h3>
+<ol><li>把文件名改成 <code>我的日记.txt</code>，写一段今天发生的事，保存后关掉程序再打开。</li><li>给「保存」旁边再加一个「清空」按钮，点它把输入框清空（提示：<code>settext(记录框, "")</code>）。</li><li>在状态栏显示"上次保存成功"的时间？先想想：C* 有没有现成的取时间函数。</li></ol>
+<hr>
+<h2>第 18 课　给窗口穿上彩衣</h2>
+<p><strong>这一课学什么</strong>：用 <code>C_CSS.cash</code> 给窗口、标题、输入框和按钮换颜色、改字号。</p>
+<p>前面做的窗口都是系统默认的灰底。C* 还有一个美化工具箱，只要在
+<code>use "C_OPED.cash";</code> 后面再写一行 <code>use "C_CSS.cash";</code>：</p>
+<table>
+<thead><tr><th>写法</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td><code>cstext(控件, 颜色)</code></td><td>改文字颜色</td></tr>
+<tr><td><code>csbg(控件, 颜色)</code></td><td>改背景颜色</td></tr>
+<tr><td><code>csfont(控件, 字号, 加粗)</code></td><td>改字号（磅）和粗细；加粗写 1，不加粗写 0</td></tr>
+<tr><td><code>csbg(窗口, 颜色)</code></td><td>改整个窗口的底色</td></tr>
+</tbody></table>
+<p>颜色写 <code>"#RRGGBB"</code>（红绿蓝各两位），也可以写 <code>"red"</code>、<code>"gold"</code> 这样的颜色名。</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";
+
+int 名字框;
+int 提示;
+
+function on_click(int 控件) {
+    settext(提示, "你好，" + readtext(名字框) + "！");
+}
+
+function main() {
+    int 窗口 = window("彩色问候", 460, 280);
+    int 标题 = label("你好，C* 0.5.0！", 20, 20, 420, 40);
+    名字框 = textbox("小明", 20, 80, 280, 28);
+    int 按钮 = button("打个招呼", 20, 130, 160, 40);
+    提示 = label("在这里写名字", 20, 196, 420, 24);
+
+    csbg(窗口, "1B2129");            // 深蓝黑窗底
+    cstext(标题, "#FFD166");         // 金黄色标题
+    csfont(标题, 22, 1);             // 22 磅、加粗
+    csbg(名字框, "0D1117");          // 输入框深色底
+    cstext(名字框, "#E6EDF3");       // 输入框浅色字
+    csbg(按钮, "238636");            // 绿色按钮
+    cstext(按钮, "#FFFFFF");
+    csfont(按钮, 12, 1);
+    cstext(提示, "#8B949E");
+    run();
+}</code></pre>
+<p><strong>新东西</strong>：</p>
+<ul><li><code>csbg(窗口, ...)</code> 连窗口自己的底色也能换。</li><li>按钮的颜色在 Windows 上也真的会变——0.5.0 把按钮改成了自绘。</li><li><code>csfont</code> 的单位是<strong>磅</strong>，12 磅大约 16 像素，数字别写太大。</li><li>圆角 <code>csradius</code> 和投影 <code>csshadow</code> 只在 Linux 上有效，Windows 上写了也没关系，不会报错。</li></ul>
+<h3>动手试一试</h3>
+<ol><li>把窗口底色改成 <code>"0B1020"</code>，标题改成 <code>"#4FC3F7"</code>，看看像不像夜空。</li><li>给「打个招呼」按钮换成橙色 <code>"F0883E"</code>，文字用黑色。</li><li>再加一个标签，用 <code>csfont(标签, 9, 0)</code> 做成小号说明文字。</li></ol>
+<hr>
 <h2>附录 A　关键字小词典</h2>
 <table>
 <thead><tr><th>中文说法</th><th>写法</th><th>例子</th></tr></thead>
@@ -709,6 +799,10 @@ int 数 = atoi("42");            // 把文字 "42" 变成整数 42</code></pre>
 <tr><td>把答案交出去</td><td><code>return</code></td><td><code>return a + b;</code></td></tr>
 <tr><td>并且 / 或者 / 不是</td><td><code>and</code> / <code>or</code> / <code>not</code></td><td><code>a &gt; 0 and b &gt; 0</code></td></tr>
 <tr><td>引入头文件</td><td><code>use</code></td><td><code>use "C_OPED.cash";</code></td></tr>
+<tr><td>读写文件</td><td><code>readfile</code> / <code>writefile</code></td><td><code>writefile(appdir() + "/a.txt", "你好");</code></td></tr>
+<tr><td>文件在不在</td><td><code>fileexists</code></td><td><code>if (fileexists(路径) != 0) { ... }</code></td></tr>
+<tr><td>给控件上色</td><td><code>csbg</code> / <code>cstext</code></td><td><code>csbg(按钮, "238636");</code></td></tr>
+<tr><td>改字号</td><td><code>csfont</code></td><td><code>csfont(标题, 22, 1);</code></td></tr>
 </tbody></table>
 <p>算术和比较：<code>+ - * / %</code>，<code>== != &lt; &lt;= &gt; &gt;=</code>。自增自减 <code>++ --</code>，复合赋值 <code>+= -= *= /= %=</code>。</p>
 <p>老名字（都还能用，编译时会得到一条不算错的"提示"）：
@@ -718,7 +812,7 @@ int 数 = atoi("42");            // 把文字 "42" 变成整数 42</code></pre>
 <hr>
 <h2>彩蛋时间：<code>rcl</code></h2>
 <p>写到这里你可能已经会很多东西了。藏一个小秘密：C* 里有一个内置函数叫 <code>rcl</code>，它不用 <code>use</code>、不用自己写函数体，直接调用就行。</p>
-<ul><li><code>rcl(235);</code> 或者 <code>rcl("FC235");</code> —— 会打印出 <code>方程235 爱 rcl</code>，然后继续往下走。</li><li><code>rcl("rcl");</code> —— 打印出 <code>rcl，方程235永远爱你！</code>。</li><li>空着的 <code>rcl();</code> —— 打印出 <code>方程235永远爱rcl！</code>，然后<strong>整个程序就停了</strong>，后面的话一句也不执行。可以把它当成一个"急停"按钮。</li><li>别的值（比如 <code>rcl(1);</code>、<code>rcl("hello");</code>）—— 什么都不做，程序照常跑。</li></ul>
+<ul><li><code>rcl(235);</code> 或者 <code>rcl("FC235");</code> —— 会打印出 <code>rcl 爱 方程235</code>，然后继续往下走。</li><li><code>rcl("rcl");</code> —— 打印出 <code>方程235，rcl永远爱你！</code>。</li><li>空着的 <code>rcl();</code> —— 打印出 <code>rcl永远爱方程235！</code>，然后<strong>整个程序就停了</strong>，后面的话一句也不执行。可以把它当成一个"急停"按钮。</li><li>别的值（比如 <code>rcl(1);</code>、<code>rcl("hello");</code>）—— 什么都不做，程序照常跑。</li></ul>
 <p>它认的字符串暗号（不分大小写）有：<code>235</code>、<code>方程235</code>、<code>FangCheng235</code>、<code>ZFC235</code>、<code>JF235</code>、<code>JF</code>、<code>FC235</code>、<code>FC</code>、<code>ZFC</code>、<code>FangCheng</code>。</p>
 <p>试试看：把你的名字或班级编号藏在 <code>rcl</code> 里，写个"只有我们班才看得懂"的小程序。</p>
 <hr>
@@ -771,7 +865,7 @@ int 数 = atoi("42");            // 把文字 "42" 变成整数 42</code></pre>
 <p>它的意思是第 7 行除数是 0。数组越界也一样，会告诉你 <code>数组下标越界</code> 和出错的行号。看到这种信息，就去看那一行的除数和方括号里的号码。C* 遇到这种错会<strong>立刻停下</strong>，不会接着乱算——这是好事，它帮你把问题指出来了。</p>
 <p><strong>最后一种：程序跑完了，但结果不对。</strong> 这种最难找，办法是：一次只改一样东西，中间多加几个 <code>print</code>，把盒子里的数打出来看看对不对。比如怀疑平均分算错了，就先把总分打出来，看看总分对不对。</p>
 <hr>
-<p>小学版教程 · C* 语言（0.4.2）。更细的说明见 <code>docs\CStar手册.md</code>。</p>
+<p>小学版教程 · C* 语言（0.5.0）。更细的说明见 <code>docs\CStar手册.md</code>。</p>
 <hr>
 <p style="color:#888;font-size:0.9em;">由 docs/md2html.py 从 小学版教程.md 生成</p>
 </body>

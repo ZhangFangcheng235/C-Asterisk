@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>C* 语言 必修一（0.4.2）</title>
+<title>C* 语言 必修一（0.5.0）</title>
 <style>
   body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
          line-height: 1.7; color: #222; background: #fafafa;
@@ -27,20 +27,23 @@
 </style>
 </head>
 <body>
-<h1>C* 语言 必修一（0.4.2）</h1>
+<h1>C* 语言 必修一（0.5.0）</h1>
 <blockquote><p>普通高中信息技术教材 · 必修一
-C* 读作 <strong>C Asterisk</strong>。书中的程序按 <strong>0.4.2 版</strong>的写法书写，全部经编译器实际编译验证。</p></blockquote>
+C* 读作 <strong>C Asterisk</strong>。书中的程序按 <strong>0.5.0 版</strong>的写法书写，全部经编译器实际编译验证。
+
+<strong>0.5.0 新增</strong>：4.5 节「文件与系统」、4.6 节「界面美化」；窗口程序现在能真正保存数据、
+使用自定义配色。</p></blockquote>
 <h2>写在前面</h2>
 <p>本书面向已经会使用计算机、第一次系统学习编程的高一学生。C* 的语法接近 C 语言，
 关键字都是英语里的常用词，变量名和函数名还可以写成中文，适合用来学习程序的基本结构。</p>
-<p>关于语言版本：C* 0.4.2 用 <code>int</code> <code>float</code> <code>string</code> <code>char</code> <code>bool</code> <code>none</code> 这六个名字表示类型。
+<p>关于语言版本：C* 0.5.0 用 <code>int</code> <code>float</code> <code>string</code> <code>char</code> <code>bool</code> <code>none</code> 这六个名字表示类型。
 0.3 及更早版本里的 <code>number</code> <code>real</code> <code>text</code> <code>letter</code> <code>void</code> 仍然可以编译，编辑器只会给出一条
 "提示"级别的提醒。本书正文一律使用新名字，新旧对照见 1.3 节。</p>
 <p>关于代码：书中的完整程序都放在 ``<code>cask 代码块里，紧跟其后的 </code>``text 代码块是它真实的运行结果。
 有些代码块只是<strong>片断</strong>（只有几行，没有程序入口），用来表示"这一小段这样写"，不能单独运行。</p>
 <p>关于上机：双击 <code>bin\caskide.exe</code> 打开 C* Studio 编辑器，按 <code>F5</code> 编译并运行；
 也可以在命令行里执行 <code>bin\caskc.exe 程序.cask --run</code>。</p>
-<p>本书结构：正文四章共十三节，每一节都按"学习目标 → 情境导入 → 知识讲解 → 动手实践 → 小结 → 练习"
+<p>本书结构：正文四章共十五节，每一节都按"学习目标 → 情境导入 → 知识讲解 → 动手实践 → 小结 → 练习"
 的顺序展开；正文之后是四个附录，分别用来查语法、查错、做综合项目和核对练习答案。</p>
 <hr>
 <h1>第一章　走进 C*</h1>
@@ -58,7 +61,7 @@ C* 读作 <strong>C Asterisk</strong>。书中的程序按 <strong>0.4.2 版</st
 <p>一段程序通常写成文本文件，叫做<strong>源文件</strong>。人读得懂的源文件，计算机并不能直接运行；
 要先经过一个叫<strong>编译器</strong>的工具翻译成计算机能执行的形式。C\* 程序的源文件后缀名是 <code>.cask</code>，
 编译器是 <code>bin\caskc.exe</code>。</p>
-<p>一个 C\* 程序里必须有一个<strong>入口</strong>，也就是"从哪一行开始执行"。0.4.2 推荐的写法是：</p>
+<p>一个 C\* 程序里必须有一个<strong>入口</strong>，也就是"从哪一行开始执行"。0.5.0 推荐的写法是：</p>
 <pre><code class="lang-cask">function main() {
     // 这里写程序要做的事
 }</code></pre>
@@ -73,7 +76,7 @@ C* 读作 <strong>C Asterisk</strong>。书中的程序按 <strong>0.4.2 版</st
 <tr><td>关键字看得懂</td><td><code>print</code> 表示输出，<code>if</code> <code>while</code> <code>for</code> 就是英语里的判断和循环</td></tr>
 <tr><td>名字可以用中文</td><td><code>int 分数 = 90;</code> 是合法的写法</td></tr>
 <tr><td>出错会停下</td><td>除零、数组越界、整数溢出都会被检查出来，并指出出错的行</td></tr>
-<tr><td>跑得快</td><td><code>.cask</code> 先翻译成 C 代码，再由 gcc 编译成原生的 <code>.exe</code></td></tr>
+<tr><td>跑得快</td><td><code>.cask</code> 直接生成 x86-64 汇编，再由 <code>as</code> + <code>ld</code> 链接成原生 <code>.exe</code>（不经过 C 编译器）</td></tr>
 </tbody></table>
 <h4>编辑器 C\* Studio</h4>
 <p><code>bin\caskide.exe</code> 是随 C\* 一起提供的编辑器，界面是学生熟悉的 Windows 风格。</p>
@@ -208,14 +211,14 @@ print "明年你就 ", 年龄 + 1, " 岁了。";</code></pre>
 <hr>
 <h2>1.3　数据类型与变量</h2>
 <h3>学习目标</h3>
-<ol><li>说出 <code>int</code> <code>float</code> <code>string</code> <code>char</code> <code>bool</code> 五种类型分别适合存放什么数据。</li><li>按"类型 名字 = 初值;"的格式声明变量，并选择合适的类型。</li><li>用 <code>constant</code> 定义常量，并说明常量与变量的区别。</li><li>说出 0.4.2 的新类型名与 0.3 的旧别名之间的对应关系。</li></ol>
+<ol><li>说出 <code>int</code> <code>float</code> <code>string</code> <code>char</code> <code>bool</code> 五种类型分别适合存放什么数据。</li><li>按"类型 名字 = 初值;"的格式声明变量，并选择合适的类型。</li><li>用 <code>constant</code> 定义常量，并说明常量与变量的区别。</li><li>说出现在的类型名与 0.3 的旧别名之间的对应关系。</li></ol>
 <h3>情境导入</h3>
 <p>要给全班做一张成绩表，表里除了分数，还要有学号、姓名、身高和"是否及格"。
 这些数据的性质并不相同：学号是整数，身高是小数，姓名是一串文字，而"是否及格"只有两种可能。
 用一个类型硬套所有数据，既不方便也容易出错。数据分类型存放，程序才清楚每一项该怎么处理。</p>
 <h3>知识讲解</h3>
 <h4>五种基本类型</h4>
-<p>C\* 0.4.2 提供五种基本类型，各自的用途和写法如下。</p>
+<p>C\* 0.5.0 提供五种基本类型，各自的用途和写法如下。</p>
 <table>
 <thead><tr><th>类型</th><th>存放什么</th><th>例子</th><th>说明</th></tr></thead>
 <tbody>
@@ -257,7 +260,7 @@ print 校名, "：", 得分, " / ", 满分;</code></pre>
 <p>C\* 0.3 及更早的版本用另一套名字表示同样的类型。0.4.2 把它们改成了更接近 C 语言的写法，
 旧名字<strong>仍然可以编译</strong>，只是编辑器会给出一条"提示"级别的提醒（提示不计入错误，不影响程序运行）。</p>
 <table>
-<thead><tr><th>0.4.2 新名字</th><th>0.3 旧别名</th><th>含义</th></tr></thead>
+<thead><tr><th>现在的名字</th><th>0.3 旧别名</th><th>含义</th></tr></thead>
 <tbody>
 <tr><td><code>int</code></td><td><code>number</code></td><td>整数</td></tr>
 <tr><td><code>float</code></td><td><code>real</code></td><td>小数</td></tr>
@@ -301,14 +304,14 @@ print 校名, "：", 得分, " / ", 满分;</code></pre>
 三好学生：true</code></pre>
 <p>注意 <code>true</code> 和 <code>false</code> 输出时就是这两个英文单词，不是"真""假"。</p>
 <h3>小结</h3>
-<ul><li>五种基本类型：<code>int</code> 整数、<code>float</code> 小数、<code>string</code> 字符串、<code>char</code> 单个字符、<code>bool</code> 真假。</li><li>声明格式是"类型 名字 = 初值;"，不写初值时数值为 <code>0</code>，<code>bool</code> 为 <code>false</code>，字符串为空。</li><li><code>constant</code> 定义常量，常量不能再赋值，常用来表示满分、圆周率、数组长度这类固定值。</li><li>0.4.2 的新名字 <code>int float string char none</code> 取代了旧别名 <code>number real text letter void</code>；</li></ul>
+<ul><li>五种基本类型：<code>int</code> 整数、<code>float</code> 小数、<code>string</code> 字符串、<code>char</code> 单个字符、<code>bool</code> 真假。</li><li>声明格式是"类型 名字 = 初值;"，不写初值时数值为 <code>0</code>，<code>bool</code> 为 <code>false</code>，字符串为空。</li><li><code>constant</code> 定义常量，常量不能再赋值，常用来表示满分、圆周率、数组长度这类固定值。</li><li><code>int float string char none</code> 取代了旧别名 <code>number real text letter void</code>；</li></ul>
 <p>旧别名仍能编译，编辑器会给"提示"。</p>
 <h3>练习</h3>
 <p><strong>基础</strong></p>
 <ol><li>为下列数据各选一个合适的类型：班级人数、书的单价、书名、"是否迟到"。</li><li>写出声明并输出以下变量的程序：一个 <code>int</code> 表示年龄，一个 <code>char</code> 表示血型，</li></ol>
 <p>一个 <code>bool</code> 表示是否住校。</p>
 <p><strong>提高</strong></p>
-<ol><li>定义常量 <code>constant float 折率 = 0.8;</code>，声明一个 <code>float</code> 原价，输出打折后的价格。</li><li>把下面这段旧写法改成 0.4.2 的新写法：<code>real 半径 = 2.5; text 形状 = "圆";</code>。</li></ol>
+<ol><li>定义常量 <code>constant float 折率 = 0.8;</code>，声明一个 <code>float</code> 原价，输出打折后的价格。</li><li>把下面这段旧写法改成新写法：<code>real 半径 = 2.5; text 形状 = "圆";</code>。</li></ol>
 <hr>
 <h1>第二章　数据与运算</h1>
 <h2>2.1　算术运算与类型转换</h2>
@@ -452,7 +455,7 @@ C\* 的数学函数多数借用 Excel 的名字，用大写字母书写。</p>
 </tbody></table>
 <p><code>INT</code> 和 <code>ROUND</code> 的区别要看负数：<code>INT(2.7)</code> 是 2，<code>INT(-2.7)</code> 是 <strong>-3</strong>（向下，即更小的一边）；
 <code>ROUND(2.5)</code> 是 3，<code>ROUND(-2.5)</code> 是 -3。</p>
-<p>小写的 <code>abs</code>、<code>sqrt</code>、<code>floor</code>、<code>ceil</code>、<code>sin</code> 等老写法仍然可以编译，但 0.4.2 起会被编译器以蓝色"提示"建议改用上面这些大写名字；新代码请统一写大写。</p>
+<p>小写的 <code>abs</code>、<code>sqrt</code>、<code>floor</code>、<code>ceil</code>、<code>sin</code> 等老写法仍然可以编译，但会收到一条蓝色"提示"，建议改用上面这些大写名字；新代码请统一写大写。</p>
 <pre><code class="lang-cask">function main() {
     print "ABS(-7) = ", ABS(-7);
     print "SIGN(-3) = ", SIGN(-3), "，SIGN(0) = ", SIGN(0), "，SIGN(5) = ", SIGN(5);
@@ -1507,8 +1510,142 @@ function main() {
 <ol><li>做一个"加法器"：两个输入框、一个按钮，点按钮后把两个数相加显示在一个标签上。</li><li>做一个"判断奇偶"的小工具：输入一个整数，点按钮后显示"偶数"或"奇数"</li></ol>
 <p>（提示：用 <code>MOD(数, 2)</code> 判断）。</p>
 <hr>
+<h2>4.5　文件与系统</h2>
+<h3>学习目标</h3>
+<ol><li>说出为什么要把数据写进文件，而不是只放在变量里。</li><li>用 <code>use "C_IO.cash";</code> 打开文件工具箱，使用 <code>readfile</code> / <code>writefile</code> / <code>appendfile</code>。</li><li>用 <code>fileexists</code> 判断文件是否存在，用 <code>appdir()</code> 拼出程序所在目录的路径。</li><li>区分 <code>launch</code>（启动就返回）和 <code>launchwait</code>（等程序跑完）。</li><li>用 <code>envget</code> 读取环境变量。</li></ol>
+<h3>情境导入</h3>
+<p>上一节的"算两倍"工具，关掉窗口后输入和结果就都没了。如果是一个记作业、记零花钱的小工具，
+用户当然希望下次打开还能看到上次的内容。变量住在内存里，程序一结束就释放；<strong>文件</strong>才留得住数据。</p>
+<h3>知识讲解</h3>
+<h4>打开文件工具箱</h4>
+<p>在程序最前面写：</p>
+<pre><code class="lang-cask">use "C_IO.cash";</code></pre>
+<p><code>C_IO.cash</code> 不依赖窗口，控制台程序也能用。它提供下面这些函数。</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>readfile(路径)</code></td><td>把整个文件读成一段文字；不存在给 <code>""</code>，上限 1MB</td></tr>
+<tr><td><code>writefile(路径, 内容)</code></td><td>覆盖写入，成功返回 1</td></tr>
+<tr><td><code>appendfile(路径, 内容)</code></td><td>追加到文件末尾，成功返回 1</td></tr>
+<tr><td><code>fileexists(路径)</code></td><td>文件或目录在不在：1 / 0</td></tr>
+<tr><td><code>makedir(路径)</code></td><td>建目录（已存在也算成功）</td></tr>
+<tr><td><code>appdir()</code></td><td>本程序（exe）所在目录，不带末尾分隔符</td></tr>
+<tr><td><code>envget("名字")</code></td><td>读环境变量（没有给 <code>""</code>）</td></tr>
+<tr><td><code>launchwait("命令行")</code></td><td>启动外部程序并<strong>等它跑完</strong>，返回退出码（起不来 -1）</td></tr>
+</tbody></table>
+<h4>保存和读取设置</h4>
+<p>下面的程序第一次运行时写入默认设置，以后每次都直接读出来。</p>
+<pre><code class="lang-cask">// 设置文件：第一次写入，之后读取
+use "C_IO.cash";
+
+number main() {
+    string 文件 = appdir() + "/设置.txt";
+
+    if (fileexists(文件) == 0) {
+        writefile(文件, "名字=小明\n内存=2048");
+        print "第一次运行，已写入默认设置。";
+    }
+
+    print "当前设置：";
+    print readfile(文件);
+    return 0;
+}</code></pre>
+<p><strong>逐行解释</strong>：</p>
+<ul><li><code>appdir()</code> 返回 exe 所在目录，后面拼 <code>/设置.txt</code>，文件就放在程序旁边。</li><li><code>fileexists(文件) == 0</code> 表示文件还不存在，这时才写默认值；第二次运行不会覆盖用户改过的内容。</li><li><code>\n</code> 是换行符，写进文件后，<code>readfile</code> 读出来也带着换行。</li><li><code>writefile</code> 是覆盖写；要保留旧内容、在末尾接一行，用 <code>appendfile</code>。</li></ul>
+<h4>路径的写法</h4>
+<p>Windows 的路径分隔符是 <code>\</code>，但在 C* 字符串里一个 <code>\</code> 要写成 <code>\\</code>：</p>
+<pre><code class="lang-text">"D:\\mc\\client.jar"</code></pre>
+<p>也可以统一写 <code>/</code>，Windows 和 Linux 都认。相对路径按<strong>当前工作目录</strong>解析，不一定等于 exe 目录；
+需要稳妥时就用 <code>appdir()</code> 拼绝对路径。</p>
+<h4><code>launch</code> 与 <code>launchwait</code></h4>
+<table>
+<thead><tr><th>函数</th><th>所在头文件</th><th>行为</th><th>适合</th></tr></thead>
+<tbody>
+<tr><td><code>launch("命令行")</code></td><td><code>C_OPED.cash</code></td><td>启动就返回</td><td>启动游戏、浏览器、编辑器</td></tr>
+<tr><td><code>launchwait("命令行")</code></td><td><code>C_IO.cash</code></td><td>等程序结束，返回退出码</td><td>批处理、需要判断成功失败</td></tr>
+</tbody></table>
+<h3>动手实践</h3>
+<p><strong>任务</strong>：做一个"零花钱账本"：每次运行往文件末尾追加一条记录，再把全部记录读出来。</p>
+<pre><code class="lang-cask">use "C_IO.cash";
+
+number main() {
+    string 文件 = appdir() + "/零花钱.txt";
+    string 一笔 = "3月5日 买笔 -8";
+
+    appendfile(文件, 一笔 + "\n");
+    print "全部记录：";
+    print readfile(文件);
+    return 0;
+}</code></pre>
+<p>运行两次，文件里就会有两行相同记录——这正是"追加"和"覆盖"的区别。</p>
+<h3>小结</h3>
+<ul><li><code>C_IO.cash</code> 让程序读写文件、判断存在、建目录、取程序目录和环境变量。</li><li><code>writefile</code> 覆盖，<code>appendfile</code> 追加，<code>readfile</code> 整段读回。</li><li><code>appdir()</code> 拼绝对路径最稳；字符串里的 <code>\</code> 要写成 <code>\\</code>。</li><li><code>launch</code> 启动就返回，<code>launchwait</code> 等待并返回退出码。</li></ul>
+<h3>练习</h3>
+<p><strong>基础</strong></p>
+<ol><li>把上面的账本改成先问用户一行内容，再追加到文件。</li><li>用 <code>makedir(appdir() + "/data")</code> 建目录，把账本写进 <code>data/</code>。</li></ol>
+<p><strong>提高</strong></p>
+<ol><li>用 <code>envget("USERPROFILE")</code> 找到用户目录，把设置文件存到那里。</li><li>写一个程序：用 <code>launchwait("notepad.exe")</code> 打开记事本，等用户关掉后再打印"记事本已关闭"。</li></ol>
+<hr>
+<h2>4.6　界面美化</h2>
+<h3>学习目标</h3>
+<ol><li>说出 <code>C_CSS.cash</code> 与 <code>C_OPED.cash</code> 的依赖关系。</li><li>用 <code>csbg</code> / <code>cstext</code> / <code>csfont</code> 给窗口、标签、输入框和按钮设置颜色与字号。</li><li>写出一套完整的深色主题，并说明 Windows 上按钮自绘的意义。</li><li>知道 <code>csradius</code> / <code>csshadow</code> 只在 Linux 生效，Windows 上会被安全忽略。</li></ol>
+<h3>情境导入</h3>
+<p>同样的功能，灰底黑字的界面和一套配色协调的深色界面，使用体验差别很大。
+C* 把 CSS 的思路搬进了桌面程序：选控件、给颜色、调字号，几行代码就能换一套主题。</p>
+<h3>知识讲解</h3>
+<h4>两个头文件一起用</h4>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";</code></pre>
+<p><code>C_CSS.cash</code> 必须写在 <code>C_OPED.cash</code> 后面；只写 CSS 头会编译报错。</p>
+<h4>常用函数</h4>
+<table>
+<thead><tr><th>函数</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>cstext(控件, 颜色)</code></td><td>文字颜色</td></tr>
+<tr><td><code>csbg(控件, 颜色)</code></td><td>背景颜色（控件或窗口都行）</td></tr>
+<tr><td><code>csfont(控件, 字号, 加粗)</code></td><td>字号（磅）+ 是否加粗</td></tr>
+<tr><td><code>cshide(控件)</code> / <code>csshow(控件)</code></td><td>隐藏 / 显示</td></tr>
+<tr><td><code>cspass(控件)</code></td><td>输入框打码（密码）</td></tr>
+<tr><td><code>cscolor(名字, 颜色)</code> / <code>csapply(名字, 控件)</code></td><td>给颜色起名，再复用</td></tr>
+<tr><td><code>csradius(控件, 像素)</code> / <code>csshadow(控件, 0/1)</code></td><td>圆角 / 投影（仅 Linux）</td></tr>
+</tbody></table>
+<p>颜色写 <code>"#RRGGBB"</code>、<code>"RRGGBB"</code> 或 CSS 颜色名（<code>"red"</code> <code>"gold"</code> …）。</p>
+<h4>一套深色主题</h4>
+<pre><code class="lang-cask">// 深色主题示例
+use "C_OPED.cash";
+use "C_CSS.cash";
+
+function main() {
+    int 窗口 = window("主题示例", 440, 260);
+    int 标题 = label("C* 深色主题", 20, 20, 400, 36);
+    int 按钮 = button("确定", 20, 100, 140, 40);
+
+    csbg(窗口, "0D1117");
+    cstext(标题, "#E6EDF3");
+    csfont(标题, 20, 1);
+    csbg(按钮, "238636");
+    cstext(按钮, "#FFFFFF");
+    csfont(按钮, 12, 1);
+    run();
+}</code></pre>
+<h4>0.5.0 在 Windows 上的改进</h4>
+<ul><li>按钮改成 <strong>owner-draw 自绘</strong>。Win10/11 的视觉样式原本会忽略 <code>WM_CTLCOLORBTN</code>，</li></ul>
+<p>现在 <code>csbg</code> / <code>cstext</code> / <code>csfont</code> 能真正控制按钮的底色、文字和字号。</p>
+<ul><li><code>csbg(窗口, 颜色)</code> 换掉窗口背景刷，整块窗口底色都会变。</li><li>输入框返回背景刷的同时设置文字底色，输入区域内部不再是一块白。</li><li><code>csfont</code> 按 DPI 把"磅"换算成像素（96 DPI 下 12 磅约 16 像素），不会出现超大字号。</li></ul>
+<h3>动手实践</h3>
+<p><strong>任务</strong>：把 4.4 节的"算两倍"工具改成深色主题：窗口 <code>1B2129</code>、标题 <code>#E8EAED</code>、
+输入框 <code>0D1117</code>、按钮 <code>238636</code> 白字。</p>
+<p>参考上面的主题代码，把 <code>csbg</code> / <code>cstext</code> / <code>csfont</code> 加到对应控件上即可。</p>
+<h3>小结</h3>
+<ul><li><code>C_CSS.cash</code> 依赖 <code>C_OPED.cash</code>，两个头要一起用。</li><li><code>cstext</code> 改字色、<code>csbg</code> 改底色、<code>csfont</code> 改字号；窗口本身也能用 <code>csbg</code> 上色。</li><li>0.5.0 起 Windows 上按钮、窗口、输入框都能真正上色。</li><li><code>csradius</code> / <code>csshadow</code> 只在 Linux 生效，Windows 上安全忽略。</li></ul>
+<h3>练习</h3>
+<p><strong>基础</strong></p>
+<ol><li>把主题里的窗口底色改成 <code>"0B1020"</code>，标题改成 <code>"#4FC3F7"</code>。</li><li>用 <code>csfont</code> 把按钮字号改成 14 磅、不加粗，观察按钮大小变化。</li></ol>
+<p><strong>提高</strong></p>
+<ol><li>用 <code>cscolor("主色", "1E88E5")</code> 定义主色，再用 <code>csapply</code> 涂到两个按钮上。</li><li>用 <code>cshide</code> / <code>csshow</code> 做一个"展开更多"按钮：点一下显示第二行说明。</li></ol>
+<hr>
 <h1>附录A　语法速查表</h1>
-<p>本附录把 C\* 0.4.2 的常用写法集中成表，方便随时翻查。</p>
+<p>本附录把 C\* 0.5.0 的常用写法集中成表，方便随时翻查。</p>
 <h2>A.1　程序骨架与注释</h2>
 <table>
 <thead><tr><th>内容</th><th>写法</th></tr></thead>
@@ -1619,6 +1756,11 @@ function main() {
 <tr><td>销毁控件</td><td><code>destroy(控件);</code></td></tr>
 <tr><td>事件函数</td><td><code>function on_click(int 控件)</code> / <code>function on_change(int 控件)</code> / <code>function on_close()</code></td></tr>
 <tr><td>文字转整数</td><td><code>VALUE(文字)</code> 或 <code>VAL(文字)</code></td></tr>
+<tr><td>深色主题</td><td><code>csbg(控件, "1B2129")</code> <code>cstext(控件, "#E8EAED")</code> <code>csfont(控件, 12, 1)</code></td></tr>
+<tr><td>密码框</td><td><code>cspass(输入框)</code></td></tr>
+<tr><td>文件读写</td><td><code>use "C_IO.cash";</code> 后用 <code>readfile</code> <code>writefile</code> <code>appendfile</code> <code>fileexists</code></td></tr>
+<tr><td>程序目录 / 环境变量</td><td><code>appdir()</code> / <code>envget("名字")</code></td></tr>
+<tr><td>启动外部程序</td><td><code>launch("命令行")</code>（不等）/ <code>launchwait("命令行")</code>（等）</td></tr>
 </tbody></table>
 <h2>A.10　编译运行命令</h2>
 <table>
