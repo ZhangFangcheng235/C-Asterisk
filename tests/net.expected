@@ -9,3 +9,7 @@ fnv_nonzero
 fnv_stable
 b64_rt
 alive_none
+dns_ip_passthrough
+http_no_scheme
+http_bad_input
+banner_offline_ok

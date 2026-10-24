@@ -25,3 +25,16 @@ long long   caskw_hostalive(const char *host, long long port)
 {
     return cask_net_hostalive(host, (int)port);
 }
+/* 主动侦察（攻击面检测层）：只对"你有权访问的目标"使用 */
+const char *caskw_bannerget(const char *host, long long port, const char *probe)
+{
+    return cask_net_bannerget(host, (int)port, probe);
+}
+long long   caskw_httpcode(const char *url)
+{
+    return cask_net_httpcode(url);
+}
+const char *caskw_dnsresolve(const char *host)
+{
+    return cask_net_dnsresolve(host);
+}

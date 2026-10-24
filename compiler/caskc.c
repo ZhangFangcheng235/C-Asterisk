@@ -699,6 +699,10 @@ static const NativeApi g_net_api[] = {
     { "base64",    T_TEXT, 1, { T_TEXT } },
     { "unbase64",  T_TEXT, 1, { T_TEXT } },
     { "hostalive", T_NUM,  2, { T_TEXT, T_NUM } },
+    /* 主动侦察（攻击面检测层） */
+    { "bannerget",  T_TEXT, 3, { T_TEXT, T_NUM, T_TEXT } },
+    { "httpcode",   T_NUM,  1, { T_TEXT } },
+    { "dnsresolve", T_TEXT, 1, { T_TEXT } },
     { NULL, 0, 0, { 0 } }
 };
 

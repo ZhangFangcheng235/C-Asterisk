@@ -3172,7 +3172,7 @@ if (率 &gt; 100) { return 100; }</code></pre>
 <hr>
 <h2>第 13 章　操作系统、网络攻防与便携化交互</h2>
 <h3>学习目标</h3>
-<ul><li>会用 <code>use "C_OS.cash";</code> 读系统信息：<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>。</li><li>会用 <code>use "C_NET.cash";</code> 做协议校验、编码与哈希：<code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code>，以及主机探测 <code>hostalive</code>。</li><li>会用 <code>use "C_SC.cash";</code> 做便携化交互：<code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code>。</li><li>会把这些头与第 10 章的 <code>C_IO.cash</code>、第 9 章的窗口合起来，做出"系统信息面板"这类完整工具。</li><li>说得清每个新分类在积木视图里怎么用：文件与系统、操作系统、网络与攻防、便携化交互四类积木都要先 <code>use</code> 对应头文件才出现。</li></ul>
+<ul><li>会用 <code>use "C_OS.cash";</code> 读系统信息：<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>。</li><li>会用 <code>use "C_NET.cash";</code> 做协议校验、编码与哈希：<code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code>，以及主机探测 <code>hostalive</code>；还会用主动侦察三件套 <code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>。</li><li>会用 <code>use "C_SC.cash";</code> 做便携化交互：<code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code>。</li><li>会把这些头与第 10 章的 <code>C_IO.cash</code>、第 9 章的窗口合起来，做出"系统信息面板"这类完整工具。</li><li>说得清每个新分类在积木视图里怎么用：文件与系统、操作系统、网络与攻防、便携化交互四类积木都要先 <code>use</code> 对应头文件才出现。</li><li>说得清 C_NET 的"攻防"边界：只做只读侦察（校验、编码、哈希、探活、抓 banner、取 HTTP 状态码、解析 DNS），不做 DoS / 发包 / 漏洞利用，且只对<strong>自己有权使用的目标</strong>动手。</li></ul>
 <h3>任务引入</h3>
 <p>前面几章，程序读的是<strong>自己的</strong>数据和<strong>用户的</strong>输入。但一个真正能用的工具，往往还要"读懂它所在的环境"：</p>
 <ul><li>机房管理员想要一个<strong>系统体检小工具</strong>：这台机器几个核、多少内存、是不是管理员开的、开机多久了。</li><li>一个下载器要<strong>判断网址写得对不对</strong>、把下载内容编码成 base64 存起来、出发前<strong>探测服务器端口通不通</strong>。</li><li>你做的绿色版程序拷到 U 盘上，要确认<strong>这个目录能不能就地写文件</strong>（便携），顺便看看<strong>本机哪些端口开着</strong>。</li></ul>
@@ -3181,10 +3181,17 @@ if (率 &gt; 100) { return 100; }</code></pre>
 <thead><tr><th>头文件</th><th>一句话定位</th><th>控制台也能用？</th></tr></thead>
 <tbody>
 <tr><td><code>C_OS.cash</code></td><td>读懂操作系统：系统信息、当前进程、权限、运行时长</td><td>能</td></tr>
-<tr><td><code>C_NET.cash</code></td><td>网络与攻防：协议校验、网址拆解、编码、哈希、端口探测</td><td>能</td></tr>
+<tr><td><code>C_NET.cash</code></td><td>网络与攻防：协议校验、网址拆解、编码、哈希、TCP 探活，以及<strong>主动侦察</strong>（抓 banner、取 HTTP 状态码、解析 DNS）</td><td>能</td></tr>
 <tr><td><code>C_SC.cash</code></td><td>S/C 便携化交互：判断便携、就地写文件、查资源、扫本机端口</td><td>能</td></tr>
 </tbody></table>
-<blockquote><p><strong>安全提示</strong>：这三个头里"攻防"指的是<strong>防御性的协议校验、编码、完整性检查和只读探测</strong>（判断网址/IP 是否合法、校验文件哈希、base64 编解码、探测某主机某端口通不通）。C* 不提供发 raw socket 数据包、不写网络嗅探或攻击代码；<code>hostalive</code> / <code>portcheck</code> / <code>portscan</code> 都是<strong>只读连接探测</strong>，不开监听、不改系统。教学与考试里也只考核"校验、编码、探测"这一层。</p></blockquote>
+<blockquote><p><strong>安全提示</strong>：C_NET 的"攻防"分两层。
+<strong>被动层</strong>是防御性工具——协议校验、编码、哈希、<code>hostalive</code> 只读探活；<strong>主动层</strong>是
+<code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code> 三件<strong>侦察原语</strong>，对应真实安全流程里的
+"服务发现 / 攻击面识别"这一步（banner 抓服务指纹、httpcode 看哪几个页面开着、
+dnsresolve 查主机解析到哪个 IP）。
+C* <strong>不提供</strong>发原始数据包、DoS 洪水、SYN 半开扫描、漏洞利用 / 注入这些武器化能力；
+主动侦察也只是"连一下、读回来"，和用浏览器访问一个页面在量级上没有差别。
+使用规则：<strong>只对实验室、127.0.0.1、或你已获授权的目标</strong>做主动探测。</p></blockquote>
 <h3>知识准备</h3>
 <h4>13.1 操作系统工具箱：C_OS.cash</h4>
 <pre><code class="lang-cask">use "C_OS.cash";</code></pre>
@@ -3237,7 +3244,7 @@ exe 所在目录可写（便携）
 <p>逐行看：<code>os_platform()</code> 只用来<strong>分支</strong>（不同系统走不同逻辑）；<code>os_cpu()</code> 这种机器相关的文字只<strong>显示</strong>、不拿去做等值判断；<code>os_ram()</code> 返回的是整数 GB，直接 <code>print</code> 就拼进文字里。</p>
 <h4>13.3 网络与攻防：C_NET.cash</h4>
 <pre><code class="lang-cask">use "C_NET.cash";</code></pre>
-<p>分三组。<strong>前两组是纯计算，不碰网络，随时能跑</strong>；第三组会开 socket，可能联网。</p>
+<p>分四组。<strong>前两组是纯计算，不碰网络，随时能跑</strong>；第三组会开 socket、只读探活；第四组是主动侦察（会连出去读回数据），只对有权访问的目标用。</p>
 <p><strong>协议校验</strong>（判断网址、IP 写得对不对）：</p>
 <table>
 <thead><tr><th>函数</th><th>作用</th><th>例子</th></tr></thead>
@@ -3262,6 +3269,30 @@ exe 所在目录可写（便携）
 <tr><td><code>hostalive(主机, 端口)</code></td><td>某主机某端口的 TCP 通不通</td><td>通 1，不通 0；离网给 0，不崩</td></tr>
 </tbody></table>
 <blockquote><p><code>hostalive</code> 是<strong>只读探测</strong>：它去连一下对方端口，看能不能建立连接，<strong>不发包攻击、不开监听</strong>。离网时返回 0，程序照跑。</p></blockquote>
+<p><strong>主动侦察层</strong>（<code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>）：</p>
+<p>这是"攻防"里真正会<strong>主动连出去</strong>的部分，对应渗透测试里的"服务发现 / 攻击面识别"。它们都只对"你有权访问的目标"使用，动作和用浏览器打开一个页面在同一量级。</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>bannerget(主机, 端口, 探测串)</code></td><td>连上服务、发探测串、读回第一行响应</td><td>拿"服务指纹"（FTP/SMTP/自研服务的 banner）；连不上给 <code>""</code></td></tr>
+<tr><td><code>httpcode(网址)</code></td><td>对 <code>http://</code> 发一次 GET，返回状态码</td><td><code>200</code>/<code>403</code>/<code>404</code>…；只认明文 http，<code>https</code> 或连不上给 0</td></tr>
+<tr><td><code>dnsresolve(主机)</code></td><td>主机名解析成点分 IP</td><td>本身是 IP 就原样返回；解析失败给 <code>""</code></td></tr>
+</tbody></table>
+<p>一次典型的"本地体检"（对 <code>127.0.0.1</code> 上做，不碰外网）：</p>
+<pre><code class="lang-cask">// 本地网络体检：C_NET.cash 主动侦察层
+use "C_NET.cash";
+
+function main() {
+    // 1) 抓本地 9000 端口某个自研服务的 banner（没有就返回 ""，不崩）
+    string 指纹 = bannerget("127.0.0.1", 9000, "help\r\n");
+    print "服务指纹：", 指纹;
+    // 2) 取本地 8000 上 HTTP 服务的状态码
+    print "HTTP 状态：", httpcode("http://127.0.0.1:8000/");
+    // 3) 把主机名解析成 IP（IP 原样返回，域名查 DNS）
+    print "localhost -&gt; ", dnsresolve("localhost");
+    return 0;
+}</code></pre>
+<blockquote><p><strong>教学边界</strong>：这三个函数"主动"但"只读"——它们连接、读取、解析，<strong>不修改目标、不发洪水、不扫漏洞、不做注入</strong>。和 <code>hostalive</code> 一样会阻塞（约 3~4 秒），别在界面主循环里高频调用。真实项目里请只对<strong>实验室、<code>127.0.0.1</code>、或你已获书面授权的目标</strong>使用。</p></blockquote>
 <h4>13.4 一个"网址安全小工具"控制台程序</h4>
 <pre><code class="lang-cask">// 网址安全小工具：C_NET.cash 综合
 use "C_NET.cash";
@@ -3393,11 +3424,11 @@ function main() {
 <pre><code class="lang-bat">bin\caskc.exe 系统面板.cask -o 系统面板.exe --console</code></pre>
 <p>打开就是一张深色"体检卡"；点"刷新"，标签重新读一遍 <code>os_*</code> / <code>uptime</code> / <code>is64bit</code>，值会随系统变化。</p>
 <h3>拓展与规范</h3>
-<ul><li><strong>机器相关的值只展示、不写死。</strong> <code>os_cpu()</code> / <code>os_hostname()</code> / <code>os_ram()</code> 换台机器就变，判断只判断"非空 / 非 0"，别拿具体型号去 <code>==</code>。</li><li><strong>"攻防"只做防御性那一层。</strong> 用 <code>isurl</code> / <code>isip</code> / <code>fnv1a</code> / <code>base64</code> 做校验、编码、完整性，用 <code>hostalive</code> / <code>portcheck</code> / <code>portscan</code> 做只读探测；不写发包攻击、不写嗅探。</li><li><strong>探测类函数可能阻塞</strong>（<code>hostalive</code> 约 3 秒、<code>portcheck</code> / <code>portscan</code> 逐个拨号），别在界面主循环里高频狂调。</li><li><strong>绿色版先判 <code>isportable()</code>。</strong> 为 1 才把缓存/配置写 exe 旁边；为 0（如装在 C 盘系统目录）就退回 <code>C_IO</code> 的 <code>envget("USERPROFILE")</code> 写用户目录。</li><li><strong>三个头都能单独给控制台用</strong>，不依赖窗口；要放进界面再叠 <code>C_OPED.cash</code> + <code>C_CSS.cash</code>。</li></ul>
+<ul><li><strong>机器相关的值只展示、不写死。</strong> <code>os_cpu()</code> / <code>os_hostname()</code> / <code>os_ram()</code> 换台机器就变，判断只判断"非空 / 非 0"，别拿具体型号去 <code>==</code>。</li><li><strong>C_NET 分"被动"和"主动"两层。</strong> 被动层（<code>isurl</code> / <code>isip</code> / <code>fnv1a</code> / <code>base64</code> / <code>hostalive</code>）随时能用；主动层（<code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>）会连出去读回数据，<strong>只对实验室、<code>127.0.0.1</code>、或已获授权的目标</strong>用，且保持"只读"——不发包攻击、不发洪水、不做漏洞利用。</li><li><strong>探测 / 侦察类函数会阻塞</strong>（<code>hostalive</code> / <code>bannerget</code> 约 3~4 秒、<code>portcheck</code> / <code>portscan</code> 逐个拨号），别在界面主循环里高频狂调。</li><li><strong>绿色版先判 <code>isportable()</code>。</strong> 为 1 才把缓存/配置写 exe 旁边；为 0（如装在 C 盘系统目录）就退回 <code>C_IO</code> 的 <code>envget("USERPROFILE")</code> 写用户目录。</li><li><strong>三个头都能单独给控制台用</strong>，不依赖窗口；要放进界面再叠 <code>C_OPED.cash</code> + <code>C_CSS.cash</code>。</li></ul>
 <h3>本章小结</h3>
-<ul><li><code>C_OS.cash</code> 读系统：<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>。</li><li><code>C_NET.cash</code> 管网络与攻防（防御层）：<code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> 校验拆解，<code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> 编码与完整性，<code>hostalive</code> 只读探测。</li><li><code>C_SC.cash</code> 做便携化交互：<code>isportable</code> / <code>copytoexe</code> 判断与就地写文件，<code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> 查资源，<code>portcheck</code> / <code>portscan</code> 扫本机端口。</li><li>三个头都<strong>控制台可用</strong>；做窗口工具时叠 <code>C_OPED.cash</code> + <code>C_CSS.cash</code> 出一块深色"系统信息面板"。</li><li>积木视图里，文件与系统、操作系统、网络与攻防、便携化交互四个新分类，都要先 <code>use</code> 对应头文件才显示。</li></ul>
+<ul><li><code>C_OS.cash</code> 读系统：<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>。</li><li><code>C_NET.cash</code> 管网络与攻防：被动层 <code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> 校验拆解、<code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> 编码与完整性、<code>hostalive</code> 只读探活；主动侦察层 <code>bannerget</code> 抓服务指纹、<code>httpcode</code> 取 HTTP 状态码、<code>dnsresolve</code> 解析 IP（只对有权目标用）。</li><li><code>C_SC.cash</code> 做便携化交互：<code>isportable</code> / <code>copytoexe</code> 判断与就地写文件，<code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> 查资源，<code>portcheck</code> / <code>portscan</code> 扫本机端口。</li><li>三个头都<strong>控制台可用</strong>；做窗口工具时叠 <code>C_OPED.cash</code> + <code>C_CSS.cash</code> 出一块深色"系统信息面板"。</li><li>积木视图里，文件与系统、操作系统、网络与攻防、便携化交互四个新分类，都要先 <code>use</code> 对应头文件才显示。</li></ul>
 <h3>实训任务</h3>
-<ol><li>给 13.2 的"系统体检"加一段：用 <code>findproc</code> 检查常见后台进程（如 <code>explorer</code>）在不在，<code>print</code> 出结果。</li><li>写一个"文件指纹"小工具：用 <code>C_IO.cash</code> 的 <code>readfile</code> 读出一个文本，再 <code>fnv1a</code> 算指纹并 <code>writefile</code> 存成 <code>.hash</code>；下次再读，指纹变了就提示"文件被改过"。</li><li>做一个绿色版"下载器骨架"：先用 <code>isurl</code> 校验地址，再 <code>hostalive(urlhost(地址), urlport(地址))</code> 探端口，通了才 <code>appendfile</code> 记一条到日志；整包判断 <code>isportable()</code> 决定缓存放哪里。</li></ol>
+<ol><li>给 13.2 的"系统体检"加一段：用 <code>findproc</code> 检查常见后台进程（如 <code>explorer</code>）在不在，<code>print</code> 出结果。</li><li>写一个"文件指纹"小工具：用 <code>C_IO.cash</code> 的 <code>readfile</code> 读出一个文本，再 <code>fnv1a</code> 算指纹并 <code>writefile</code> 存成 <code>.hash</code>；下次再读，指纹变了就提示"文件被改过"。</li><li>做一个绿色版"下载器骨架"：先用 <code>isurl</code> 校验地址，再 <code>hostalive(urlhost(地址), urlport(地址))</code> 探端口，通了才 <code>appendfile</code> 记一条到日志；整包判断 <code>isportable()</code> 决定缓存放哪里。</li><li>做一个"本地服务侦察"窗口：两个输入框填主机和端口，点按钮用 <code>bannerget</code> 抓 banner、<code>httpcode</code> 取 HTTP 状态，显示在标签上；再对 <code>dnsresolve</code> 解析一次主机名。全程只连本机或你有权访问的测试服务器。</li></ol>
 <h3>本章测验</h3>
 <ol><li>选择题：想知道"本程序是不是以管理员身份运行"，用（　）。</li></ol>
 <ul><li>A. <code>os_pid()</code>　B. <code>isadmin()</code>　C. <code>findproc()</code>　D. <code>uptime()</code></li></ul>
@@ -3405,7 +3436,9 @@ function main() {
 <ul><li>A. <code>isip()</code>　B. <code>fnv1a()</code>　C. <code>isurl()</code>　D. <code>urlhost()</code></li></ul>
 <ol><li>选择题：把 <code>"hello"</code> 编码成 base64 再还原，应该（　）。</li></ol>
 <ul><li>A. 还原成 <code>"hello"</code>　B. 还原成 <code>"aGVsbG8="</code>　C. 还原成空串　D. 编译报错</li></ul>
-<ol><li>判断题：<code>os_cpu()</code> 的返回值因机器而异，程序里可以放心写死判断。（　）</li><li>判断题：<code>hostalive</code> / <code>portcheck</code> / <code>portscan</code> 是只读连接探测，不开监听、不对外攻击。（　）</li><li>判断题：绿色版程序在 <code>isportable()</code> 为 1 时，可以把缓存文件写到 exe 旁边。（　）</li><li>编程题：写一个控制台程序，用 <code>os_cores()</code>、<code>os_ram()</code>、<code>uptime()</code> 三行拼出一句"本机器 X 核、Y GB 内存，已开机约 Z 分钟"。</li><li>编程题：做一个"网址检查"窗口——输入框填网址，点按钮用 <code>isurl</code> + <code>urlhost</code> + <code>urlport</code> 在标签里显示"合法/不合法、主机、端口"；不合法就变红提示。</li></ol>
+<ol><li>判断题：<code>os_cpu()</code> 的返回值因机器而异，程序里可以放心写死判断。（　）</li><li>判断题：<code>hostalive</code> / <code>portcheck</code> / <code>portscan</code> 是只读连接探测，不开监听、不对外攻击。（　）</li><li>判断题：绿色版程序在 <code>isportable()</code> 为 1 时，可以把缓存文件写到 exe 旁边。（　）</li><li>判断题：<code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code> 属于主动侦察，可以随便对陌生公网目标批量扫描。（　）</li><li>选择题：想拿到某台本地 HTTP 服务的状态码（200/404…），用（　）。</li></ol>
+<ul><li>A. <code>hostalive(主机, 端口)</code>　B. <code>httpcode("http://主机/路径")</code>　C. <code>dnsresolve(主机)</code>　D. <code>portcheck(端口)</code></li></ul>
+<ol><li>编程题：写一个控制台程序，用 <code>os_cores()</code>、<code>os_ram()</code>、<code>uptime()</code> 三行拼出一句"本机器 X 核、Y GB 内存，已开机约 Z 分钟"。</li><li>编程题：做一个"网址检查"窗口——输入框填网址，点按钮用 <code>isurl</code> + <code>urlhost</code> + <code>urlport</code> 在标签里显示"合法/不合法、主机、端口"；不合法就变红提示。</li></ol>
 <hr>
 <h2>附录 A　语法速查表</h2>
 <p>这一份是把全书用到的写法收在一起，写代码时查这里比翻正文快。</p>

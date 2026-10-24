@@ -34,7 +34,7 @@
 学完这两节，程序就能把数据留住，并拥有一套自己的界面配色。
 
 <strong>0.5.1 新增</strong>：4.5 节末尾补了「三个新头」拓展——<code>C_OS.cash</code>（操作系统）、
-<code>C_NET.cash</code>（网络与攻防，只做校验/编码/哈希/只读探测）、<code>C_SC.cash</code>（S/C 便携化交互），
+<code>C_NET.cash</code>（网络与攻防，含主动侦察层）、<code>C_SC.cash</code>（S/C 便携化交互），
 并结合 4.5 的"保存位置三选一"讲了 <code>isportable</code> / <code>fnv1a</code> 的用法。</p></blockquote>
 <h2>前言</h2>
 <h3>这本书写给谁</h3>
@@ -1773,12 +1773,14 @@ function main() {
 <thead><tr><th>头文件</th><th>定位</th><th>代表函数</th></tr></thead>
 <tbody>
 <tr><td><code>use "C_OS.cash";</code></td><td>读懂操作系统</td><td><code>os_cores</code> / <code>os_ram</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code></td></tr>
-<tr><td><code>use "C_NET.cash";</code></td><td>网络与攻防（防御层）</td><td><code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code></td></tr>
+<tr><td><code>use "C_NET.cash";</code></td><td>网络与攻防</td><td><code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code>（被动）；主动侦察层 <code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>（只对有权目标用）</td></tr>
 <tr><td><code>use "C_SC.cash";</code></td><td>S/C 便携化交互</td><td><code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code></td></tr>
 </tbody></table>
 <p>结合 4.5 的"保存位置三选一"，<code>isportable()</code>（C_SC）正好能自动判断"能不能就地放 exe 旁边"——
 能就放 exe 旁，不能就退到 <code>%APPDATA%</code>；<code>fnv1a</code>（C_NET）还能给这份配置算一个"指纹"，
-内容被改过就发现。</p>
+内容被改过就发现。C_NET 的主动侦察层（<code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>）只对
+<strong>你有权访问的目标</strong>做只读探测（连一下、读回来），不做 DoS / 发包 / 漏洞利用；
+<code>httpcode</code> 只认明文 http，离网时给 0，不会崩。</p>
 <hr>
 <h2>4.6　界面美化与主题</h2>
 <h3>学习目标</h3>

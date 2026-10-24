@@ -46,8 +46,9 @@
 * <strong>新增三个头文件</strong>（控制台程序也能用，详见 5.8）：
 * <code>use "C_OS.cash";</code> —— 操作系统：<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> /
 <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>。
-* <code>use "C_NET.cash";</code> —— 网络与攻防（防御层）：<code>isurl</code> / <code>isip</code> / <code>urlhost</code> /
-<code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code>。
+* <code>use "C_NET.cash";</code> —— 网络与攻防：<code>isurl</code> / <code>isip</code> / <code>urlhost</code> /
+<code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code>（被动校验、编码、哈希、探活），
+主动侦察层 <code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>（只对有权访问的目标使用）。
 * <code>use "C_SC.cash";</code> —— S/C 便携化交互：<code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> /
 <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code>。
 * <strong>积木视图补齐「文件与系统」及三个新分类</strong>：<code>C_IO.cash</code> 的「文件与系统」积木，
@@ -802,7 +803,7 @@ function main() {
     return 0;
 }</code></pre>
 <blockquote><p><code>os_cpu</code> / <code>os_hostname</code> / <code>os_ram</code> 的值因机器而异，<strong>只展示、别写死</strong>；要判断只判"非空 / 非 0"。</p></blockquote>
-<h4>5.8.2 网络与攻防（防御层）：<code>use "C_NET.cash";</code></h4>
+<h4>5.8.2 网络与攻防：<code>use "C_NET.cash";</code></h4>
 <table>
 <thead><tr><th>函数</th><th>作用</th><th>说明</th></tr></thead>
 <tbody>
@@ -812,7 +813,10 @@ function main() {
 <tr><td><code>urlport(网址)</code></td><td>取端口（缺省 https=443/http=80）</td><td>纯计算</td></tr>
 <tr><td><code>fnv1a(文字)</code></td><td>32 位 FNV-1a 哈希</td><td>纯计算，同输入同输出</td></tr>
 <tr><td><code>base64(文字)</code> / <code>unbase64(文字)</code></td><td>编码 / 解码往返</td><td>纯计算</td></tr>
-<tr><td><code>hostalive(主机, 端口)</code></td><td>某端口 TCP 通不通</td><td>会 socket，约 3 秒；离网给 0</td></tr>
+<tr><td><code>hostalive(主机, 端口)</code></td><td>某端口 TCP 通不通</td><td>只读探活，约 3 秒；离网给 0</td></tr>
+<tr><td><code>bannerget(主机, 端口, 探测串)</code></td><td>主动侦察：连上服务、发探测串、读回第一行</td><td>拿"服务指纹"；连不上给 <code>""</code></td></tr>
+<tr><td><code>httpcode(网址)</code></td><td>主动侦察：对 <code>http://</code> 发一次 GET，返回状态码</td><td><code>200</code>/<code>403</code>/<code>404</code>…；只认明文 http，否则给 0</td></tr>
+<tr><td><code>dnsresolve(主机)</code></td><td>主动侦察：主机名解析成点分 IP</td><td>IP 原样返回；解析失败给 <code>""</code></td></tr>
 </tbody></table>
 <pre><code class="lang-cask">use "C_NET.cash";
 
@@ -820,10 +824,16 @@ function main() {
     if (isurl("https://a.com") == 1) print "合法网址", urlhost("https://a.com/x");
     string e = base64("hi");
     print "base64 往返:", unbase64(e);
+    // 主动侦察（只对有权访问的目标）：
+    print "HTTP 状态：", httpcode("http://127.0.0.1:8000/");
+    print "localhost -&gt; ", dnsresolve("localhost");
     return 0;
 }</code></pre>
-<blockquote><p>"攻防"在这里指<strong>防御性的校验、编码、完整性与只读探测</strong>；C* 不提供发 raw socket、
-不做网络嗅探或攻击。<code>hostalive</code> 只尝试连接、看是否通。</p></blockquote>
+<blockquote><p><strong>"攻防"分两层。</strong> 被动层（校验 / 编码 / 哈希 / <code>hostalive</code>）随时能用；<strong>主动层</strong>
+<code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code> 会连出去读回数据，对应渗透测试里"服务发现 / 攻击面
+识别"这一步。C* 不提供发原始数据包、DoS 洪水、SYN 半开、漏洞利用 / 注入——主动侦察也只
+"连一下、读回来"，和用浏览器访问一个页面同量级。<strong>只对实验室、<code>127.0.0.1</code>、或已获书面
+授权的目标</strong>使用，且会阻塞 3~4 秒，别在界面主循环里高频调用。</p></blockquote>
 <h4>5.8.3 S/C 便携化交互：<code>use "C_SC.cash";</code></h4>
 <table>
 <thead><tr><th>函数</th><th>作用</th><th>返回</th></tr></thead>

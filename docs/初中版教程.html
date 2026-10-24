@@ -35,7 +35,7 @@
 最后做一个会记住内容的待办清单。
 
 <strong>0.5.1 新增</strong>：第 22 课末补了「三个新头」拓展——<code>C_OS.cash</code>（操作系统）、
-<code>C_NET.cash</code>（网络与攻防，只做校验/编码/哈希/只读探测）、<code>C_SC.cash</code>（S/C 便携化交互）。</p></blockquote>
+<code>C_NET.cash</code>（网络与攻防，含主动侦察层）、<code>C_SC.cash</code>（S/C 便携化交互）。</p></blockquote>
 <hr>
 <h2>这本书怎么用</h2>
 <ul><li><strong>读者</strong>：学过一点数学，编程零基础或刚起步，年龄大约 12 到 15 岁。</li><li><strong>每一课的结构固定</strong>：先看"这一课学什么"，再读能直接运行的程序，然后是逐行解释、易错点、练习。</li><li><strong>代码块</strong>：标着 <code>cask</code> 的代码就是 <code>C*</code> 源文件的内容，保存成后缀为 <code>.cask</code> 的文件（例如 <code>hello.cask</code>）就能编译。</li><li><strong>单元小项目</strong>：每个单元末尾会有一个完整的程序，把这一单元学到的东西合起来用一次。</li><li><strong>想查细节</strong>：随时翻 <code>docs\CStar手册.md</code>，那里有关键字总表和全部内置函数。</li></ul>
@@ -1655,7 +1655,7 @@ number main() {
 <thead><tr><th>头文件</th><th>一句话</th><th>主要函数</th></tr></thead>
 <tbody>
 <tr><td><code>use "C_OS.cash";</code></td><td>读懂操作系统</td><td><code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code></td></tr>
-<tr><td><code>use "C_NET.cash";</code></td><td>网络与攻防（只做校验、编码、哈希、只读探测）</td><td><code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code></td></tr>
+<tr><td><code>use "C_NET.cash";</code></td><td>网络与攻防（校验、编码、哈希、只读探测 + 主动侦察层）</td><td><code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code>；主动侦察层 <code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>（只对有权访问的目标用）</td></tr>
 <tr><td><code>use "C_SC.cash";</code></td><td>S/C 便携化交互</td><td><code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code></td></tr>
 </tbody></table>
 <p>最常用的一小段：</p>
@@ -1665,8 +1665,9 @@ function main() {
     print "这台机器 ", os_cores(), " 核、", os_ram(), " GB 内存，平台 ", os_platform();
     return 0;
 }</code></pre>
-<blockquote><p>"攻防"只指<strong>防御性</strong>那一层——判断网址/IP 写没写对、给内容算个指纹、base64 编码、探端口通不通；
-C* 不做发包攻击、不做网络嗅探。</p></blockquote>
+<blockquote><p>"攻防"分两层：被动层是<strong>防御性</strong>的——判断网址/IP 写没写对、给内容算个指纹、base64 编码、探端口通不通；
+主动层是 <code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code> 三件<strong>侦察原语</strong>（服务指纹、HTTP 状态码、DNS 解析），
+只对<strong>你有权访问的目标</strong>用。C* 不做发包攻击、不做网络嗅探、不做漏洞利用。</p></blockquote>
 <hr>
 <h3>第 23 课　给窗口化妆：CSS 美化</h3>
 <p><strong>这一课学什么</strong>：用 <code>C_CSS.cash</code> 改文字色、背景色和字号，做一套深色主题。</p>

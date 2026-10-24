@@ -18,8 +18,9 @@
 > * **新增三个头文件**（控制台程序也能用，详见 5.8）：
 >   * `use "C_OS.cash";` —— 操作系统：`os_pid` / `os_cores` / `os_ram` / `os_cpu` /
 >     `os_hostname` / `os_platform` / `isadmin` / `uptime` / `findproc`。
->   * `use "C_NET.cash";` —— 网络与攻防（防御层）：`isurl` / `isip` / `urlhost` /
->     `urlport` / `fnv1a` / `base64` / `unbase64` / `hostalive`。
+>   * `use "C_NET.cash";` —— 网络与攻防：`isurl` / `isip` / `urlhost` /
+>     `urlport` / `fnv1a` / `base64` / `unbase64` / `hostalive`（被动校验、编码、哈希、探活），
+>     主动侦察层 `bannerget` / `httpcode` / `dnsresolve`（只对有权访问的目标使用）。
 >   * `use "C_SC.cash";` —— S/C 便携化交互：`isportable` / `copytoexe` / `freebytes` /
 >     `diskfree` / `is64bit` / `portcheck` / `portscan`。
 > * **积木视图补齐「文件与系统」及三个新分类**：`C_IO.cash` 的「文件与系统」积木，
@@ -997,7 +998,7 @@ function main() {
 
 > `os_cpu` / `os_hostname` / `os_ram` 的值因机器而异，**只展示、别写死**；要判断只判"非空 / 非 0"。
 
-#### 5.8.2 网络与攻防（防御层）：`use "C_NET.cash";`
+#### 5.8.2 网络与攻防：`use "C_NET.cash";`
 
 | 函数 | 作用 | 说明 |
 |------|------|------|
@@ -1007,7 +1008,10 @@ function main() {
 | `urlport(网址)` | 取端口（缺省 https=443/http=80） | 纯计算 |
 | `fnv1a(文字)` | 32 位 FNV-1a 哈希 | 纯计算，同输入同输出 |
 | `base64(文字)` / `unbase64(文字)` | 编码 / 解码往返 | 纯计算 |
-| `hostalive(主机, 端口)` | 某端口 TCP 通不通 | 会 socket，约 3 秒；离网给 0 |
+| `hostalive(主机, 端口)` | 某端口 TCP 通不通 | 只读探活，约 3 秒；离网给 0 |
+| `bannerget(主机, 端口, 探测串)` | 主动侦察：连上服务、发探测串、读回第一行 | 拿"服务指纹"；连不上给 `""` |
+| `httpcode(网址)` | 主动侦察：对 `http://` 发一次 GET，返回状态码 | `200`/`403`/`404`…；只认明文 http，否则给 0 |
+| `dnsresolve(主机)` | 主动侦察：主机名解析成点分 IP | IP 原样返回；解析失败给 `""` |
 
 ```cask
 use "C_NET.cash";
@@ -1016,12 +1020,18 @@ function main() {
     if (isurl("https://a.com") == 1) print "合法网址", urlhost("https://a.com/x");
     string e = base64("hi");
     print "base64 往返:", unbase64(e);
+    // 主动侦察（只对有权访问的目标）：
+    print "HTTP 状态：", httpcode("http://127.0.0.1:8000/");
+    print "localhost -> ", dnsresolve("localhost");
     return 0;
 }
 ```
 
-> "攻防"在这里指**防御性的校验、编码、完整性与只读探测**；C* 不提供发 raw socket、
-> 不做网络嗅探或攻击。`hostalive` 只尝试连接、看是否通。
+> **"攻防"分两层。** 被动层（校验 / 编码 / 哈希 / `hostalive`）随时能用；**主动层**
+> `bannerget` / `httpcode` / `dnsresolve` 会连出去读回数据，对应渗透测试里"服务发现 / 攻击面
+> 识别"这一步。C* 不提供发原始数据包、DoS 洪水、SYN 半开、漏洞利用 / 注入——主动侦察也只
+> "连一下、读回来"，和用浏览器访问一个页面同量级。**只对实验室、`127.0.0.1`、或已获书面
+> 授权的目标**使用，且会阻塞 3~4 秒，别在界面主循环里高频调用。
 
 #### 5.8.3 S/C 便携化交互：`use "C_SC.cash";`
 

@@ -227,6 +227,9 @@ var SYNTAX = (function () {
   nn('base64(文字)', '把文字编码成 base64（返回 base64 字符串）。', 'base64');
   nn('unbase64(文字)', '把 base64 解码回原文（解码失败给 ""）。', 'unbase64');
   nn('hostalive(主机, 端口)', '某主机的某端口 TCP 通不通 -> 1 / 0（会阻塞到超时）。', 'hostalive');
+  nn('bannerget(主机, 端口, 探测串)', '主动侦察：连上服务、发探测串、读回它的响应 / banner（服务指纹）；连不上给 ""。', 'bannerget');
+  nn('httpcode(网址)', '主动侦察：对 http:// 发一次 GET，返回状态码（200/403/404…）；https / 连不上给 0。', 'httpcode');
+  nn('dnsresolve(主机)', '主动侦察：主机名解析成点分 IP；本身是 IP 就原样返回；解析失败给 ""。', 'dnsresolve');
 
   /* ---------------- 便携化交互（C_SC.cash） ---------------- */
   var SC = {};
@@ -300,6 +303,9 @@ var SYNTAX = (function () {
     urlhost: ['网址'], urlport: ['网址'], fnv1a: ['要哈希的文字'],
     base64: ['要编码的文字'], unbase64: ['要解码的 base64'],
     hostalive: ['主机名或 IP', '端口（如 80 / 443）'],
+    bannerget: ['主机名或 IP', '端口', '要发的探测串（比如 "help\r\n"）'],
+    httpcode: ['网址（http://…）'],
+    dnsresolve: ['主机名或 IP'],
     /* 便携化交互（C_SC.cash） */
     isportable: [], copytoexe: ['要写的文件名', '文件内容'],
     freebytes: [], diskfree: ['盘符或目录（如 "C:"）'],

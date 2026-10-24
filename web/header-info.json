@@ -24,7 +24,7 @@
   },
   "C_NET.cash": {
     "name": "网络与攻防工具箱",
-    "summary": "网络协议校验 / 编码 / 哈希 / 主机探测：isurl 是网址吗，isip 是 IPv4 吗，urlhost / urlport 拆网址，fnv1a 内容哈希，base64 / unbase64 编解码，hostalive(主机, 端口) TCP 探活。配合 C_IO 和 C_OS 能做网络体检面板。",
+    "summary": "网络协议校验 / 编码 / 哈希 / 主机探测 / 主动侦察：isurl 是网址吗，isip 是 IPv4 吗，urlhost / urlport 拆网址，fnv1a 内容哈希，base64 / unbase64 编解码，hostalive(主机, 端口) TCP 探活；主动侦察层 bannerget(主机, 端口, 探测串) 抓服务 banner、httpcode(网址) 取 HTTP 状态码、dnsresolve(主机) 解析 IP（只对有权访问的目标使用）。配合 C_IO 和 C_OS 能做网络体检 / 侦察面板。",
     "provides": ["net"]
   },
   "C_SC.cash": {

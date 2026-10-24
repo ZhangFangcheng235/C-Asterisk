@@ -4544,10 +4544,11 @@ if (率 > 100) { return 100; }
 ### 学习目标
 
 - 会用 `use "C_OS.cash";` 读系统信息：`os_pid` / `os_cores` / `os_ram` / `os_cpu` / `os_hostname` / `os_platform` / `isadmin` / `uptime` / `findproc`。
-- 会用 `use "C_NET.cash";` 做协议校验、编码与哈希：`isurl` / `isip` / `urlhost` / `urlport` / `fnv1a` / `base64` / `unbase64`，以及主机探测 `hostalive`。
+- 会用 `use "C_NET.cash";` 做协议校验、编码与哈希：`isurl` / `isip` / `urlhost` / `urlport` / `fnv1a` / `base64` / `unbase64`，以及主机探测 `hostalive`；还会用主动侦察三件套 `bannerget` / `httpcode` / `dnsresolve`。
 - 会用 `use "C_SC.cash";` 做便携化交互：`isportable` / `copytoexe` / `freebytes` / `diskfree` / `is64bit` / `portcheck` / `portscan`。
 - 会把这些头与第 10 章的 `C_IO.cash`、第 9 章的窗口合起来，做出"系统信息面板"这类完整工具。
 - 说得清每个新分类在积木视图里怎么用：文件与系统、操作系统、网络与攻防、便携化交互四类积木都要先 `use` 对应头文件才出现。
+- 说得清 C_NET 的"攻防"边界：只做只读侦察（校验、编码、哈希、探活、抓 banner、取 HTTP 状态码、解析 DNS），不做 DoS / 发包 / 漏洞利用，且只对**自己有权使用的目标**动手。
 
 ### 任务引入
 
@@ -4562,10 +4563,17 @@ if (率 > 100) { return 100; }
 | 头文件 | 一句话定位 | 控制台也能用？ |
 |--------|-----------|----------------|
 | `C_OS.cash` | 读懂操作系统：系统信息、当前进程、权限、运行时长 | 能 |
-| `C_NET.cash` | 网络与攻防：协议校验、网址拆解、编码、哈希、端口探测 | 能 |
+| `C_NET.cash` | 网络与攻防：协议校验、网址拆解、编码、哈希、TCP 探活，以及**主动侦察**（抓 banner、取 HTTP 状态码、解析 DNS） | 能 |
 | `C_SC.cash` | S/C 便携化交互：判断便携、就地写文件、查资源、扫本机端口 | 能 |
 
-> **安全提示**：这三个头里"攻防"指的是**防御性的协议校验、编码、完整性检查和只读探测**（判断网址/IP 是否合法、校验文件哈希、base64 编解码、探测某主机某端口通不通）。C* 不提供发 raw socket 数据包、不写网络嗅探或攻击代码；`hostalive` / `portcheck` / `portscan` 都是**只读连接探测**，不开监听、不改系统。教学与考试里也只考核"校验、编码、探测"这一层。
+> **安全提示**：C_NET 的"攻防"分两层。
+> **被动层**是防御性工具——协议校验、编码、哈希、`hostalive` 只读探活；**主动层**是
+> `bannerget` / `httpcode` / `dnsresolve` 三件**侦察原语**，对应真实安全流程里的
+> "服务发现 / 攻击面识别"这一步（banner 抓服务指纹、httpcode 看哪几个页面开着、
+> dnsresolve 查主机解析到哪个 IP）。
+> C* **不提供**发原始数据包、DoS 洪水、SYN 半开扫描、漏洞利用 / 注入这些武器化能力；
+> 主动侦察也只是"连一下、读回来"，和用浏览器访问一个页面在量级上没有差别。
+> 使用规则：**只对实验室、127.0.0.1、或你已获授权的目标**做主动探测。
 
 ### 知识准备
 
@@ -4638,7 +4646,7 @@ exe 所在目录可写（便携）
 use "C_NET.cash";
 ```
 
-分三组。**前两组是纯计算，不碰网络，随时能跑**；第三组会开 socket，可能联网。
+分四组。**前两组是纯计算，不碰网络，随时能跑**；第三组会开 socket、只读探活；第四组是主动侦察（会连出去读回数据），只对有权访问的目标用。
 
 **协议校验**（判断网址、IP 写得对不对）：
 
@@ -4664,6 +4672,36 @@ use "C_NET.cash";
 | `hostalive(主机, 端口)` | 某主机某端口的 TCP 通不通 | 通 1，不通 0；离网给 0，不崩 |
 
 > `hostalive` 是**只读探测**：它去连一下对方端口，看能不能建立连接，**不发包攻击、不开监听**。离网时返回 0，程序照跑。
+
+**主动侦察层**（`bannerget` / `httpcode` / `dnsresolve`）：
+
+这是"攻防"里真正会**主动连出去**的部分，对应渗透测试里的"服务发现 / 攻击面识别"。它们都只对"你有权访问的目标"使用，动作和用浏览器打开一个页面在同一量级。
+
+| 函数 | 作用 | 说明 |
+|------|------|------|
+| `bannerget(主机, 端口, 探测串)` | 连上服务、发探测串、读回第一行响应 | 拿"服务指纹"（FTP/SMTP/自研服务的 banner）；连不上给 `""` |
+| `httpcode(网址)` | 对 `http://` 发一次 GET，返回状态码 | `200`/`403`/`404`…；只认明文 http，`https` 或连不上给 0 |
+| `dnsresolve(主机)` | 主机名解析成点分 IP | 本身是 IP 就原样返回；解析失败给 `""` |
+
+一次典型的"本地体检"（对 `127.0.0.1` 上做，不碰外网）：
+
+```cask
+// 本地网络体检：C_NET.cash 主动侦察层
+use "C_NET.cash";
+
+function main() {
+    // 1) 抓本地 9000 端口某个自研服务的 banner（没有就返回 ""，不崩）
+    string 指纹 = bannerget("127.0.0.1", 9000, "help\r\n");
+    print "服务指纹：", 指纹;
+    // 2) 取本地 8000 上 HTTP 服务的状态码
+    print "HTTP 状态：", httpcode("http://127.0.0.1:8000/");
+    // 3) 把主机名解析成 IP（IP 原样返回，域名查 DNS）
+    print "localhost -> ", dnsresolve("localhost");
+    return 0;
+}
+```
+
+> **教学边界**：这三个函数"主动"但"只读"——它们连接、读取、解析，**不修改目标、不发洪水、不扫漏洞、不做注入**。和 `hostalive` 一样会阻塞（约 3~4 秒），别在界面主循环里高频调用。真实项目里请只对**实验室、`127.0.0.1`、或你已获书面授权的目标**使用。
 
 #### 13.4 一个"网址安全小工具"控制台程序
 
@@ -4837,15 +4875,15 @@ bin\caskc.exe 系统面板.cask -o 系统面板.exe --console
 ### 拓展与规范
 
 - **机器相关的值只展示、不写死。** `os_cpu()` / `os_hostname()` / `os_ram()` 换台机器就变，判断只判断"非空 / 非 0"，别拿具体型号去 `==`。
-- **"攻防"只做防御性那一层。** 用 `isurl` / `isip` / `fnv1a` / `base64` 做校验、编码、完整性，用 `hostalive` / `portcheck` / `portscan` 做只读探测；不写发包攻击、不写嗅探。
-- **探测类函数可能阻塞**（`hostalive` 约 3 秒、`portcheck` / `portscan` 逐个拨号），别在界面主循环里高频狂调。
+- **C_NET 分"被动"和"主动"两层。** 被动层（`isurl` / `isip` / `fnv1a` / `base64` / `hostalive`）随时能用；主动层（`bannerget` / `httpcode` / `dnsresolve`）会连出去读回数据，**只对实验室、`127.0.0.1`、或已获授权的目标**用，且保持"只读"——不发包攻击、不发洪水、不做漏洞利用。
+- **探测 / 侦察类函数会阻塞**（`hostalive` / `bannerget` 约 3~4 秒、`portcheck` / `portscan` 逐个拨号），别在界面主循环里高频狂调。
 - **绿色版先判 `isportable()`。** 为 1 才把缓存/配置写 exe 旁边；为 0（如装在 C 盘系统目录）就退回 `C_IO` 的 `envget("USERPROFILE")` 写用户目录。
 - **三个头都能单独给控制台用**，不依赖窗口；要放进界面再叠 `C_OPED.cash` + `C_CSS.cash`。
 
 ### 本章小结
 
 - `C_OS.cash` 读系统：`os_pid` / `os_cores` / `os_ram` / `os_cpu` / `os_hostname` / `os_platform` / `isadmin` / `uptime` / `findproc`。
-- `C_NET.cash` 管网络与攻防（防御层）：`isurl` / `isip` / `urlhost` / `urlport` 校验拆解，`fnv1a` / `base64` / `unbase64` 编码与完整性，`hostalive` 只读探测。
+- `C_NET.cash` 管网络与攻防：被动层 `isurl` / `isip` / `urlhost` / `urlport` 校验拆解、`fnv1a` / `base64` / `unbase64` 编码与完整性、`hostalive` 只读探活；主动侦察层 `bannerget` 抓服务指纹、`httpcode` 取 HTTP 状态码、`dnsresolve` 解析 IP（只对有权目标用）。
 - `C_SC.cash` 做便携化交互：`isportable` / `copytoexe` 判断与就地写文件，`freebytes` / `diskfree` / `is64bit` 查资源，`portcheck` / `portscan` 扫本机端口。
 - 三个头都**控制台可用**；做窗口工具时叠 `C_OPED.cash` + `C_CSS.cash` 出一块深色"系统信息面板"。
 - 积木视图里，文件与系统、操作系统、网络与攻防、便携化交互四个新分类，都要先 `use` 对应头文件才显示。
@@ -4855,6 +4893,7 @@ bin\caskc.exe 系统面板.cask -o 系统面板.exe --console
 1. 给 13.2 的"系统体检"加一段：用 `findproc` 检查常见后台进程（如 `explorer`）在不在，`print` 出结果。
 2. 写一个"文件指纹"小工具：用 `C_IO.cash` 的 `readfile` 读出一个文本，再 `fnv1a` 算指纹并 `writefile` 存成 `.hash`；下次再读，指纹变了就提示"文件被改过"。
 3. 做一个绿色版"下载器骨架"：先用 `isurl` 校验地址，再 `hostalive(urlhost(地址), urlport(地址))` 探端口，通了才 `appendfile` 记一条到日志；整包判断 `isportable()` 决定缓存放哪里。
+4. 做一个"本地服务侦察"窗口：两个输入框填主机和端口，点按钮用 `bannerget` 抓 banner、`httpcode` 取 HTTP 状态，显示在标签上；再对 `dnsresolve` 解析一次主机名。全程只连本机或你有权访问的测试服务器。
 
 ### 本章测验
 
@@ -4867,8 +4906,11 @@ bin\caskc.exe 系统面板.cask -o 系统面板.exe --console
 4. 判断题：`os_cpu()` 的返回值因机器而异，程序里可以放心写死判断。（　）
 5. 判断题：`hostalive` / `portcheck` / `portscan` 是只读连接探测，不开监听、不对外攻击。（　）
 6. 判断题：绿色版程序在 `isportable()` 为 1 时，可以把缓存文件写到 exe 旁边。（　）
-7. 编程题：写一个控制台程序，用 `os_cores()`、`os_ram()`、`uptime()` 三行拼出一句"本机器 X 核、Y GB 内存，已开机约 Z 分钟"。
-8. 编程题：做一个"网址检查"窗口——输入框填网址，点按钮用 `isurl` + `urlhost` + `urlport` 在标签里显示"合法/不合法、主机、端口"；不合法就变红提示。
+7. 判断题：`bannerget` / `httpcode` / `dnsresolve` 属于主动侦察，可以随便对陌生公网目标批量扫描。（　）
+8. 选择题：想拿到某台本地 HTTP 服务的状态码（200/404…），用（　）。
+   - A. `hostalive(主机, 端口)`　B. `httpcode("http://主机/路径")`　C. `dnsresolve(主机)`　D. `portcheck(端口)`
+9. 编程题：写一个控制台程序，用 `os_cores()`、`os_ram()`、`uptime()` 三行拼出一句"本机器 X 核、Y GB 内存，已开机约 Z 分钟"。
+10. 编程题：做一个"网址检查"窗口——输入框填网址，点按钮用 `isurl` + `urlhost` + `urlport` 在标签里显示"合法/不合法、主机、端口"；不合法就变红提示。
 
 ---
 

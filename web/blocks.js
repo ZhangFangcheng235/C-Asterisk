@@ -628,6 +628,7 @@ var CALL_CAT = {
   /* 网络与攻防（C_NET.cash） */
   isurl: 'net', isip: 'net', urlhost: 'net', urlport: 'net',
   fnv1a: 'net', base64: 'net', unbase64: 'net', hostalive: 'net',
+  bannerget: 'net', httpcode: 'net', dnsresolve: 'net',
   /* 便携化交互（C_SC.cash） */
   isportable: 'sc', copytoexe: 'sc', freebytes: 'sc', diskfree: 'sc',
   is64bit: 'sc', portcheck: 'sc', portscan: 'sc'
@@ -1001,6 +1002,9 @@ var PALETTE = [
   { cat: 'net', name: 'base64 编码',    hint: 'string e = base64(文字);', code: 'string 密 = base64(原文);\n' },
   { cat: 'net', name: 'base64 解码',    hint: 'string d = unbase64(文字);', code: 'string 明 = unbase64(密);\n' },
   { cat: 'net', name: '主机在线吗',     hint: 'if (hostalive(主机, 端口) != 0) { }', code: 'if (hostalive("127.0.0.1", 8080) != 0) {\n}\n' },
+  { cat: 'net', name: '抓服务横幅',     hint: 'string b = bannerget(主机, 端口, 探测串);', code: 'string 横幅 = bannerget("127.0.0.1", 21, "help\r\n");\n' },
+  { cat: 'net', name: 'HTTP 状态码',    hint: 'int c = httpcode(网址);', code: 'int 状态码 = httpcode("http://127.0.0.1:8000/");\n' },
+  { cat: 'net', name: '解析主机名',     hint: 'string ip = dnsresolve(主机);', code: 'string ip = dnsresolve("a.com");\n' },
 
   /* ---- 便携化交互（C_SC.cash） ---- */
   { cat: 'sc', name: '安装便携插件',    hint: 'use "C_SC.cash";',          code: 'use "C_SC.cash";\n' },

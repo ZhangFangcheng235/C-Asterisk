@@ -35,7 +35,7 @@ C* 读作 <strong>C Asterisk</strong>。书中的程序按 <strong>0.5.1 版</st
 使用自定义配色。
 
 <strong>0.5.1 新增</strong>：4.5 节末尾补了「三个新头」拓展——<code>C_OS.cash</code>（操作系统）、
-<code>C_NET.cash</code>（网络与攻防，只做校验/编码/哈希/只读探测）、<code>C_SC.cash</code>（S/C 便携化交互）；
+<code>C_NET.cash</code>（网络与攻防：校验/编码/哈希/只读探测 + 主动侦察层）、<code>C_SC.cash</code>（S/C 便携化交互）；
 控制台程序也能用，完整讲法见高职教材第 13 章。</p></blockquote>
 <h2>写在前面</h2>
 <p>本书面向已经会使用计算机、第一次系统学习编程的高一学生。C* 的语法接近 C 语言，
@@ -1595,7 +1595,7 @@ number main() {
 <thead><tr><th>头文件</th><th>一句话</th><th>主要函数</th></tr></thead>
 <tbody>
 <tr><td><code>use "C_OS.cash";</code></td><td>读懂操作系统</td><td><code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code></td></tr>
-<tr><td><code>use "C_NET.cash";</code></td><td>网络与攻防（防御层）</td><td><code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code></td></tr>
+<tr><td><code>use "C_NET.cash";</code></td><td>网络与攻防</td><td><code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code>（被动校验、编码、哈希、探活）；主动侦察层 <code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>（只对有权访问的目标用）</td></tr>
 <tr><td><code>use "C_SC.cash";</code></td><td>S/C 便携化交互</td><td><code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code></td></tr>
 </tbody></table>
 <p>最常用的一小段：</p>
@@ -1607,6 +1607,9 @@ function main() {
 }</code></pre>
 <p>积木视图里，"文件与系统"（<code>C_IO.cash</code>）以及"操作系统 / 网络与攻防 / 便携化交互"四个分类，
 都要先 <code>use</code> 对应头文件才出现。</p>
+<blockquote><p><strong>安全边界</strong>：<code>C_NET.cash</code> 的主动侦察层（<code>bannerget</code> / <code>httpcode</code> / <code>dnsresolve</code>）只对<strong>你有权访问的目标</strong>
+使用，保持只读——不做 DoS 洪水、不发原始数据包、不做漏洞利用；<code>httpcode</code> 只认明文 http，
+<code>bannerget</code> / <code>dnsresolve</code> 离网时给 <code>0</code> / <code>""</code>，不会崩。</p></blockquote>
 <hr>
 <h2>4.6　界面美化</h2>
 <h3>学习目标</h3>

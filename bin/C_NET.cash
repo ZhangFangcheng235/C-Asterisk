@@ -1,10 +1,10 @@
-/* ============================================================
+﻿/* ============================================================
  *  C_NET.cash -- C* 的"网络与攻防"头（Windows / Linux / macOS 通用）
  *
  *      use "C_NET.cash";
  *
- *  给 C* 程序打开"网络"层面。C* 不直接开 raw socket 发包，
- *  网络攻防能力放在 **协议校验 / 编码 / 哈希 / 主机探测** 这一层：
+ *  给 C* 程序打开"网络"层面。C* 不直接开 raw socket 发原始数据包，
+ *  网络攻防能力放在 **协议校验 / 编码 / 哈希 / 主机探测 / 主动侦察** 这几层：
  *  配合 C_IO（存配置、跑命令）和 C_OS（查本机信息）能搭出一个
  *  完整的网络工具面板 / 安全体检小工具。
  *
@@ -19,12 +19,20 @@
  *        fnv1a(文字)         字符串 32 位 FNV-1a 哈希（校验内容有没有变）
  *        base64(文字)        把文字编码成 base64（返回 base64 字符串）
  *        unbase64(文字)      把 base64 解码回原文（解码失败给 ""）
- *      主机探测（会用 socket，可能需要联网）
+ *      被动探测（会用 socket，可能要联网；只读、不破坏）
  *        hostalive(主机, 端口)  某主机的某端口 TCP 通不通 -> 1 / 0
+ *      主动侦察（攻击面检测；只对"你有权使用的目标"用）
+ *        bannerget(主机, 端口, 探测串)  连上服务读回它的响应 / banner（服务指纹）
+ *        httpcode(网址)        对 http:// 发一次 GET，返回状态码（200/403/404…）
+ *        dnsresolve(主机)      主机名解析成点分 IP；本身是 IP 就原样返回
  *
- *  注意：hostalive 会阻塞到连接成功或超时（约 3 秒）；离网时给 0，不崩。
- *  isurl / isip / urlhost / urlport / fnv1a / base64 / unbase64 是纯计算，
- *  不碰网络，随时能跑。
+ *  安全边界（教学用途）：
+ *  - 只做"只读"级别的探测与侦察：连一下、读回、解析。不发原始数据包、
+ *    不做 DoS 洪水、不做 SYN 半开扫描、不做漏洞利用 / 注入。
+ *  - bannerget / httpcode / hostalive 只对**你有权访问的目标**（实验室机、
+ *    127.0.0.1、自家测试服务器）使用；对陌生公网目标做主动探测前先取得授权。
+ *  - hostalive / bannerget 会阻塞到连接成功或超时（约 3~4 秒）；离网时给 0 / ""，不崩。
+ *  - isurl / isip / urlhost / urlport / fnv1a / base64 / unbase64 是纯计算，不碰网络。
  * ============================================================ */
 #ifndef CASK_NET_CASH
 #define CASK_NET_CASH
@@ -86,12 +94,12 @@ const char *cask_net_urlhost(const char *url)
     const char *slash = strchr(p, '/');
     const char *end = slash ? slash : (p + strlen(p));
     size_t n = (size_t)(end - p);
-    if (n > sizeof out - 1) n = sizeof out - 1;
+    if (n > sizeof buf[0] - 1) n = sizeof buf[0] - 1;
     char tmp[512];
     memcpy(tmp, p, n); tmp[n] = 0;
     char *colon = strrchr(tmp, ':');
     if (colon && colon > tmp) *colon = 0;
-    snprintf(out, sizeof out, "%s", tmp);
+    snprintf(out, sizeof buf[0], "%s", tmp);
     return out;
 }
 int cask_net_urlport(const char *url)
@@ -163,7 +171,7 @@ const char *cask_net_unbase64(const char *s)
     char *out = buf[slot]; slot = (slot + 1) & 1;
     int o = 0;
     unsigned acc = 0; int bits = 0;
-    const size_t CAP = sizeof out - 1;
+    const size_t CAP = sizeof buf[0] - 1;
     if (s) {
         for (const char *p = s; *p; p++) {
             if (*p == '\n' || *p == '\r' || *p == ' ') continue;
@@ -215,6 +223,131 @@ int cask_net_hostalive(const char *host, int port)
     return alive;
 }
 
+/* ---- 主动侦察：bannerget —— 连上服务、发探测串、读回响应（服务指纹） ---- */
+const char *cask_net_bannerget(const char *host, int port, const char *probe)
+{
+    static char buf[2][4096];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    out[0] = 0;
+    if (!host || !*host || port <= 0) return out;
+    cask_net_ws_init();
+    if (cask_net_ws_started != 1) return out;
+    int s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s < 0) return out;
+    struct sockaddr_in a;
+    memset(&a, 0, sizeof a);
+    a.sin_family = AF_INET;
+    a.sin_port = htons((u_short)port);
+    if (inet_pton(AF_INET, host, &a.sin_addr) != 1) {
+        HOSTENT *he = gethostbyname(host);
+        if (!he || !he->h_addr_list[0]) { closesocket(s); return out; }
+        memcpy(&a.sin_addr, he->h_addr_list[0], 4);
+    }
+    DWORD to = 3000;
+    setsockopt(s, SOL_SOCKET, SO_CONNECT_TIME, &to, sizeof to);
+    if (connect(s, (struct sockaddr *)&a, sizeof a) != 0) { closesocket(s); return out; }
+    if (probe && *probe)
+        send(s, probe, (int)strlen(probe), 0);
+    int n = 0;
+    while (n < (int)sizeof buf[0] - 1) {
+        int r = recv(s, out + n, 1, 0);
+        if (r <= 0) break;
+        out[n++] = (char)r;
+        /* banner 读到换行或常见结束符即停，避免一直等 */
+        if (r == '\n' || r == '\r' || r == '\0' || n >= 512) break;
+    }
+    out[n] = 0;
+    /* 去掉常见换行/控制符，取第一行做指纹 */
+    for (int i = 0; i < n; i++)
+        if (out[i] == '\n' || out[i] == '\r') { out[i] = 0; break; }
+    closesocket(s);
+    return out;
+}
+
+/* ---- 主动侦察：httpcode —— 对 http:// 发一次 GET，返回状态码 ---- */
+int cask_net_httpcode(const char *url)
+{
+    if (!url || !*url) return 0;
+    int secure = 0;
+    const char *p = url;
+    if (strncmp(p, "https://", 8) == 0) { secure = 1; p += 8; }
+    else if (strncmp(p, "http://", 7) == 0) p += 7;
+    else return 0;                                   /* 只认 http(s) */
+    /* 只支持明文 http 探测状态码；https 需要证书/TLS，这里安全地返回 0 */
+    if (secure) return 0;
+    const char *slash = strchr(p, '/');
+    const char *end = slash ? slash : (p + strlen(p));
+    char host[512];
+    size_t n = (size_t)(end - p);
+    if (n > sizeof host - 1) n = sizeof host - 1;
+    memcpy(host, p, n); host[n] = 0;
+    int port = 80;
+    char *colon = strrchr(host, ':');
+    if (colon && colon > host) { port = atoi(colon + 1); *colon = 0; }
+    if (port <= 0) port = 80;
+    char req[600];
+    snprintf(req, sizeof req,
+             "GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n",
+             slash ? slash + 1 : "", host);
+    static char resp[4096];
+    resp[0] = 0;
+    cask_net_ws_init();
+    if (cask_net_ws_started != 1) return 0;
+    int s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s < 0) return 0;
+    struct sockaddr_in a;
+    memset(&a, 0, sizeof a);
+    a.sin_family = AF_INET;
+    a.sin_port = htons((u_short)port);
+    if (inet_pton(AF_INET, host, &a.sin_addr) != 1) {
+        HOSTENT *he = gethostbyname(host);
+        if (!he || !he->h_addr_list[0]) { closesocket(s); return 0; }
+        memcpy(&a.sin_addr, he->h_addr_list[0], 4);
+    }
+    DWORD to = 4000;
+    setsockopt(s, SOL_SOCKET, SO_CONNECT_TIME, &to, sizeof to);
+    if (connect(s, (struct sockaddr *)&a, sizeof a) != 0) { closesocket(s); return 0; }
+    send(s, req, (int)strlen(req), 0);
+    int got = 0;
+    while (got < (int)sizeof resp - 1) {
+        int r = recv(s, resp + got, 1, 0);
+        if (r <= 0) break;
+        got++;
+        if (resp[got - 1] == '\n' && got > 1 && resp[got - 2] == '\r'
+            && resp[0] == 'H') break;               /* 读到第一个 \r\n 结束行 */
+        if (got >= 4096) break;
+    }
+    resp[got] = 0;
+    closesocket(s);
+    if (got < 12 || strncmp(resp, "HTTP/", 5) != 0) return 0;
+    int code = atoi(resp + 9);
+    return (code > 0) ? code : 0;
+}
+
+/* ---- 主动侦察：dnsresolve —— 主机名解析成点分 IP；本身是 IP 就原样返回 ---- */
+const char *cask_net_dnsresolve(const char *host)
+{
+    static char buf[2][64];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    out[0] = 0;
+    if (!host || !*host) return out;
+    struct in_addr addr;
+    if (inet_pton(AF_INET, host, &addr) == 1) {
+        strncpy(out, host, sizeof buf[0] - 1);
+        out[sizeof buf[0] - 1] = 0;
+        return out;                                    /* 已是 IP，原样返回 */
+    }
+    cask_net_ws_init();
+    if (cask_net_ws_started != 1) return out;
+    HOSTENT *he = gethostbyname(host);
+    if (!he || !he->h_addr_list[0]) return out;         /* 解析失败 -> "" */
+    memcpy(&addr, he->h_addr_list[0], 4);
+    if (inet_ntop(AF_INET, &addr, out, sizeof buf[0]) != 1) out[0] = 0;
+    return out;
+}
+
 #else  /* ===================== Linux / macOS ===================== */
 
 #include <stdio.h>
@@ -250,12 +383,12 @@ const char *cask_net_urlhost(const char *url)
     const char *slash = strchr(p, '/');
     const char *end = slash ? slash : (p + strlen(p));
     size_t n = (size_t)(end - p);
-    if (n > sizeof out - 1) n = sizeof out - 1;
+    if (n > sizeof buf[0] - 1) n = sizeof buf[0] - 1;
     char tmp[512];
     memcpy(tmp, p, n); tmp[n] = 0;
     char *colon = strrchr(tmp, ':');
     if (colon && colon > tmp) *colon = 0;
-    snprintf(out, sizeof out, "%s", tmp);
+    snprintf(out, sizeof buf[0], "%s", tmp);
     return out;
 }
 int cask_net_urlport(const char *url)
@@ -323,7 +456,7 @@ const char *cask_net_unbase64(const char *s)
     char *out = buf[slot]; slot = (slot + 1) & 1;
     int o = 0;
     unsigned acc = 0; int bits = 0;
-    const size_t CAP = sizeof out - 1;
+    const size_t CAP = sizeof buf[0] - 1;
     if (s) {
         for (const char *p = s; *p; p++) {
             if (*p == '\n' || *p == '\r' || *p == ' ') continue;
@@ -365,6 +498,129 @@ int cask_net_hostalive(const char *host, int port)
     return alive;
 }
 
+/* POSIX 辅助：按主机名 + 端口建一个已连接的 TCP 连接；失败返回 -1 */
+static int cask_net_open(const char *host, int port)
+{
+    if (!host || !*host || port <= 0) return -1;
+    char pstr[16];
+    snprintf(pstr, sizeof pstr, "%d", port);
+    struct addrinfo hints, *res = NULL, *rp;
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host, pstr, &hints, &res) != 0) return -1;
+    int fd = -1;
+    for (rp = res; rp; rp = rp->ai_next) {
+        if (rp->ai_family != AF_INET) continue;
+        int s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (s < 0) continue;
+        struct timeval tv; tv.tv_sec = 4; tv.tv_usec = 0;
+        setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+        setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof tv);
+        if (connect(s, rp->ai_addr, rp->ai_addrlen) == 0) { fd = s; break; }
+        close(s);
+    }
+    freeaddrinfo(res);
+    return fd;
+}
+
+/* ---- 主动侦察：bannerget（POSIX） ---- */
+const char *cask_net_bannerget(const char *host, int port, const char *probe)
+{
+    static char buf[2][4096];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    out[0] = 0;
+    int s = cask_net_open(host, port);
+    if (s < 0) return out;
+    if (probe && *probe) send(s, probe, (int)strlen(probe), 0);
+    int n = 0;
+    while (n < (int)sizeof buf[0] - 1) {
+        int r = recv(s, out + n, 1, 0);
+        if (r <= 0) break;
+        out[n++] = (char)r;
+        if (r == '\n' || r == '\r' || r == '\0' || n >= 512) break;
+    }
+    out[n] = 0;
+    for (int i = 0; i < n; i++)
+        if (out[i] == '\n' || out[i] == '\r') { out[i] = 0; break; }
+    close(s);
+    return out;
+}
+
+/* ---- 主动侦察：httpcode（POSIX） ---- */
+int cask_net_httpcode(const char *url)
+{
+    if (!url || !*url) return 0;
+    int secure = 0;
+    const char *p = url;
+    if (strncmp(p, "https://", 8) == 0) { secure = 1; p += 8; }
+    else if (strncmp(p, "http://", 7) == 0) p += 7;
+    else return 0;
+    if (secure) return 0;                            /* 只支持明文 http */
+    const char *slash = strchr(p, '/');
+    const char *end = slash ? slash : (p + strlen(p));
+    char host[512];
+    size_t n = (size_t)(end - p);
+    if (n > sizeof host - 1) n = sizeof host - 1;
+    memcpy(host, p, n); host[n] = 0;
+    int port = 80;
+    char *colon = strrchr(host, ':');
+    if (colon && colon > host) { port = atoi(colon + 1); *colon = 0; }
+    if (port <= 0) port = 80;
+    char req[600];
+    snprintf(req, sizeof req, "GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n", slash ? slash + 1 : "", host);
+    static char resp[4096];
+    resp[0] = 0;
+    int s = cask_net_open(host, port);
+    if (s < 0) return 0;
+    send(s, req, (int)strlen(req), 0);
+    int got = 0;
+    while (got < (int)sizeof resp - 1) {
+        int r = recv(s, resp + got, 1, 0);
+        if (r <= 0) break;
+        got++;
+        if (resp[got - 1] == '\n' && got > 1 && resp[got - 2] == '\r' && resp[0] == 'H') break;
+        if (got >= 4096) break;
+    }
+    resp[got] = 0;
+    close(s);
+    if (got < 12 || strncmp(resp, "HTTP/", 5) != 0) return 0;
+    int code = atoi(resp + 9);
+    return (code > 0) ? code : 0;
+}
+
+/* ---- 主动侦察：dnsresolve（POSIX） ---- */
+const char *cask_net_dnsresolve(const char *host)
+{
+    static char buf[2][64];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    out[0] = 0;
+    if (!host || !*host) return out;
+    struct in_addr addr;
+    if (inet_pton(AF_INET, host, &addr) == 1) {
+        strncpy(out, host, sizeof buf[0] - 1);
+        out[sizeof buf[0] - 1] = 0;
+        return out;                                   /* 已是 IP，原样返回 */
+    }
+    char pstr[8] = "0";
+    struct addrinfo hints, *res = NULL;
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host, pstr, &hints, &res) != 0) return out;
+    for (struct addrinfo *rp = res; rp; rp = rp->ai_next)
+        if (rp->ai_family == AF_INET) {
+            struct sockaddr_in *sa = (struct sockaddr_in *)rp->ai_addr;
+            if (inet_ntop(AF_INET, &sa->sin_addr, out, sizeof buf[0]) != 1) out[0] = 0;
+            break;
+        }
+    freeaddrinfo(res);
+    return out;
+}
+
 #endif /* _WIN32 / POSIX */
 
 #endif /* CASK_NET_CASH */
+

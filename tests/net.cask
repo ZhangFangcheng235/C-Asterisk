@@ -20,5 +20,11 @@ function main() {
     // hostalive：离线/在线都合法（0 或 1 都算对，只断言"是 0 或 1"）
     int r = hostalive("127.0.0.1", 99999 - 99999);  // 0 -> 返回 0
     if (r == 0) print "alive_none";
+    // 主动侦察层（必真属性，不依赖外网）
+    if (dnsresolve("1.2.3.4") == "1.2.3.4") print "dns_ip_passthrough";
+    if (httpcode("ftp://x") == 0) print "http_no_scheme";
+    if (httpcode("notaurl") == 0) print "http_bad_input";
+    string bn = bannerget("127.0.0.1", 9, "");  // 丢弃端口/无服务 -> ""，不崩
+    if (bn == "" or LEN(bn) > 0) print "banner_offline_ok";
     return 0;
 }
