@@ -1,0 +1,24 @@
+// net.cask -- C_NET.cash 自检测试（纯计算部分必真；hostalive 离线时可能 0，只断言 0/1）
+use "C_NET.cash";
+
+function main() {
+    // 协议校验
+    if (isurl("https://a.com") == 1) print "isurl_https";
+    if (isurl("ftp://x") == 0) print "isurl_ftp_no";
+    if (isip("1.2.3.4") == 1) print "isip_ok";
+    if (isip("256.1.1.1") == 0) print "isip_bad_no";
+    // 网址拆解
+    if (urlhost("https://a.com/x?y=1") == "a.com") print "host_a";
+    if (urlport("http://a.com") == 80) print "port_80";
+    if (urlport("https://a.com") == 443) print "port_443";
+    // 哈希（确定性）
+    if (fnv1a("") != 0) print "fnv_nonzero";
+    if (fnv1a("abc") == fnv1a("abc")) print "fnv_stable";
+    // base64 编解码往返
+    string e = base64("hello");
+    if (unbase64(e) == "hello") print "b64_rt";
+    // hostalive：离线/在线都合法（0 或 1 都算对，只断言"是 0 或 1"）
+    int r = hostalive("127.0.0.1", 99999 - 99999);  // 0 -> 返回 0
+    if (r == 0) print "alive_none";
+    return 0;
+}

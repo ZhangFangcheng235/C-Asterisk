@@ -1,0 +1,18 @@
+// sc.cask -- C_SC.cash 自检测试（断言"必真"属性 + copytoexe 实际写文件再读回）
+use "C_SC.cash";
+use "C_IO.cash";
+
+function main() {
+    if (isportable() == 1) print "portable";
+    if (is64bit() == 1) print "is64";
+    if (freebytes() > 0) print "mem_pos";
+    if (diskfree(appdir()) >= 0) print "disk_ne";
+    // copytoexe 实际写文件，再用 C_IO 读回
+    if (copytoexe("_csc_probe.txt", "pong") == 1) print "wrote";
+    if (fileexists(appdir() + "/_csc_probe.txt") == 1) print "exists";
+    string got = readfile(appdir() + "/_csc_probe.txt");
+    if (got == "pong") print "read_back";
+    // 端口：断言 0 端口恒 0
+    if (portcheck(0) == 0) print "port0";
+    return 0;
+}

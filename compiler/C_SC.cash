@@ -1,0 +1,252 @@
+/* ============================================================
+ *  C_SC.cash -- C* 的"S/C 便携化交互"头（Windows / Linux / macOS 通用）
+ *
+ *      use "C_SC.cash";
+ *
+ *  给 C* 程序打开"S/C 便携化交互"层面：把 C* 写成的工具做成
+ *  **单文件 / 便携** 形态，并且能和宿主系统做轻量交互。用它可以
+ *  判断机器能不能就地跑、把辅助文件写到 exe 旁边、看资源还剩多少、
+ *  扫本地端口。
+ *
+ *  打开这些函数：
+ *
+ *      便携能力
+ *        isportable()        本程序所在目录可写（能就地放文件）-> 1 / 0
+ *        copytoexe(名, 内容) 把一个文本文件写到 exe 旁边，1 = 成功
+ *      资源与运行环境
+ *        freebytes()         空闲内存，单位 字节（拿不到 0）
+ *        diskfree(路径)      某盘符 / 目录所在分区的空闲字节（拿不到 0）
+ *        is64bit()           本程序跑在 64 位环境 -> 1 / 0
+ *      本地端口
+ *        portcheck(端口)     127.0.0.1 上某 TCP 端口是否开着 -> 1 / 0
+ *        portscan(起, 止)    这一段端口开着几个 -> 个数
+ *
+ *  注意：portcheck / portscan 会往 127.0.0.1 上拨号，是只读探测，
+ *  不开监听；没服务时只是连接被拒，不会崩。freebytes / diskfree
+ *  数值因机器而异，别写死。
+ * ============================================================ */
+#ifndef CASK_SC_CASH
+#define CASK_SC_CASH
+
+#ifdef _WIN32
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+
+#pragma comment(lib, "ws2_32.lib")
+
+#ifndef SO_CONNECT_TIME
+#define SO_CONNECT_TIME 0x1008
+#endif
+
+/* 取 exe 所在目录（不带末尾分隔符），写进 out（至少 16 字节兜底） */
+static void cask_sc_dir(char *out, size_t n)
+{
+    char w[MAX_PATH + 16];
+    GetModuleFileNameA(NULL, w, sizeof w);
+    char *slash = strrchr(w, '\\');
+    if (slash) slash[1] = 0;
+    snprintf(out, n, "%s", w);
+}
+
+int cask_sc_isportable(void)
+{
+    char dir[MAX_PATH + 16];
+    cask_sc_dir(dir, sizeof dir);
+    char probe[MAX_PATH + 32];
+    snprintf(probe, sizeof probe, "%s\\c_sc_probe", dir);
+    FILE *f = fopen(probe, "w");
+    if (!f) return 0;
+    fputc('x', f);
+    fclose(f);
+    remove(probe);
+    return 1;
+}
+long long cask_sc_copytoexe(const char *name, const char *content)
+{
+    char dir[MAX_PATH + 16];
+    cask_sc_dir(dir, sizeof dir);
+    char path[MAX_PATH + 32];
+    snprintf(path, sizeof path, "%s\\%s", dir, name ? name : "");
+    FILE *f = fopen(path, "w");
+    if (!f) return 0;
+    size_t len = content ? strlen(content) : 0, w = 0;
+    if (len) w = fwrite(content, 1, len, f);
+    fclose(f);
+    return (w == len) ? 1 : 0;
+}
+
+long long cask_sc_freebytes(void)
+{
+    MEMORYSTATUSEX ms; ms.dwLength = sizeof ms;
+    if (GlobalMemoryStatusEx(&ms)) return (long long)ms.ullAvailPhys;
+    return 0;
+}
+long long cask_sc_diskfree(const char *path)
+{
+    if (!path || !*path) return 0;
+    char root[4];
+    snprintf(root, sizeof root, "%c:\\", *path);
+    char vol[MAX_PATH];
+    if (!GetVolumePathNameA(root, vol, sizeof vol)) return 0;
+    ULARGE_INTEGER free, total, freeuser;
+    if (GetDiskFreeSpaceExA(vol, &freeuser, &total, &free))
+        return (long long)free.QuadPart;
+    return 0;
+}
+int cask_sc_is64bit(void)
+{
+#ifdef _WIN64
+    return 1;
+#else
+    return 0;
+#endif
+}
+
+static int cask_sc_ws_started = -1;
+static void cask_sc_ws_init(void)
+{
+    if (cask_sc_ws_started != 0) {
+        WSADATA d;
+        cask_sc_ws_started = (WSAStartup(MAKEWORD(2, 0), &d) == 0) ? 1 : 2;
+    }
+}
+int cask_sc_portcheck(int port)
+{
+    if (port <= 0 || port > 65535) return 0;
+    cask_sc_ws_init();
+    if (cask_sc_ws_started != 1) return 0;
+    int s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s < 0) return 0;
+    DWORD to = 800;
+    setsockopt(s, SOL_SOCKET, SO_CONNECT_TIME, &to, sizeof to);
+    struct sockaddr_in a;
+    memset(&a, 0, sizeof a);
+    a.sin_family = AF_INET;
+    a.sin_port = htons((u_short)port);
+    a.sin_addr.S_un.S_addr = htonl(0x7F000001);   /* 127.0.0.1 */
+    int r = connect(s, (struct sockaddr *)&a, sizeof a);
+    int open = (r == 0) ? 1 : 0;
+    closesocket(s);
+    return open;
+}
+int cask_sc_portscan(int lo, int hi)
+{
+    if (lo < 1) lo = 1;
+    if (hi < lo) hi = lo;
+    if (hi > 65535) hi = 65535;
+    int n = 0;
+    for (int p = lo; p <= hi; p++)
+        if (cask_sc_portcheck(p)) n++;
+    return n;
+}
+
+#else  /* ===================== Linux / macOS ===================== */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/statvfs.h>
+
+/* 取可写工作目录：优先 exe 所在目录（/proc/self/exe），否则 cwd */
+static void cask_sc_dir(char *out, size_t n)
+{
+    char exe[512];
+    ssize_t len = readlink("/proc/self/exe", exe, sizeof exe - 1);
+    if (len > 0) {
+        exe[len] = 0;
+        char *slash = strrchr(exe, '/');
+        if (slash) { *slash = 0; snprintf(out, n, "%s", exe); }
+        else        snprintf(out, n, ".");
+    } else {
+        snprintf(out, n, ".");
+    }
+}
+
+int cask_sc_isportable(void)
+{
+    char dir[512], tmp[572];
+    cask_sc_dir(dir, sizeof dir);
+    snprintf(tmp, sizeof tmp, "%s/.c_*_probe", dir);
+    FILE *f = fopen(tmp, "w");
+    if (!f) return 0;
+    fputc('x', f);
+    fclose(f);
+    remove(tmp);
+    return 1;
+}
+long long cask_sc_copytoexe(const char *name, const char *content)
+{
+    char dir[512], path[572];
+    cask_sc_dir(dir, sizeof dir);
+    snprintf(path, sizeof path, "%s%s", dir, name ? name : "");
+    FILE *f = fopen(path, "w");
+    if (!f) return 0;
+    size_t len = content ? strlen(content) : 0, w = 0;
+    if (len) w = fwrite(content, 1, len, f);
+    fclose(f);
+    return (w == len) ? 1 : 0;
+}
+
+long long cask_sc_freebytes(void)
+{
+    long pages = sysconf(_SC_AVPHYS_PAGES);
+    long ps = sysconf(_SC_PAGESIZE);
+    if (pages <= 0 || ps <= 0) return 0;
+    return (long long)pages * ps;
+}
+long long cask_sc_diskfree(const char *path)
+{
+    struct statvfs st;
+    const char *p = (path && *path) ? path : "/";
+    if (statvfs(p, &st) != 0) return 0;
+    return (long long)st.f_bavail * st.f_bsize;
+}
+int cask_sc_is64bit(void)
+{
+#if defined(__LP64__)
+    return 1;
+#else
+    return 0;
+#endif
+}
+
+int cask_sc_portcheck(int port)
+{
+    if (port <= 0 || port > 65535) return 0;
+    int s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s < 0) return 0;
+    struct sockaddr_in a;
+    memset(&a, 0, sizeof a);
+    a.sin_family = AF_INET;
+    a.sin_port = htons((u_short)port);
+    a.sin_addr.s_addr = htonl(0x7F000001);   /* 127.0.0.1 */
+    struct timeval tv; tv.tv_sec = 1; tv.tv_usec = 0;
+    setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof tv);
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+    int r = connect(s, (struct sockaddr *)&a, sizeof a);
+    int open = (r == 0) ? 1 : 0;
+    close(s);
+    return open;
+}
+int cask_sc_portscan(int lo, int hi)
+{
+    if (lo < 1) lo = 1;
+    if (hi < lo) hi = lo;
+    if (hi > 65535) hi = 65535;
+    int n = 0;
+    for (int p = lo; p <= hi; p++)
+        if (cask_sc_portcheck(p)) n++;
+    return n;
+}
+
+#endif /* _WIN32 / POSIX */
+
+#endif /* CASK_SC_CASH */

@@ -1,0 +1,370 @@
+/* ============================================================
+ *  C_NET.cash -- C* 的"网络与攻防"头（Windows / Linux / macOS 通用）
+ *
+ *      use "C_NET.cash";
+ *
+ *  给 C* 程序打开"网络"层面。C* 不直接开 raw socket 发包，
+ *  网络攻防能力放在 **协议校验 / 编码 / 哈希 / 主机探测** 这一层：
+ *  配合 C_IO（存配置、跑命令）和 C_OS（查本机信息）能搭出一个
+ *  完整的网络工具面板 / 安全体检小工具。
+ *
+ *  打开这些函数：
+ *
+ *      协议校验（纯 C，跨平台，不联网）
+ *        isurl(文字)         是 http:// 或 https:// 开头 -> 1 / 0
+ *        isip(文字)          是 IPv4 点分十进制地址 -> 1 / 0
+ *        urlhost(网址)       取网址里的主机名（"https://a.com/x" -> "a.com"）
+ *        urlport(网址)       取网址的端口（没写 -> 按 https=443 / http=80）
+ *      编码与完整性（纯 C，跨平台）
+ *        fnv1a(文字)         字符串 32 位 FNV-1a 哈希（校验内容有没有变）
+ *        base64(文字)        把文字编码成 base64（返回 base64 字符串）
+ *        unbase64(文字)      把 base64 解码回原文（解码失败给 ""）
+ *      主机探测（会用 socket，可能需要联网）
+ *        hostalive(主机, 端口)  某主机的某端口 TCP 通不通 -> 1 / 0
+ *
+ *  注意：hostalive 会阻塞到连接成功或超时（约 3 秒）；离网时给 0，不崩。
+ *  isurl / isip / urlhost / urlport / fnv1a / base64 / unbase64 是纯计算，
+ *  不碰网络，随时能跑。
+ * ============================================================ */
+#ifndef CASK_NET_CASH
+#define CASK_NET_CASH
+
+#ifdef _WIN32
+
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#pragma comment(lib, "ws2_32.lib")
+
+#ifndef SO_CONNECT_TIME
+#define SO_CONNECT_TIME 0x1008
+#endif
+
+/* ---- 纯函数：协议校验 ---- */
+int cask_net_isurl(const char *s)
+{
+    if (!s) return 0;
+    return strncmp(s, "http://", 7) == 0 || strncmp(s, "https://", 8) == 0;
+}
+int cask_net_isip(const char *s)
+{
+    if (!s) return 0;
+    /* 严格 4 段点分十进制；每段 0..255 */
+    int seg[4];
+    int idx = 0;
+    const char *p = s;
+    for (;;) {
+        if (!(*p >= '0' && *p <= '9')) return 0;   /* 段首位必须数字 */
+        int v = 0, d = 0;
+        while (*p >= '0' && *p <= '9') {
+            v = v * 10 + (*p - '0');
+            p++;
+            if (++d > 3 || v > 255) return 0;
+        }
+        seg[idx++] = v;
+        if (*p == 0) break;      /* 最后是段尾 */
+        if (*p != '.') return 0;
+        p++;                     /* 越过点 */
+        if (idx == 4) { if (*p == 0) break; else return 0; }
+    }
+    return (idx == 4) ? 1 : 0;
+}
+const char *cask_net_urlhost(const char *url)
+{
+    static char buf[2][512];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    out[0] = 0;
+    if (!url) return out;
+    const char *p = url;
+    if (strncmp(p, "https://", 8) == 0) p += 8;
+    else if (strncmp(p, "http://", 7) == 0) p += 7;
+    const char *slash = strchr(p, '/');
+    const char *end = slash ? slash : (p + strlen(p));
+    size_t n = (size_t)(end - p);
+    if (n > sizeof out - 1) n = sizeof out - 1;
+    char tmp[512];
+    memcpy(tmp, p, n); tmp[n] = 0;
+    char *colon = strrchr(tmp, ':');
+    if (colon && colon > tmp) *colon = 0;
+    snprintf(out, sizeof out, "%s", tmp);
+    return out;
+}
+int cask_net_urlport(const char *url)
+{
+    if (!url) return 80;
+    const char *p = url;
+    int secure = 0;
+    if (strncmp(p, "https://", 8) == 0) { secure = 1; p += 8; }
+    else if (strncmp(p, "http://", 7) == 0) p += 7;
+    const char *slash = strchr(p, '/');
+    const char *end = slash ? slash : (p + strlen(p));
+    char host[512];
+    size_t n = (size_t)(end - p);
+    if (n > sizeof host - 1) n = sizeof host - 1;
+    memcpy(host, p, n); host[n] = 0;
+    char *colon = strrchr(host, ':');
+    if (colon && colon > host) {
+        int prt = atoi(colon + 1);
+        return (prt > 0) ? prt : (secure ? 443 : 80);
+    }
+    return secure ? 443 : 80;
+}
+
+/* ---- 纯函数：FNV-1a 32 位哈希 ---- */
+int cask_net_fnv1a(const char *s)
+{
+    unsigned int h = 2166136261u;
+    if (s) for (const unsigned char *p = (const unsigned char *)s; *p; p++) {
+        h ^= (unsigned char)*p;
+        h *= 16777619u;
+    }
+    return (int)h;
+}
+
+/* ---- 纯函数：base64 编解码（输入上限 1MB，输出缓冲 1.375MB） ---- */
+#define NET_B64BUF 0x160000
+static const char b64tab[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const char *cask_net_base64(const char *s)
+{
+    static char buf[2][NET_B64BUF];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    int o = 0;
+    if (s) {
+        const unsigned char *p = (const unsigned char *)s;
+        size_t n = strlen(s);
+        if (n > 0x100000) n = 0x100000;         /* 输入上限 */
+        size_t i = 0;
+        while (i < n) {
+            unsigned v = p[i] << 16;
+            int b1 = (i + 1 < n), b2 = (i + 2 < n);
+            if (b1) v |= (unsigned)p[i + 1] << 8;
+            if (b2) v |= (unsigned)p[i + 2];
+            out[o++] = b64tab[(v >> 18) & 63];
+            out[o++] = b64tab[(v >> 12) & 63];
+            out[o++] = b1 ? b64tab[(v >> 6) & 63] : '=';
+            out[o++] = b2 ? b64tab[v & 63] : '=';
+            i += 3;
+        }
+    }
+    out[o] = 0;
+    return out;
+}
+const char *cask_net_unbase64(const char *s)
+{
+    static char buf[2][0x100000];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    int o = 0;
+    unsigned acc = 0; int bits = 0;
+    const size_t CAP = sizeof out - 1;
+    if (s) {
+        for (const char *p = s; *p; p++) {
+            if (*p == '\n' || *p == '\r' || *p == ' ') continue;
+            if (*p == '=') break;
+            const char *q = strchr(b64tab, *p);
+            if (!q) { out[0] = 0; return out; }   /* 非法字符 -> 失败 */
+            acc = (acc << 6) | (unsigned)(q - b64tab);
+            bits += 6;
+            if (bits >= 8) {
+                bits -= 8;
+                if (o < (int)CAP) out[o++] = (char)((acc >> bits) & 0xFF);
+            }
+        }
+    }
+    out[o] = 0;
+    return out;
+}
+
+/* ---- socket：TCP 探测 ---- */
+static int cask_net_ws_started = -1;
+static void cask_net_ws_init(void)
+{
+    if (cask_net_ws_started != 0) {
+        WSADATA d;
+        cask_net_ws_started = (WSAStartup(MAKEWORD(2, 0), &d) == 0) ? 1 : 2;
+    }
+}
+int cask_net_hostalive(const char *host, int port)
+{
+    if (!host || !*host || port <= 0) return 0;
+    cask_net_ws_init();
+    if (cask_net_ws_started != 1) return 0;
+    int s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s < 0) return 0;
+    struct sockaddr_in a;
+    memset(&a, 0, sizeof a);
+    a.sin_family = AF_INET;
+    a.sin_port = htons((u_short)port);
+    if (inet_pton(AF_INET, host, &a.sin_addr) != 1) {
+        HOSTENT *he = gethostbyname(host);        /* DNS 解析 */
+        if (!he || !he->h_addr_list[0]) { closesocket(s); return 0; }
+        memcpy(&a.sin_addr, he->h_addr_list[0], 4);
+    }
+    DWORD to = 3000;
+    setsockopt(s, SOL_SOCKET, SO_CONNECT_TIME, &to, sizeof to);
+    int r = connect(s, (struct sockaddr *)&a, sizeof a);
+    int alive = (r == 0) ? 1 : 0;
+    closesocket(s);
+    return alive;
+}
+
+#else  /* ===================== Linux / macOS ===================== */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+int cask_net_isurl(const char *s)
+{
+    if (!s) return 0;
+    return strncmp(s, "http://", 7) == 0 || strncmp(s, "https://", 8) == 0;
+}
+int cask_net_isip(const char *s)
+{
+    if (!s) return 0;
+    struct in_addr a;
+    return inet_pton(AF_INET, s, &a) == 1;
+}
+const char *cask_net_urlhost(const char *url)
+{
+    static char buf[2][512];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    out[0] = 0;
+    if (!url) return out;
+    const char *p = url;
+    if (strncmp(p, "https://", 8) == 0) p += 8;
+    else if (strncmp(p, "http://", 7) == 0) p += 7;
+    const char *slash = strchr(p, '/');
+    const char *end = slash ? slash : (p + strlen(p));
+    size_t n = (size_t)(end - p);
+    if (n > sizeof out - 1) n = sizeof out - 1;
+    char tmp[512];
+    memcpy(tmp, p, n); tmp[n] = 0;
+    char *colon = strrchr(tmp, ':');
+    if (colon && colon > tmp) *colon = 0;
+    snprintf(out, sizeof out, "%s", tmp);
+    return out;
+}
+int cask_net_urlport(const char *url)
+{
+    if (!url) return 80;
+    const char *p = url;
+    int secure = 0;
+    if (strncmp(p, "https://", 8) == 0) { secure = 1; p += 8; }
+    else if (strncmp(p, "http://", 7) == 0) p += 7;
+    const char *slash = strchr(p, '/');
+    const char *end = slash ? slash : (p + strlen(p));
+    char host[512];
+    size_t n = (size_t)(end - p);
+    if (n > sizeof host - 1) n = sizeof host - 1;
+    memcpy(host, p, n); host[n] = 0;
+    char *colon = strrchr(host, ':');
+    if (colon && colon > host) {
+        int prt = atoi(colon + 1);
+        return (prt > 0) ? prt : (secure ? 443 : 80);
+    }
+    return secure ? 443 : 80;
+}
+int cask_net_fnv1a(const char *s)
+{
+    unsigned int h = 2166136261u;
+    if (s) for (const unsigned char *p = (const unsigned char *)s; *p; p++) {
+        h ^= (unsigned char)*p;
+        h *= 16777619u;
+    }
+    return (int)h;
+}
+#define NET_B64BUF 0x160000
+static const char b64tab[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const char *cask_net_base64(const char *s)
+{
+    static char buf[2][NET_B64BUF];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    int o = 0;
+    if (s) {
+        const unsigned char *p = (const unsigned char *)s;
+        size_t n = strlen(s);
+        if (n > 0x100000) n = 0x100000;
+        size_t i = 0;
+        while (i < n) {
+            unsigned v = p[i] << 16;
+            int b1 = (i + 1 < n), b2 = (i + 2 < n);
+            if (b1) v |= (unsigned)p[i + 1] << 8;
+            if (b2) v |= (unsigned)p[i + 2];
+            out[o++] = b64tab[(v >> 18) & 63];
+            out[o++] = b64tab[(v >> 12) & 63];
+            out[o++] = b1 ? b64tab[(v >> 6) & 63] : '=';
+            out[o++] = b2 ? b64tab[v & 63] : '=';
+            i += 3;
+        }
+    }
+    out[o] = 0;
+    return out;
+}
+const char *cask_net_unbase64(const char *s)
+{
+    static char buf[2][0x100000];
+    static int slot = 0;
+    char *out = buf[slot]; slot = (slot + 1) & 1;
+    int o = 0;
+    unsigned acc = 0; int bits = 0;
+    const size_t CAP = sizeof out - 1;
+    if (s) {
+        for (const char *p = s; *p; p++) {
+            if (*p == '\n' || *p == '\r' || *p == ' ') continue;
+            if (*p == '=') break;
+            const char *q = strchr(b64tab, *p);
+            if (!q) { out[0] = 0; return out; }
+            acc = (acc << 6) | (unsigned)(q - b64tab);
+            bits += 6;
+            if (bits >= 8) {
+                bits -= 8;
+                if (o < (int)CAP) out[o++] = (char)((acc >> bits) & 0xFF);
+            }
+        }
+    }
+    out[o] = 0;
+    return out;
+}
+int cask_net_hostalive(const char *host, int port)
+{
+    if (!host || !*host || port <= 0) return 0;
+    struct addrinfo hints, *res = NULL, *rp;
+    char pstr[16];
+    snprintf(pstr, sizeof pstr, "%d", port);
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host, pstr, &hints, &res) != 0) return 0;
+    int alive = 0;
+    for (rp = res; rp; rp = rp->ai_next) {
+        int s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (s < 0) continue;
+        struct timeval tv; tv.tv_sec = 3; tv.tv_usec = 0;
+        setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof tv);
+        setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+        if (connect(s, rp->ai_addr, rp->ai_addrlen) == 0) { alive = 1; close(s); break; }
+        close(s);
+    }
+    freeaddrinfo(res);
+    return alive;
+}
+
+#endif /* _WIN32 / POSIX */
+
+#endif /* CASK_NET_CASH */

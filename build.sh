@@ -26,11 +26,14 @@ $CC -O2 -Wall -Wextra -o bin/caskc compiler/caskc.c
 echo "[build] runtime   -> bin/libcastrt.a"
 $CC -O2 -w -c compiler/cask_rt.c -o build/cask_rt.o
 $CC -O2 -w -c compiler/cask_io.c -o build/cask_io.o
-GUI_OBJ="build/cask_io.o"
+$CC -O2 -w -c compiler/cask_os.c -o build/cask_os.o
+$CC -O2 -w -c compiler/cask_net.c -o build/cask_net.o
+$CC -O2 -w -c compiler/cask_sc.c -o build/cask_sc.o
+GUI_OBJ="build/cask_io.o build/cask_os.o build/cask_net.o build/cask_sc.o"
 if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists gtk+-3.0; then
   # window toolkit + css live inside the runtime library too
   $CC -O2 -w $(pkg-config --cflags gtk+-3.0) -c compiler/cask_gui.c -o build/cask_gui.o
-  GUI_OBJ="build/cask_gui.o build/cask_io.o"
+  GUI_OBJ="build/cask_gui.o build/cask_io.o build/cask_os.o build/cask_net.o build/cask_sc.o"
 else
   echo "[build] note: GTK3 dev not found -- the runtime library will not"
   echo "        include the window toolkit (console programs still work)."
@@ -76,6 +79,9 @@ cp compiler/cask_rt.h bin/cask_rt.h
 cp compiler/C_OPED.cash bin/C_OPED.cash
 cp compiler/C_CSS.cash bin/C_CSS.cash
 cp compiler/C_IO.cash bin/C_IO.cash
+cp compiler/C_OS.cash bin/C_OS.cash
+cp compiler/C_NET.cash bin/C_NET.cash
+cp compiler/C_SC.cash bin/C_SC.cash
 # never let a stale copy in build/ shadow the bin/ headers
 rm -f build/C_OPED.cash build/C_CSS.cash examples/C_OPED.cash examples/C_CSS.cash 2>/dev/null || true
 

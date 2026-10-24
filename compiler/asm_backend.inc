@@ -2843,6 +2843,10 @@ static int asm_backend_build(SList *top, const char *out, int keep_s)
         if (g_native && n > 0 && n < (int)sizeof ldl)
             n += snprintf(ldl + n, sizeof ldl - n,
                 " -luser32 -lgdi32 -lcomctl32 -lole32 -luuid -lshell32 -lcomdlg32 -lmsimg32");
+        if ((g_use_net || g_use_sc) && n > 0 && n < (int)sizeof ldl)
+            n += snprintf(ldl + n, sizeof ldl - n, " -lws2_32");
+        if (g_use_os && n > 0 && n < (int)sizeof ldl)
+            n += snprintf(ldl + n, sizeof ldl - n, " -ladvapi32 -lpsapi");
 #else
         if (!g_gccdir[0]) {
             fprintf(stderr, "caskc: 找不到动态加载器 ld-linux-x86-64.so.2\n");

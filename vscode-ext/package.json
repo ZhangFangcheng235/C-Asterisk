@@ -1,11 +1,12 @@
 {
   "name": "c-asterisk",
   "displayName": "C Asterisk (C*)",
-  "description": "Language support for C Asterisk (.cask): syntax highlighting, snippets, comments, brackets",
-  "version": "0.5.0",
+  "description": "Language support for C Asterisk (.cask): syntax highlighting, snippets, comments, brackets, run, and caskc syntax checking",
+  "version": "0.5.1",
   "icon": "icon.png",
   "publisher": "c-asterisk",
   "license": "MIT",
+  "main": "./extension.js",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -20,6 +21,10 @@
     "casterisk",
     "education"
   ],
+  "activationEvents": [
+    "onLanguage:casterisk",
+    "onCommand:casterisk.run"
+  ],
   "contributes": {
     "languages": [
       {
@@ -32,6 +37,7 @@
         "extensions": [
           ".cask"
         ],
+        "icon": "./icon.png",
         "configuration": "./language-configuration.json"
       }
     ],
@@ -47,6 +53,59 @@
         "language": "casterisk",
         "path": "./snippets/casterisk.json"
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "casterisk.run",
+        "title": "C*: 运行当前文件",
+        "category": "C*",
+        "icon": "$(play)"
+      },
+      {
+        "command": "casterisk.check",
+        "title": "C*: 语法检查（caskc --check）",
+        "category": "C*",
+        "icon": "$(checklist)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "casterisk.run",
+          "when": "editorLangId == casterisk && !isInNotebookEditor",
+          "group": "navigation"
+        },
+        {
+          "command": "casterisk.check",
+          "when": "editorLangId == casterisk && !isInNotebookEditor",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "C Asterisk (C*)",
+      "properties": {
+        "casterisk.caskcPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "caskc 可执行文件的位置。留空 = 自动找：向上找 `bin/caskc(.exe)`，再退回 PATH 里的 `caskc`。"
+        },
+        "casterisk.autoCheck": {
+          "type": "boolean",
+          "default": true,
+          "description": "打开 / 修改 .cask 文件时自动做语法检查，结果进 Problems 面板。"
+        },
+        "casterisk.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "保存 .cask 文件时立即语法检查。"
+        },
+        "casterisk.runAttachConsole": {
+          "type": "boolean",
+          "default": true,
+          "description": "运行窗口程序（use \"C_OPED.cash\"）时自动加 --console，让 print 能在终端看到。"
+        }
+      }
+    }
   }
 }

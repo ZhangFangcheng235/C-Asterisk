@@ -1,13 +1,22 @@
-# C* 语言基础（高职 · 0.5.0）
+# C* 语言基础（高职 · 0.5.1）
 
 > 面向高等职业教育 **软件技术 / 大数据技术 / 人工智能技术应用** 等专业的程序设计入门课。
-> 语言版本 **0.5.0**；编译器 `bin\caskc.exe`；配套编辑器 **C* Studio**（`bin\caskide.exe`）。
+> 语言版本 **0.5.1**；编译器 `bin\caskc.exe`；配套编辑器 **C* Studio**（`bin\caskide.exe`）。
 > C* 读作 **C Asterisk**（C 加一个星号）。
 >
 > **0.5.0 新增**：第 10 章「文件读写与界面美化」——用 `use "C_IO.cash";` 让程序读写文件、
 > 记住配置，用 `use "C_CSS.cash";` 给窗口界面配色。0.5.0 起 Windows 上的按钮改为自绘，
 > 美化函数才真正生效。全书把"先翻译成 C 再交给 gcc"的旧说法改成了"直接生成 x86-64 汇编，
 > 用 `as` + `ld` 链接"。
+>
+> **0.5.1 新增**：第 13 章「操作系统、网络攻防与便携化交互」——新增三个头文件：
+> `use "C_OS.cash";` 读系统信息（`os_pid` / `os_cores` / `os_ram` / `os_cpu` / `os_hostname` /
+> `os_platform` / `isadmin` / `uptime` / `findproc`）；`use "C_NET.cash";` 做协议校验、
+> 编码与哈希（`isurl` / `isip` / `urlhost` / `urlport` / `fnv1a` / `base64` / `unbase64` /
+> `hostalive`）；`use "C_SC.cash";` 做 S/C 便携化交互（`isportable` / `copytoexe` /
+> `freebytes` / `diskfree` / `is64bit` / `portcheck` / `portscan`）。同时积木视图补上了
+> 「文件与系统」及新增的三个分类（操作系统 / 网络与攻防 / 便携化交互），
+> VS Code 扩展升级：`.cask` 文件有图标、工具栏「运行」按钮、语法检查实时进「问题」面板。
 
 ---
 
@@ -37,13 +46,13 @@
 | ` ```bat ` | 在 Windows 命令行（cmd）里敲的命令 |
 | ` ```c ` | 生成的 C 代码，或者 C 语言片段（只用来对照） |
 
-全书所有带 `function main()` 的 C* 程序都在 **0.5.0** 编译器上真实编译过。窗口程序只编译、不自动运行（它要开窗口，会一直等你关掉），正文里会写清楚运行时你会看到什么。
+全书所有带 `function main()` 的 C* 程序都在 **0.5.1** 编译器上真实编译过。窗口程序只编译、不自动运行（它要开窗口，会一直等你关掉），正文里会写清楚运行时你会看到什么。
 
 ### 上机环境
 
 1. Windows 10/11，装机时已经装好 binutils（`as` / `ld`，MinGW-w64 系自带，Dev-C++、MSYS2、w64devkit、Strawberry Perl 里的都行）。**编译 `.cask` 程序不再需要 gcc**——`caskc` 直接生成 x86-64 汇编，用 `as` + `ld` 链接预编译好的 `bin\libcastrt.a`；只有构建工具链本身（`build.bat`）才需要 gcc / g++。
 2. 把整个 `C_AS` 目录拷到本机，比如 `D:\C_AS\`。目录里要有 `bin\caskc.exe`、`bin\caskide.exe`、`bin\cask_rt.h`、`bin\libcastrt.a`、`bin\C_OPED.cash`、`bin\C_CSS.cash`、`bin\C_IO.cash`。
-3. 在命令行里 `cd` 到 `C_AS` 目录，敲 `bin\caskc.exe --version`，能打出版本号 `0.5.0` 就算装好了。
+3. 在命令行里 `cd` 到 `C_AS` 目录，敲 `bin\caskc.exe --version`，能打出版本号 `0.5.1` 就算装好了。
 
 ### 0.5.0 的类型名（重点）
 
@@ -95,6 +104,7 @@ C* 里最特别的一条是：程序第一行写 `use "C_OPED.cash";`，就能�
 - 第 10 章　文件读写与界面美化
 - 第 11 章　调用系统与 C 函数
 - 第 12 章　综合实训二与项目交付规范
+- 第 13 章　操作系统、网络攻防与便携化交互
 - 附录 A　语法速查表
 - 附录 B　错误分级与调试流程
 - 附录 C　从 C* 到 C 的对照表
@@ -4526,6 +4536,339 @@ if (率 > 100) { return 100; }
 6. 判断题：窗口程序交付时不需要带上 `C_OPED.cash`。（　）
 7. 编程题：为一个"学生信息登记"窗口程序写出控件表和函数划分表，不必写代码。
 8. 编程题：为第 7 题设计的程序写一张不少于 6 条的测试用例表，覆盖正常、边界、异常三类，再从中挑两条写出实际测试结果。
+
+---
+
+## 第 13 章　操作系统、网络攻防与便携化交互
+
+### 学习目标
+
+- 会用 `use "C_OS.cash";` 读系统信息：`os_pid` / `os_cores` / `os_ram` / `os_cpu` / `os_hostname` / `os_platform` / `isadmin` / `uptime` / `findproc`。
+- 会用 `use "C_NET.cash";` 做协议校验、编码与哈希：`isurl` / `isip` / `urlhost` / `urlport` / `fnv1a` / `base64` / `unbase64`，以及主机探测 `hostalive`。
+- 会用 `use "C_SC.cash";` 做便携化交互：`isportable` / `copytoexe` / `freebytes` / `diskfree` / `is64bit` / `portcheck` / `portscan`。
+- 会把这些头与第 10 章的 `C_IO.cash`、第 9 章的窗口合起来，做出"系统信息面板"这类完整工具。
+- 说得清每个新分类在积木视图里怎么用：文件与系统、操作系统、网络与攻防、便携化交互四类积木都要先 `use` 对应头文件才出现。
+
+### 任务引入
+
+前面几章，程序读的是**自己的**数据和**用户的**输入。但一个真正能用的工具，往往还要"读懂它所在的环境"：
+
+- 机房管理员想要一个**系统体检小工具**：这台机器几个核、多少内存、是不是管理员开的、开机多久了。
+- 一个下载器要**判断网址写得对不对**、把下载内容编码成 base64 存起来、出发前**探测服务器端口通不通**。
+- 你做的绿色版程序拷到 U 盘上，要确认**这个目录能不能就地写文件**（便携），顺便看看**本机哪些端口开着**。
+
+这三类需求，分别对应 0.5.x 新增的三个头文件：
+
+| 头文件 | 一句话定位 | 控制台也能用？ |
+|--------|-----------|----------------|
+| `C_OS.cash` | 读懂操作系统：系统信息、当前进程、权限、运行时长 | 能 |
+| `C_NET.cash` | 网络与攻防：协议校验、网址拆解、编码、哈希、端口探测 | 能 |
+| `C_SC.cash` | S/C 便携化交互：判断便携、就地写文件、查资源、扫本机端口 | 能 |
+
+> **安全提示**：这三个头里"攻防"指的是**防御性的协议校验、编码、完整性检查和只读探测**（判断网址/IP 是否合法、校验文件哈希、base64 编解码、探测某主机某端口通不通）。C* 不提供发 raw socket 数据包、不写网络嗅探或攻击代码；`hostalive` / `portcheck` / `portscan` 都是**只读连接探测**，不开监听、不改系统。教学与考试里也只考核"校验、编码、探测"这一层。
+
+### 知识准备
+
+#### 13.1 操作系统工具箱：C_OS.cash
+
+```cask
+use "C_OS.cash";
+```
+
+不依赖窗口，控制台程序直接用。它打开"操作系统"层面的一组只读查询函数（失败给 `0` 或 `""`，不会崩溃）：
+
+| 函数 | 作用 | 返回 |
+|------|------|------|
+| `os_pid()` | 本程序的进程号 | `> 0` |
+| `os_cores()` | 逻辑 CPU 核数 | `>= 1` |
+| `os_ram()` | 物理内存大小（GB） | `>= 0` |
+| `os_cpu()` | CPU 型号文字 | 拿不到给 `""` |
+| `os_hostname()` | 本机主机名 | 拿不到给 `""` |
+| `os_platform()` | `"windows"` / `"linux"` / `"mac"` | 文字 |
+| `isadmin()` | 以管理员 / root 身份运行 | `1` / `0` |
+| `uptime()` | 开机到现在的毫秒数 | `>= 0` |
+| `findproc(名字)` | 有这个名字的进程在跑 | `1` / `0` |
+
+**注意**：`os_cpu` / `os_hostname` / `os_ram` 的值**因机器而异**，程序里别写死。要显示就显示，要判断只判断"非空 / 非 0"。
+
+#### 13.2 一段"系统体检"控制台程序
+
+```cask
+// 系统体检：C_OS.cash + C_SC.cash 综合
+use "C_OS.cash";
+use "C_SC.cash";
+
+function main() {
+    print "== 系统体检 ==";
+    print "平台：", os_platform();
+    print "CPU：", os_cpu();
+    print "核数：", os_cores(), "，内存：", os_ram(), " GB";
+    print "主机名：", os_hostname();
+    print "运行中毫秒：", uptime();
+    if (isadmin() == 1) { print "当前是管理员权限"; }
+    else { print "当前是普通用户权限"; }
+    if (isportable() == 1) { print "exe 所在目录可写（便携）"; }
+    else { print "exe 所在目录不可写"; }
+    print "空闲内存字节：", freebytes();
+    if (is64bit() == 1) { print "64 位环境"; }
+    return 0;
+}
+```
+
+运行一次（不同机器输出不同，示意）：
+
+```text
+== 系统体检 ==
+平台：windows
+CPU：Intel(R) Core(TM) i5-10400
+核数：8，内存：16 GB
+主机名：DESKTOP-XYZ
+运行中毫秒：86400000
+当前是普通用户权限
+exe 所在目录可写（便携）
+空闲内存字节：4194304000
+64 位环境
+```
+
+逐行看：`os_platform()` 只用来**分支**（不同系统走不同逻辑）；`os_cpu()` 这种机器相关的文字只**显示**、不拿去做等值判断；`os_ram()` 返回的是整数 GB，直接 `print` 就拼进文字里。
+
+#### 13.3 网络与攻防：C_NET.cash
+
+```cask
+use "C_NET.cash";
+```
+
+分三组。**前两组是纯计算，不碰网络，随时能跑**；第三组会开 socket，可能联网。
+
+**协议校验**（判断网址、IP 写得对不对）：
+
+| 函数 | 作用 | 例子 |
+|------|------|------|
+| `isurl(文字)` | 以 `http://` 或 `https://` 开头才算合法网址 | `isurl("https://a.com")` → 1 |
+| `isip(文字)` | 严格 IPv4 点分十进制（每段 0..255） | `isip("256.1.1.1")` → 0 |
+| `urlhost(网址)` | 取主机名（自动去掉端口） | `urlhost("https://a.com:8443/x")` → `"a.com"` |
+| `urlport(网址)` | 取端口，没写按 https=443 / http=80 | `urlport("https://a.com")` → 443 |
+
+**编码与完整性**（把内容编码、算哈希、base64 往返）：
+
+| 函数 | 作用 | 例子 |
+|------|------|------|
+| `fnv1a(文字)` | 32 位 FNV-1a 哈希，同一输入永远同一输出 | 用它发现"内容被改过" |
+| `base64(文字)` | 把文字编码成 base64 字符串 | `base64("hello")` → `"aGVsbG8="` |
+| `unbase64(文字)` | 把 base64 解码回原文（失败给 `""`） | 编码再解码能还原 |
+
+**主机探测**（会用 socket，可能阻塞到约 3 秒）：
+
+| 函数 | 作用 | 说明 |
+|------|------|------|
+| `hostalive(主机, 端口)` | 某主机某端口的 TCP 通不通 | 通 1，不通 0；离网给 0，不崩 |
+
+> `hostalive` 是**只读探测**：它去连一下对方端口，看能不能建立连接，**不发包攻击、不开监听**。离网时返回 0，程序照跑。
+
+#### 13.4 一个"网址安全小工具"控制台程序
+
+```cask
+// 网址安全小工具：C_NET.cash 综合
+use "C_NET.cash";
+
+function main() {
+    print "== 网址校验 ==";
+    print "https://a.com 合法：", isurl("https://a.com");
+    print "ftp://x 合法：", isurl("ftp://x");
+    print "1.2.3.4 是 IP：", isip("1.2.3.4");
+    print "256.1.1.1 是 IP：", isip("256.1.1.1");
+    print "host：", urlhost("https://a.com:8443/x?y=1");
+    print "port：", urlport("https://a.com:8443/x");
+    print "== 编码 ==";
+    print "fnv1a：", fnv1a("abc");
+    string e = base64("hello");
+    print "base64：", e;
+    print "还原：", unbase64(e);
+    return 0;
+}
+```
+
+运行一次：
+
+```text
+== 网址校验 ==
+https://a.com 合法：1
+ftp://x 合法：0
+1.2.3.4 是 IP：1
+256.1.1.1 是 IP：0
+host：a.com
+port：8443
+== 编码 ==
+fnv1a：440920331
+base64：aGVsbG8=
+还原：hello
+```
+
+注意 `base64` 再 `unbase64` 能**原样还原**，这是"编码—解码"往返的典型用法；`fnv1a` 对同一段文字**永远给同一个数**，所以可以用它当"内容指纹"——文件被改过一点点，哈希就变了。
+
+#### 13.5 S/C 便携化交互：C_SC.cash
+
+```cask
+use "C_SC.cash";
+```
+
+把 C* 工具做成**单文件 / 绿色版**形态时，最需要"和宿主系统轻量交互"的几件事：
+
+| 函数 | 作用 | 返回 |
+|------|------|------|
+| `isportable()` | 本程序（exe）所在目录**可写**（能就地放文件） | `1` / `0` |
+| `copytoexe(名, 内容)` | 把一个文本文件**写到 exe 旁边** | 成功 `1` |
+| `freebytes()` | 当前空闲内存（字节） | `>= 0` |
+| `diskfree(路径)` | 路径所在分区的空闲字节 | `>= 0` |
+| `is64bit()` | 本程序跑在 64 位环境 | `1` / `0` |
+| `portcheck(端口)` | `127.0.0.1` 上某 TCP 端口是否开着 | `1` / `0` |
+| `portscan(起, 止)` | 这一段端口里有几个开着 | 个数 |
+
+`portcheck` / `portscan` 都是**往 127.0.0.1 上拨号的只读探测**：只尝试连接、看有没有服务在听，**不开监听、不主动对外**。没有服务时只是"连接被拒"，返回 0，不会崩。
+
+#### 13.6 便携化与本机端口探测
+
+```cask
+// 便携小工具：C_SC.cash + C_IO.cash 综合
+use "C_SC.cash";
+use "C_IO.cash";
+
+function main() {
+    print "== 便携体检 ==";
+    if (isportable() == 1) { print "exe 目录可写，能就地放文件"; }
+    else { print "exe 目录不可写，改用 C_IO 写到用户目录"; }
+    if (is64bit() == 1) { print "64 位环境"; }
+    else { print "32 位环境"; }
+    print "空闲内存：", freebytes(), " 字节";
+    print "exe 所在盘空闲：", diskfree(appdir()), " 字节";
+    // 把一个辅助文件写到 exe 旁边，再用 C_IO 读回验证
+    if (copytoexe("_probe.txt", "pong") == 1) {
+        print "写文件成功，读回：", readfile(appdir() + "/_probe.txt");
+    }
+    print "80 端口：", portcheck(80), "，443 端口：", portcheck(443);
+    return 0;
+}
+```
+
+这里 `copytoexe` 把文件写到 **exe 旁边**，而 `appdir()`（第 10 章的 `C_IO.cash`）拿到的是**同一个目录**，所以 `readfile(appdir() + "/_probe.txt")` 能读回刚写的内容——两个头配起来，就是一条"就地写、就地读"的闭环。绿色版程序判断 `isportable()` 为 1，就知道可以把缓存、配置都放在 exe 旁边，拷到 U 盘照样能用。
+
+### 任务实施
+
+**任务：做一个"系统信息面板"窗口程序。** 深色界面，打开就把平台、CPU、核数、内存、主机名、权限、开机时长、64 位与否都显示出来；点"刷新"按钮重新读一遍。把第 9 章的窗口、第 10 章的配色、本章的三个头串成一个完整工具。
+
+**第 1 步　引四个头。** 窗口 + 配色 + 操作系统 + 便携：
+
+```cask
+use "C_OPED.cash";
+use "C_CSS.cash";
+use "C_OS.cash";
+use "C_SC.cash";
+```
+
+**第 2 步　写一个"拼信息"的普通函数。** 把要显示的内容集中在一处，好维护：
+
+```cask
+string 信息() {
+    string 行 = "平台：" + os_platform() + "\n";
+    行 = 行 + "CPU：" + os_cpu() + "\n";
+    行 = 行 + "核数：" + os_cores() + "，内存：" + os_ram() + " GB\n";
+    行 = 行 + "主机名：" + os_hostname() + "\n";
+    if (isadmin() == 1) { 行 = 行 + "权限：管理员\n"; }
+    else { 行 = 行 + "权限：普通用户\n"; }
+    行 = 行 + "已开机 " + uptime() / 60000 + " 分钟\n";
+    if (is64bit() == 1) { 行 = 行 + "运行在 64 位环境\n"; }
+    return 行;
+}
+```
+
+`uptime()` 是毫秒，`/ 60000` 换成分钟；机器相关的值只**显示**，不做等值判断。
+
+**第 3 步　把完整程序拼出来。** 事件函数只刷新标签，`main` 建窗口、放标签和按钮、上色：
+
+```cask
+// 系统信息面板：C_OS + C_SC + C_CSS 综合（第 13 章示例）
+use "C_OPED.cash";
+use "C_CSS.cash";
+use "C_OS.cash";
+use "C_SC.cash";
+
+int 信息区;
+int 刷新按钮;
+
+string 信息() {
+    string 行 = "平台：" + os_platform() + "\n";
+    行 = 行 + "CPU：" + os_cpu() + "\n";
+    行 = 行 + "核数：" + os_cores() + "，内存：" + os_ram() + " GB\n";
+    行 = 行 + "主机名：" + os_hostname() + "\n";
+    if (isadmin() == 1) { 行 = 行 + "权限：管理员\n"; }
+    else { 行 = 行 + "权限：普通用户\n"; }
+    行 = 行 + "已开机 " + uptime() / 60000 + " 分钟\n";
+    if (is64bit() == 1) { 行 = 行 + "运行在 64 位环境\n"; }
+    return 行;
+}
+
+function on_click(int 控件) {
+    if (控件 == 刷新按钮) {
+        settext(信息区, 信息());
+    }
+}
+
+function main() {
+    int 窗口 = window("系统信息面板", 520, 380);
+    信息区 = label(信息(), 20, 20, 480, 260);
+    刷新按钮 = button("刷新", 20, 320, 120, 36);
+    csbg(窗口, "0D1117");
+    cstext(信息区, "#E6EDF3");
+    csfont(信息区, 13, 0);
+    csbg(刷新按钮, "238636");
+    cstext(刷新按钮, "#FFFFFF");
+    run();
+}
+```
+
+编译运行（窗口程序加 `--console` 才能看到 `print` 调试输出）：
+
+```bat
+bin\caskc.exe 系统面板.cask -o 系统面板.exe --console
+```
+
+打开就是一张深色"体检卡"；点"刷新"，标签重新读一遍 `os_*` / `uptime` / `is64bit`，值会随系统变化。
+
+### 拓展与规范
+
+- **机器相关的值只展示、不写死。** `os_cpu()` / `os_hostname()` / `os_ram()` 换台机器就变，判断只判断"非空 / 非 0"，别拿具体型号去 `==`。
+- **"攻防"只做防御性那一层。** 用 `isurl` / `isip` / `fnv1a` / `base64` 做校验、编码、完整性，用 `hostalive` / `portcheck` / `portscan` 做只读探测；不写发包攻击、不写嗅探。
+- **探测类函数可能阻塞**（`hostalive` 约 3 秒、`portcheck` / `portscan` 逐个拨号），别在界面主循环里高频狂调。
+- **绿色版先判 `isportable()`。** 为 1 才把缓存/配置写 exe 旁边；为 0（如装在 C 盘系统目录）就退回 `C_IO` 的 `envget("USERPROFILE")` 写用户目录。
+- **三个头都能单独给控制台用**，不依赖窗口；要放进界面再叠 `C_OPED.cash` + `C_CSS.cash`。
+
+### 本章小结
+
+- `C_OS.cash` 读系统：`os_pid` / `os_cores` / `os_ram` / `os_cpu` / `os_hostname` / `os_platform` / `isadmin` / `uptime` / `findproc`。
+- `C_NET.cash` 管网络与攻防（防御层）：`isurl` / `isip` / `urlhost` / `urlport` 校验拆解，`fnv1a` / `base64` / `unbase64` 编码与完整性，`hostalive` 只读探测。
+- `C_SC.cash` 做便携化交互：`isportable` / `copytoexe` 判断与就地写文件，`freebytes` / `diskfree` / `is64bit` 查资源，`portcheck` / `portscan` 扫本机端口。
+- 三个头都**控制台可用**；做窗口工具时叠 `C_OPED.cash` + `C_CSS.cash` 出一块深色"系统信息面板"。
+- 积木视图里，文件与系统、操作系统、网络与攻防、便携化交互四个新分类，都要先 `use` 对应头文件才显示。
+
+### 实训任务
+
+1. 给 13.2 的"系统体检"加一段：用 `findproc` 检查常见后台进程（如 `explorer`）在不在，`print` 出结果。
+2. 写一个"文件指纹"小工具：用 `C_IO.cash` 的 `readfile` 读出一个文本，再 `fnv1a` 算指纹并 `writefile` 存成 `.hash`；下次再读，指纹变了就提示"文件被改过"。
+3. 做一个绿色版"下载器骨架"：先用 `isurl` 校验地址，再 `hostalive(urlhost(地址), urlport(地址))` 探端口，通了才 `appendfile` 记一条到日志；整包判断 `isportable()` 决定缓存放哪里。
+
+### 本章测验
+
+1. 选择题：想知道"本程序是不是以管理员身份运行"，用（　）。
+   - A. `os_pid()`　B. `isadmin()`　C. `findproc()`　D. `uptime()`
+2. 选择题：判断一段文字是不是合法的 `http` / `https` 网址，用（　）。
+   - A. `isip()`　B. `fnv1a()`　C. `isurl()`　D. `urlhost()`
+3. 选择题：把 `"hello"` 编码成 base64 再还原，应该（　）。
+   - A. 还原成 `"hello"`　B. 还原成 `"aGVsbG8="`　C. 还原成空串　D. 编译报错
+4. 判断题：`os_cpu()` 的返回值因机器而异，程序里可以放心写死判断。（　）
+5. 判断题：`hostalive` / `portcheck` / `portscan` 是只读连接探测，不开监听、不对外攻击。（　）
+6. 判断题：绿色版程序在 `isportable()` 为 1 时，可以把缓存文件写到 exe 旁边。（　）
+7. 编程题：写一个控制台程序，用 `os_cores()`、`os_ram()`、`uptime()` 三行拼出一句"本机器 X 核、Y GB 内存，已开机约 Z 分钟"。
+8. 编程题：做一个"网址检查"窗口——输入框填网址，点按钮用 `isurl` + `urlhost` + `urlport` 在标签里显示"合法/不合法、主机、端口"；不合法就变红提示。
 
 ---
 

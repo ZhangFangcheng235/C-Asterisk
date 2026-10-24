@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>C* 语言 选修一（0.5.0）</title>
+<title>C* 语言 选修一（0.5.1）</title>
 <style>
   body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
          line-height: 1.7; color: #222; background: #fafafa;
@@ -27,11 +27,15 @@
 </style>
 </head>
 <body>
-<h1>C* 语言 选修一（0.5.0）</h1>
+<h1>C* 语言 选修一（0.5.1）</h1>
 <blockquote><p>本书是《<code>C*</code> 语言 必修一》的提高篇，读者是学完必修一、选修"信息技术提高"的普通高中学生。
 
 <strong>0.5.0 新增</strong>：4.5 节「文件、配置与外部程序」、4.6 节「界面美化与主题」。
-学完这两节，程序就能把数据留住，并拥有一套自己的界面配色。</p></blockquote>
+学完这两节，程序就能把数据留住，并拥有一套自己的界面配色。
+
+<strong>0.5.1 新增</strong>：4.5 节末尾补了「三个新头」拓展——<code>C_OS.cash</code>（操作系统）、
+<code>C_NET.cash</code>（网络与攻防，只做校验/编码/哈希/只读探测）、<code>C_SC.cash</code>（S/C 便携化交互），
+并结合 4.5 的"保存位置三选一"讲了 <code>isportable</code> / <code>fnv1a</code> 的用法。</p></blockquote>
 <h2>前言</h2>
 <h3>这本书写给谁</h3>
 <p>你已经学完了必修一：知道变量、分支、循环、函数、数组，也做过最简单的窗口程序。本书不再从头讲这些概念，而是回答一个更进一步的问题：<strong>手上有了一批数据，怎么把它组织好、处理快、并且不出错。</strong></p>
@@ -1731,7 +1735,7 @@ int 提示;
 int 记事本按钮;
 string 配置;
 
-function 读配置() {
+string 读配置() {
     if (fileexists(配置) == 0) {
         writefile(配置, "名字=小明\n班级=高一(3)班");
         return "第一次运行，已写入默认配置。";
@@ -1763,6 +1767,18 @@ function main() {
 <ol><li>给配置增加一项"音量=5"，并写一个函数按 <code>键</code> 查出对应的值。</li><li>把配置文件改存到 <code>envget("APPDATA") + "/MyApp/设置.txt"</code>，先建目录再写。</li></ol>
 <p><strong>提高</strong></p>
 <ol><li>设计一个"最近打开的文件"列表：最多保存 5 条，每次打开新文件时更新，用 <code>writefile</code> 整体写回。</li><li>写一个安装器：用 <code>launchwait</code> 依次运行两个程序，任何一个退出码非 0 就停止并提示。</li></ol>
+<p><strong>拓展（0.5.1 新增）</strong></p>
+<p>0.5.1 新增三个头文件，控制台程序也能用（完整讲法见高职教材第 13 章、手册 5.8 节）：</p>
+<table>
+<thead><tr><th>头文件</th><th>定位</th><th>代表函数</th></tr></thead>
+<tbody>
+<tr><td><code>use "C_OS.cash";</code></td><td>读懂操作系统</td><td><code>os_cores</code> / <code>os_ram</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code></td></tr>
+<tr><td><code>use "C_NET.cash";</code></td><td>网络与攻防（防御层）</td><td><code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code></td></tr>
+<tr><td><code>use "C_SC.cash";</code></td><td>S/C 便携化交互</td><td><code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code></td></tr>
+</tbody></table>
+<p>结合 4.5 的"保存位置三选一"，<code>isportable()</code>（C_SC）正好能自动判断"能不能就地放 exe 旁边"——
+能就放 exe 旁，不能就退到 <code>%APPDATA%</code>；<code>fnv1a</code>（C_NET）还能给这份配置算一个"指纹"，
+内容被改过就发现。</p>
 <hr>
 <h2>4.6　界面美化与主题</h2>
 <h3>学习目标</h3>

@@ -16,7 +16,7 @@
 #include <limits.h>
 #include <setjmp.h>
 
-#define CASK_VERSION "0.5.0"
+#define CASK_VERSION "0.5.1"
 
 /* ---------------- small utilities ---------------- */
 static void *xmalloc(size_t n)
@@ -69,6 +69,9 @@ static int g_native = 0;    /* use "C_OPED.cash"; -- the native world is open */
 static int g_native_line = 0;   /* where that 'use' was written           */
 static int g_use_css = 0;   /* use "C_CSS.cash"; -- the styling toolkit  */
 static int g_use_io = 0;    /* use "C_IO.cash"; -- files & system        */
+static int g_use_os = 0;    /* use "C_OS.cash"; -- operating-system info */
+static int g_use_net = 0;   /* use "C_NET.cash"; -- network & security  */
+static int g_use_sc = 0;    /* use "C_SC.cash"; -- portable S/C interop */
 static int g_css_line = 0;
 static int g_console = 0;   /* --console: keep the console in native mode  */
 
@@ -672,6 +675,45 @@ static const NativeApi g_io_api[] = {
     { NULL, 0, 0, { 0 } }
 };
 
+/* C_OS.cash: operating-system info & process helpers */
+static const NativeApi g_os_api[] = {
+    { "os_pid",      T_NUM,  0, { 0 } },
+    { "os_cores",    T_NUM,  0, { 0 } },
+    { "os_ram",      T_NUM,  0, { 0 } },
+    { "os_cpu",      T_TEXT, 0, { 0 } },
+    { "os_hostname", T_TEXT, 0, { 0 } },
+    { "os_platform", T_TEXT, 0, { 0 } },
+    { "isadmin",     T_NUM,  0, { 0 } },
+    { "uptime",      T_NUM,  0, { 0 } },
+    { "findproc",    T_NUM,  1, { T_TEXT } },
+    { NULL, 0, 0, { 0 } }
+};
+
+/* C_NET.cash: network & security helpers */
+static const NativeApi g_net_api[] = {
+    { "isurl",     T_NUM,  1, { T_TEXT } },
+    { "isip",      T_NUM,  1, { T_TEXT } },
+    { "urlhost",   T_TEXT, 1, { T_TEXT } },
+    { "urlport",   T_NUM,  1, { T_TEXT } },
+    { "fnv1a",     T_NUM,  1, { T_TEXT } },
+    { "base64",    T_TEXT, 1, { T_TEXT } },
+    { "unbase64",  T_TEXT, 1, { T_TEXT } },
+    { "hostalive", T_NUM,  2, { T_TEXT, T_NUM } },
+    { NULL, 0, 0, { 0 } }
+};
+
+/* C_SC.cash: portable S/C interop helpers */
+static const NativeApi g_sc_api[] = {
+    { "isportable", T_NUM,  0, { 0 } },
+    { "copytoexe",  T_NUM,  2, { T_TEXT, T_TEXT } },
+    { "freebytes",  T_NUM,  0, { 0 } },
+    { "diskfree",   T_NUM,  1, { T_TEXT } },
+    { "is64bit",    T_NUM,  0, { 0 } },
+    { "portcheck",  T_NUM,  1, { T_NUM } },
+    { "portscan",   T_NUM,  2, { T_NUM, T_NUM } },
+    { NULL, 0, 0, { 0 } }
+};
+
 static const NativeApi *native_find(const char *n)
 {
     int i;
@@ -683,6 +725,15 @@ static const NativeApi *native_find(const char *n)
     if (g_use_io)
         for (i = 0; g_io_api[i].name; i++)
             if (strcmp(g_io_api[i].name, n) == 0) return &g_io_api[i];
+    if (g_use_os)
+        for (i = 0; g_os_api[i].name; i++)
+            if (strcmp(g_os_api[i].name, n) == 0) return &g_os_api[i];
+    if (g_use_net)
+        for (i = 0; g_net_api[i].name; i++)
+            if (strcmp(g_net_api[i].name, n) == 0) return &g_net_api[i];
+    if (g_use_sc)
+        for (i = 0; g_sc_api[i].name; i++)
+            if (strcmp(g_sc_api[i].name, n) == 0) return &g_sc_api[i];
     return NULL;
 }
 /* names the C world uses: MessageBoxA, MB_OK, WS_VISIBLE ... */
@@ -1631,7 +1682,7 @@ static Type etype(Expr *e)
         for (l = e->args; l; l = l->next) { etype(l->e); n++; }
         if (!f) {
         const char *fix = did_you_mean(e->sv);
-        if (g_native || g_use_css || g_use_io) {
+        if (g_native || g_use_css || g_use_io || g_use_os || g_use_net || g_use_sc) {
             const NativeApi *na = native_find(e->sv);
             if (na) {
                 /* the C* window helpers: check the shape, then type it */
@@ -3172,6 +3223,21 @@ static void add_use(const char *name)
     if (!strcmp(name, "C_IO.cash") || !strcmp(name, "C_IO.CASH")) {
         g_use_io = 1;
         name = "C_IO.cash";
+    }
+    /* C_OS.cash -- operating-system info & process helpers */
+    if (!strcmp(name, "C_OS.cash") || !strcmp(name, "C_OS.CASH")) {
+        g_use_os = 1;
+        name = "C_OS.cash";
+    }
+    /* C_NET.cash -- network & security helpers */
+    if (!strcmp(name, "C_NET.cash") || !strcmp(name, "C_NET.CASH")) {
+        g_use_net = 1;
+        name = "C_NET.cash";
+    }
+    /* C_SC.cash -- portable S/C interop helpers */
+    if (!strcmp(name, "C_SC.cash") || !strcmp(name, "C_SC.CASH")) {
+        g_use_sc = 1;
+        name = "C_SC.cash";
     }
     /* keep the caller's brackets:  <stdio.h>  or  "my_helper.h" */
     if (name[0] == '<') snprintf(buf, sizeof buf, "%s", name);

@@ -201,9 +201,9 @@ function firstDiff(a, b) {
   ok('调色板全部 ' + I.PALETTE.length + ' 个模板可解析可还原', allGood, badName);
 }
 ok('调色板条目 >= 70', I.PALETTE.length >= 70, 'count=' + I.PALETTE.length);
-ok('调色板 10 个分类', I.CATEGORIES.length === 10);
+ok('调色板 14 个分类', I.CATEGORIES.length === 14);
 
-/* 每个分类一种颜色：十种颜色互不相同（dot 色块 + cls 颜色类都要唯一） */
+/* 每个分类一种颜色：颜色互不相同（dot 色块 + cls 颜色类都要唯一） */
 (function () {
   var dots = {}, clss = {}, missing = [], dup = [];
   I.CATEGORIES.forEach(function (c) {
@@ -213,9 +213,9 @@ ok('调色板 10 个分类', I.CATEGORIES.length === 10);
     if (clss[cc.cls]) dup.push(c.id + ' / ' + clss[cc.cls] + ' 同为 ' + cc.cls);
     dots[cc.dot] = c.id; clss[cc.cls] = c.id;
   });
-  ok('颜色表覆盖 10 个分类', missing.length === 0, 'missing=' + missing.join(','));
-  ok('10 个分类颜色各不相同', dup.length === 0, dup.join('; '));
-  ok('10 个分类颜色类各不相同', Object.keys(clss).length === 10,
+  ok('颜色表覆盖全部 14 个分类', missing.length === 0, 'missing=' + missing.join(','));
+  ok('14 个分类颜色各不相同', dup.length === 0, dup.join('; '));
+  ok('14 个分类颜色类各不相同', Object.keys(clss).length === 14,
      'classes=' + Object.keys(clss).join(','));
 })();
 

@@ -11,7 +11,9 @@ var SYNTAX = (function () {
 
   var CAT = {
     out: 't-out', var: 't-var', math: 't-math', if: 't-if', loop: 't-loop',
-    fn: 't-fn', text: 't-text', win: 't-win', css: 't-css', io: 't-misc', misc: 't-misc'
+    fn: 't-fn', text: 't-text', win: 't-win', css: 't-css',
+    io: 't-io', os: 't-os', net: 't-net', sc: 't-sc',
+    misc: 't-misc'
   };
 
   /* ---------------- 关键字 ---------------- */
@@ -197,6 +199,54 @@ var SYNTAX = (function () {
   c('css', 'cscolor(名字, 颜色)', '给一个颜色起个名字，之后能用 csapply 涂到别的控件上。', 'cscolor');
   c('css', 'csapply(名字, 控件号)', '把起好名字的颜色涂到这个控件上。', 'csapply');
 
+  /* ---------------- 操作系统（C_OS.cash） ---------------- */
+  var OS = {};                       /* 小写名 -> {cat, sig, note} */
+  function o(sig, note, names) {
+    names.split(' ').forEach(function (n) { OS[n] = { cat: 'os', sig: sig, note: note }; });
+  }
+  o('os_pid()', '本程序的进程号（> 0）。', 'os_pid');
+  o('os_cores()', '逻辑 CPU 核数（>= 1）。', 'os_cores');
+  o('os_ram()', '物理内存大小，单位 GB（>= 0）。', 'os_ram');
+  o('os_cpu()', 'CPU 型号文字（拿不到给 ""）。', 'os_cpu');
+  o('os_hostname()', '本机主机名（拿不到给 ""）。', 'os_hostname');
+  o('os_platform()', '"windows" / "linux" / "mac"。', 'os_platform');
+  o('isadmin()', '以管理员 / root 身份运行 -> 1 / 0。', 'isadmin');
+  o('uptime()', '开机到现在经过的毫秒数（>= 0）。', 'uptime');
+  o('findproc("名字")', '有这个名字的进程在跑 -> 1 / 0。', 'findproc');
+
+  /* ---------------- 网络与攻防（C_NET.cash） ---------------- */
+  var NET = {};
+  function nn(sig, note, names) {
+    names.split(' ').forEach(function (n) { NET[n] = { cat: 'net', sig: sig, note: note }; });
+  }
+  nn('isurl(文字)', '是 http:// 或 https:// 开头 -> 1 / 0。', 'isurl');
+  nn('isip(文字)', '是 IPv4 点分十进制地址 -> 1 / 0。', 'isip');
+  nn('urlhost(网址)', '取网址里的主机名（"https://a.com/x" -> "a.com"）。', 'urlhost');
+  nn('urlport(网址)', '取网址的端口（没写 -> 按 https=443 / http=80）。', 'urlport');
+  nn('fnv1a(文字)', '字符串 32 位 FNV-1a 哈希（校验内容有没有变）。', 'fnv1a');
+  nn('base64(文字)', '把文字编码成 base64（返回 base64 字符串）。', 'base64');
+  nn('unbase64(文字)', '把 base64 解码回原文（解码失败给 ""）。', 'unbase64');
+  nn('hostalive(主机, 端口)', '某主机的某端口 TCP 通不通 -> 1 / 0（会阻塞到超时）。', 'hostalive');
+
+  /* ---------------- 便携化交互（C_SC.cash） ---------------- */
+  var SC = {};
+  function s(sig, note, names) {
+    names.split(' ').forEach(function (n) { SC[n] = { cat: 'sc', sig: sig, note: note }; });
+  }
+  s('isportable()', '本程序所在目录可写（能就地放文件）-> 1 / 0。', 'isportable');
+  s('copytoexe(名, 内容)', '把一个文本文件写到 exe 旁边，1 = 成功。', 'copytoexe');
+  s('freebytes()', '空闲内存，单位字节（拿不到 0）。', 'freebytes');
+  s('diskfree(路径)', '某盘符 / 目录所在分区的空闲字节（拿不到 0）。', 'diskfree');
+  s('is64bit()', '本程序跑在 64 位环境 -> 1 / 0。', 'is64bit');
+  s('portcheck(端口)', '127.0.0.1 上某 TCP 端口是否开着 -> 1 / 0。', 'portcheck');
+  s('portscan(起, 止)', '这一段端口开着几个 -> 个数。', 'portscan');
+
+  /* 合并进 GUI 命名空间，让 lookup() 一次查全 */
+  var i;
+  for (i in OS)  GUI[i] = OS[i];
+  for (i in NET) GUI[i] = NET[i];
+  for (i in SC)  GUI[i] = SC[i];
+
   /* ---------------- 每一格该填什么（积木视图的悬浮说明） ---------------- */
   var ARG = {
     /* 语句本身 */
@@ -241,6 +291,19 @@ var SYNTAX = (function () {
     appdir: [],
     envget: ['环境变量的名字'],
     launchwait: ['完整命令行'],
+    /* 操作系统（C_OS.cash） */
+    os_pid: [], os_cores: [], os_ram: [], os_cpu: [],
+    os_hostname: [], os_platform: [], isadmin: [], uptime: [],
+    findproc: ['进程名（比如 notepad）'],
+    /* 网络与攻防（C_NET.cash） */
+    isurl: ['要判断的文字'], isip: ['要判断的文字'],
+    urlhost: ['网址'], urlport: ['网址'], fnv1a: ['要哈希的文字'],
+    base64: ['要编码的文字'], unbase64: ['要解码的 base64'],
+    hostalive: ['主机名或 IP', '端口（如 80 / 443）'],
+    /* 便携化交互（C_SC.cash） */
+    isportable: [], copytoexe: ['要写的文件名', '文件内容'],
+    freebytes: [], diskfree: ['盘符或目录（如 "C:"）'],
+    is64bit: [], portcheck: ['端口号'], portscan: ['起始端口', '结束端口'],
     /* 逻辑（Excel 风格） */
     IF: ['条件（要写比较，比如 x > 3）', '成立时的值', '不成立时的值'],
     AND: ['第一个条件', '第二个条件', '…'], OR: ['第一个条件', '第二个条件', '…'],

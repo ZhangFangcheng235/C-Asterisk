@@ -1,6 +1,6 @@
 # C*（C Asterisk）编程语言 · 使用说明书
 
-> 版本 **0.5.0** — 一门语法像 C、关键字贴近初中英语词汇的小语言。
+> 版本 **0.5.1** — 一门语法像 C、关键字贴近初中英语词汇的小语言。
 > 源文件后缀：`.cask`　编译器：`bin\caskc.exe`　编辑器：`bin\caskide.exe`
 >
 > 本文件是**速查手册**，把语言的每一处细节都列清楚。想跟着课学，选一本：
@@ -12,6 +12,22 @@
 > | C* 语言 必修一 | `docs\普高教材必修一.md` | 普通高中信息技术课 |
 > | C* 语言 选修一 | `docs\普高选修一.md` | 高中选修：算法与窗口程序进阶 |
 > | C* 语言基础 | `docs\高职教程CStar语言基础.md` | 高职，面向就业 |
+>
+> **0.5.1 相对 0.5.0 的变化**
+>
+> * **新增三个头文件**（控制台程序也能用，详见 5.8）：
+>   * `use "C_OS.cash";` —— 操作系统：`os_pid` / `os_cores` / `os_ram` / `os_cpu` /
+>     `os_hostname` / `os_platform` / `isadmin` / `uptime` / `findproc`。
+>   * `use "C_NET.cash";` —— 网络与攻防（防御层）：`isurl` / `isip` / `urlhost` /
+>     `urlport` / `fnv1a` / `base64` / `unbase64` / `hostalive`。
+>   * `use "C_SC.cash";` —— S/C 便携化交互：`isportable` / `copytoexe` / `freebytes` /
+>     `diskfree` / `is64bit` / `portcheck` / `portscan`。
+> * **积木视图补齐「文件与系统」及三个新分类**：`C_IO.cash` 的「文件与系统」积木，
+>   以及「操作系统」「网络与攻防」「便携化交互」三类，都要先 `use` 对应头文件才出现
+>   （积木箱共 14 类，见 3.4）。
+> * **VS Code 扩展升级（0.5.1）**：`.cask` 文件带语言图标；工具栏新增「运行」按钮
+>   （编译并运行，可选保留控制台）；保存/停顿自动跑 `--check`，把每条问题按
+>   `P|行|列|信息` 解析进「问题」面板，实时语法检查（见第 10 节）。
 >
 > **0.5.0 相对 0.4.2 的变化**
 >
@@ -88,10 +104,16 @@ C_AS\
 │   ├─ cask_rt.c      控制台运行时（编译进 libcastrt.a）
 │   ├─ cask_gui.c     窗口 / CSS 运行时（编译进 libcastrt.a）
 │   ├─ cask_io.c      文件与系统运行时（编译进 libcastrt.a）
+│   ├─ cask_os.c      操作系统运行时（编译进 libcastrt.a）
+│   ├─ cask_net.c     网络与攻防运行时（编译进 libcastrt.a）
+│   ├─ cask_sc.c      便携化交互运行时（编译进 libcastrt.a）
 │   ├─ cask_rt.h      运行时语义基准与内建声明
 │   ├─ C_OPED.cash    窗口程序头（use "C_OPED.cash"; 打开 C / Win32 世界）
 │   ├─ C_CSS.cash     美化头（配 C_OPED 用）
-│   └─ C_IO.cash      文件与系统头（控制台程序也能用）
+│   ├─ C_IO.cash      文件与系统头（控制台程序也能用）
+│   ├─ C_OS.cash      操作系统头（查系统信息、进程、权限）
+│   ├─ C_NET.cash     网络与攻防头（校验、编码、哈希、探测）
+│   └─ C_SC.cash      便携化交互头（便携判断、就地写文件、扫本机端口）
 ├─ editor\
 │   ├─ webide.c       C* Studio 编辑器宿主（原生窗口 + 本机网页服务 + 编译运行桥）
 │   ├─ wv2.cpp        WebView2 接入层（把网页放进原生窗口里）
@@ -106,10 +128,11 @@ C_AS\
 │   └─ images\        文档里的截图
 ├─ examples\          示例程序
 ├─ tests\             测试程序 + 期望输出
-├─ vscode-ext\        VS Code 插件（让 .cask 有高亮和补全）
+├─ vscode-ext\        VS Code 插件（.cask 高亮、补全、运行按钮、实时语法检查）
 ├─ dist\              打包好的发行文件（zip / vsix）
 ├─ bin\               build.bat 生成：caskc.exe、caskide.exe、libcastrt.a、libgcc.a、
-│                     cask_rt.h、C_OPED.cash / C_CSS.cash / C_IO.cash、web\、WebView2Loader.dll
+│                     cask_rt.h、C_OPED.cash / C_CSS.cash / C_IO.cash / C_OS.cash /
+│                     C_NET.cash / C_SC.cash、web\、WebView2Loader.dll
 ├─ build.bat          一键构建整个工具链
 ├─ run_tests.bat      跑全部测试
 └─ README.md
@@ -146,8 +169,9 @@ python docs\md2html.py
 python docs\check_doc_code.py docs\小学版教程.md
 ```
 
-`build.bat` 还会把 `cask_rt.h`、`C_OPED.cash`、`C_CSS.cash`、`C_IO.cash` 和
-`libcastrt.a` 复制到 `bin\`。这些文件必须和 `caskc.exe` 放在一起，编译出来的程序才跑得起来。
+`build.bat` 还会把 `cask_rt.h`、`C_OPED.cash`、`C_CSS.cash`、`C_IO.cash`、`C_OS.cash`、
+`C_NET.cash`、`C_SC.cash` 和 `libcastrt.a` 复制到 `bin\`。这些文件必须和 `caskc.exe` 放在一起，
+编译出来的程序才跑得起来。
 
 ---
 
@@ -275,12 +299,16 @@ UTF-8 和系统编码（如 GBK）保存的 `.cask` 都能正确打开和保存�
 
 ![积木视图](images/blocks.png)
 
-* 左边是**积木箱**，分成 10 类：输出输入、变量数据、运算、判断、循环、函数、
-  字符串与数组、**窗口程序**、**CSS 美化**、其它；每类默认收起，点一下展开。判断/循环类里有
+* 左边是**积木箱**，分成 14 类：输出输入、变量数据、运算、判断、循环、函数、
+  字符串与数组、**窗口程序**、**CSS 美化**、**文件与系统**、**操作系统**、
+  **网络与攻防**、**便携化交互**、其它；每类默认收起，点一下展开。判断/循环类里有
   `if`、`while`、`for`、`until`、`do…while`、`foreach`、`switch/case/default` 这些新老积木；
-  「窗口程序」「CSS 美化」这两类是**头文件插件**：程序里 `use` 了 `C_OPED.cash` /
-  `C_CSS.cash` 它们才出现，没 `use` 就不显示（像没装的插件；「其它」里有
-  "安装窗口插件""安装 CSS 插件" 两个入口积木，点了对应分类才装上）。
+  「窗口程序」「CSS 美化」「文件与系统」「操作系统」「网络与攻防」「便携化交互」这六类是
+  **头文件插件**：程序里 `use` 了 `C_OPED.cash` / `C_CSS.cash` / `C_IO.cash` /
+  `C_OS.cash` / `C_NET.cash` / `C_SC.cash` 它们才出现，没 `use` 就不显示（像没装的插件；
+  「其它」里有"安装窗口插件""安装 CSS 插件"等入口积木，点了对应分类才装上）。
+  0.5.1 起「文件与系统」（`C_IO.cash`）及三个新分类（`C_OS.cash` 操作系统、
+  `C_NET.cash` 网络与攻防、`C_SC.cash` 便携化交互）的积木才真正出现在积木箱里（见 5.8）。
 * **加入**：点一块积木就插进程序里（插在当前选中的积木后面，没选就插在末尾）；
   也可以直接把它**拖到画布**上想要的位置松开。
 * **移动**：拖动画布里的积木换位置——拖动时有一个半透明**影子**跟着鼠标走，
@@ -939,6 +967,89 @@ calc.exe                                                  # 运行，点按键�
 | 中文变成方块 / 乱码 | 源文件存成 UTF-8（菜单栏「编辑 → 转成 UTF-8」） |
 | 提示 `找不到 'C_OPED.cash'` | `C_OPED.cash` 要和 `caskc.exe` 放在一起（`build.bat` 会自动复制） |
 
+### 5.8 三个新头：操作系统 / 网络攻防 / 便携化交互（0.5.1）
+
+三个头都能**单独给控制台程序用**（不必开窗口），也都能和 `C_OPED.cash` / `C_CSS.cash` 叠在一起做成窗口工具。
+
+#### 5.8.1 操作系统：`use "C_OS.cash";`
+
+| 函数 | 作用 | 返回 |
+|------|------|------|
+| `os_pid()` | 本程序进程号 | `> 0` |
+| `os_cores()` | 逻辑 CPU 核数 | `>= 1` |
+| `os_ram()` | 物理内存（GB） | `>= 0` |
+| `os_cpu()` | CPU 型号 | 拿不到给 `""` |
+| `os_hostname()` | 本机主机名 | 拿不到给 `""` |
+| `os_platform()` | `"windows"` / `"linux"` / `"mac"` | 文字 |
+| `isadmin()` | 以管理员 / root 运行 | `1` / `0` |
+| `uptime()` | 开机到现在的毫秒 | `>= 0` |
+| `findproc(名字)` | 有这个名字的进程在跑 | `1` / `0` |
+
+```cask
+use "C_OS.cash";
+
+function main() {
+    print "平台 ", os_platform(), "，核数 ", os_cores(), "，内存 ", os_ram(), " GB";
+    if (isadmin() == 1) print "管理员";
+    return 0;
+}
+```
+
+> `os_cpu` / `os_hostname` / `os_ram` 的值因机器而异，**只展示、别写死**；要判断只判"非空 / 非 0"。
+
+#### 5.8.2 网络与攻防（防御层）：`use "C_NET.cash";`
+
+| 函数 | 作用 | 说明 |
+|------|------|------|
+| `isurl(文字)` | 是 `http://` 或 `https://` | 纯计算 |
+| `isip(文字)` | 是 IPv4 点分十进制 | 纯计算 |
+| `urlhost(网址)` | 取主机名（去端口） | 纯计算 |
+| `urlport(网址)` | 取端口（缺省 https=443/http=80） | 纯计算 |
+| `fnv1a(文字)` | 32 位 FNV-1a 哈希 | 纯计算，同输入同输出 |
+| `base64(文字)` / `unbase64(文字)` | 编码 / 解码往返 | 纯计算 |
+| `hostalive(主机, 端口)` | 某端口 TCP 通不通 | 会 socket，约 3 秒；离网给 0 |
+
+```cask
+use "C_NET.cash";
+
+function main() {
+    if (isurl("https://a.com") == 1) print "合法网址", urlhost("https://a.com/x");
+    string e = base64("hi");
+    print "base64 往返:", unbase64(e);
+    return 0;
+}
+```
+
+> "攻防"在这里指**防御性的校验、编码、完整性与只读探测**；C* 不提供发 raw socket、
+> 不做网络嗅探或攻击。`hostalive` 只尝试连接、看是否通。
+
+#### 5.8.3 S/C 便携化交互：`use "C_SC.cash";`
+
+| 函数 | 作用 | 返回 |
+|------|------|------|
+| `isportable()` | exe 所在目录可写（能就地放文件） | `1` / `0` |
+| `copytoexe(名, 内容)` | 写一个文本文件到 exe 旁边 | 成功 `1` |
+| `freebytes()` | 空闲内存（字节） | `>= 0` |
+| `diskfree(路径)` | 路径所在分区空闲字节 | `>= 0` |
+| `is64bit()` | 跑在 64 位环境 | `1` / `0` |
+| `portcheck(端口)` | `127.0.0.1` 上某 TCP 端口是否开着 | `1` / `0` |
+| `portscan(起, 止)` | 这段端口开着几个 | 个数 |
+
+```cask
+use "C_SC.cash";
+
+function main() {
+    if (isportable() == 1) print "绿色版：可就地放文件";
+    if (copytoexe("note.txt", "ok") == 1) print "写了 note.txt";
+    print "80 端口：", portcheck(80);
+    return 0;
+}
+```
+
+> `portcheck` / `portscan` 是往 `127.0.0.1` 拨号的**只读探测**：只连、不听，不对外。
+
+三个头各自的完整讲解、综合示例（"系统信息面板"窗口）与测验，见高职教材第 13 章。
+
 ---
 
 ## 6. 安全机制（重点）
@@ -1080,16 +1191,40 @@ bin\caskc.exe 我的窗口.cask --run --console
 
 `vscode-ext\` 里是一个 VS Code 扩展（`c-asterisk`）：装上以后，`.cask` 文件会有
 
+* 语言图标（编辑器文件树 / 标签页上显示 C* 的六边形图标）
 * 语法高亮（关键字、类型、内建函数、字符串、注释）
 * 代码片段（输入 `main`、`print`、`for`、`if`… 按 Tab 就能展开成完整骨架）
 * 括号自动配对、`//` 自动注释
+* **工具栏「运行」按钮**（`$(play)` 图标）：一键调用 `caskc` 编译并运行当前文件（可配 `runAttachConsole`）
+* **工具栏「语法检查」按钮**（`$(checklist)` 图标）：手动触发一次 `caskc --check --diag`
+* **实时语法检查**：打开 / 改动停顿约 0.45 秒自动后台跑 `--check`；保存时立即再跑一次。
+  每条问题（`P/S/E/H|行|列|信息`）解析成 VS Code 的「问题」面板诊断：
+  `E`/`S` → 错误（红）、`P` → 警告（橙）、`H` → 信息（蓝），来源标注 `C*`
 
-安装方法：在 VS Code 里按 `Ctrl+Shift+P` → 输入 `Install from VSIX` → 选 `dist\c-asterisk-0.5.0.vsix`。
+安装方法：在 VS Code 里按 `Ctrl+Shift+P` → 输入 `Install from VSIX` → 选 `dist\c-asterisk-0.5.1.vsix`。
 （在 `vscode-ext\` 目录里运行 `npx @vscode/vsce package` 也可以自己重新打包。）
 
-想让它也能一键编译/运行，可以在 VS Code 的 `tasks.json` 里加一条调用 `bin\caskc.exe` 的任务，
-或者在 VS Code 的集成终端里直接用 `bin\caskc.exe 程序.cask --run`。
+**编译器怎么找到**（自动按序尝试，也可手动指定）：
+
+1. 设置 `casterisk.caskcPath`（最优先，绝对路径或相对工作区）
+2. 向上找 `.caskc` 所在的 `bin\caskc.exe`（或 `caskc`）
+3. `PATH` 里的 `caskc.exe` / `caskc`
+
+设置项一览：
+
+| 设置 | 默认 | 作用 |
+|------|------|------|
+| `casterisk.caskcPath` | 空 | 显式指定 `caskc` 可执行文件 |
+| `casterisk.autoCheck` | `true` | 打开 / 改动时自动跑语法检查 |
+| `casterisk.checkOnSave` | `true` | 保存时再跑一次语法检查 |
+| `casterisk.runAttachConsole` | `false` | 运行时加 `--console`（窗口程序保留黑控制台看 print） |
+
+命令行直接编译 / 运行的写法不变：
+
+```bat
+bin\caskc.exe 程序.cask --run
+```
 
 ---
 
-*C* 0.5.0 · 源码与问题反馈见 `README.md`。*
+*C* 0.5.1 · 源码与问题反馈见 `README.md`。*

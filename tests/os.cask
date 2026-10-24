@@ -1,0 +1,12 @@
+// os.cask -- C_OS.cash 自检测试（只断言"必真"的属性，不依赖具体系统值）
+use "C_OS.cash";
+
+function main() {
+    if (os_pid() > 0) print "pid_ok";
+    if (os_cores() >= 1) print "cores_ok";
+    if (os_ram() >= 0) print "ram_ok";
+    if (uptime() >= 0) print "uptime_ok";
+    if (os_platform() != "") print "plat_ne";
+    if (findproc("no_such_proc_xyz") == 0) print "fp_none";
+    return 0;
+}

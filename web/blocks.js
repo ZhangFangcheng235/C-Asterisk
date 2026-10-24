@@ -532,6 +532,10 @@ var CATEGORIES = [
   { id: 'text', name: '字符串与数组' },
   { id: 'win',  name: '窗口程序' },
   { id: 'css',  name: 'CSS 美化' },
+  { id: 'io',   name: '文件与系统' },
+  { id: 'os',   name: '操作系统' },
+  { id: 'net',  name: '网络与攻防' },
+  { id: 'sc',   name: '便携化交互' },
   { id: 'misc', name: '其它' }
 ];
 
@@ -539,7 +543,11 @@ var CATEGORIES = [
  * 不 use 就根本不出现 —— "不use就用不了，不显示"。 */
 var HEADER_GATED = {
   win: 'C_OPED.cash',
-  css: 'C_CSS.cash'
+  css: 'C_CSS.cash',
+  io:  'C_IO.cash',
+  os:  'C_OS.cash',
+  net: 'C_NET.cash',
+  sc:  'C_SC.cash'
 };
 
 /* 扫描代码里 use 了哪些头文件（.cask 里写 use "X.cash"; 就算 use 了） */
@@ -569,7 +577,10 @@ var CAT_COLOR = {
   text: { dot: '#ce9178', cls: 'c-text', name: '橙' },
   win:  { dot: '#4fc1ff', cls: 'c-win',  name: '天蓝' },
   css:  { dot: '#ab7dff', cls: 'c-css',  name: '紫' },
-  io:   { dot: '#dcaa5a', cls: 'c-misc', name: '沙金' },
+  io:   { dot: '#dcaa5a', cls: 'c-io',   name: '沙金' },
+  os:   { dot: '#5fc9b8', cls: 'c-os',   name: '青绿' },
+  net:  { dot: '#ff7f6e', cls: 'c-net',  name: '珊瑚红' },
+  sc:   { dot: '#e2b743', cls: 'c-sc',   name: '琥珀' },
   misc: { dot: '#9aa3b5', cls: 'c-misc', name: '灰' },
   comment: { dot: '#6a9955', cls: 'c-comment', name: '注释绿' }
 };
@@ -609,7 +620,17 @@ var CALL_CAT = {
   cscolor: 'css', csapply: 'css',
   /* 文件与系统（C_IO.cash） */
   readfile: 'io', writefile: 'io', appendfile: 'io', fileexists: 'io',
-  makedir: 'io', appdir: 'io', envget: 'io', launchwait: 'io'
+  makedir: 'io', appdir: 'io', envget: 'io', launchwait: 'io',
+  /* 操作系统（C_OS.cash） */
+  os_pid: 'os', os_cores: 'os', os_ram: 'os', os_cpu: 'os',
+  os_hostname: 'os', os_platform: 'os', isadmin: 'os', uptime: 'os',
+  findproc: 'os',
+  /* 网络与攻防（C_NET.cash） */
+  isurl: 'net', isip: 'net', urlhost: 'net', urlport: 'net',
+  fnv1a: 'net', base64: 'net', unbase64: 'net', hostalive: 'net',
+  /* 便携化交互（C_SC.cash） */
+  isportable: 'sc', copytoexe: 'sc', freebytes: 'sc', diskfree: 'sc',
+  is64bit: 'sc', portcheck: 'sc', portscan: 'sc'
 };
 
 /* 语句里第一个被调用的函数名（大小写原样），比如 'button'、'SUM' */
@@ -758,13 +779,16 @@ function stmtCat(s) {
     case 'break': case 'continue': return 'loop';
     case 'function': case 'return': return 'fn';
     case 'use': {
-      /* use "C_CSS.cash" 归 css，use "C_OPED.cash" 归 win，别的头文件归 misc */
+      /* use "某.cash" 归到对应分组；别的头文件归 misc */
       for (var ui = 0; ui < toks.length; ui++)
         if (toks[ui].kind === 'str') {
           var hh = toks[ui].text;
           if (hh.indexOf('C_CSS') >= 0) return 'css';
           if (hh.indexOf('C_OPED') >= 0) return 'win';
           if (hh.indexOf('C_IO') >= 0) return 'io';
+          if (hh.indexOf('C_OS') >= 0) return 'os';
+          if (hh.indexOf('C_NET') >= 0) return 'net';
+          if (hh.indexOf('C_SC') >= 0) return 'sc';
           return 'misc';
         }
       return 'win';
@@ -955,6 +979,39 @@ var PALETTE = [
   { cat: 'io', name: '读环境变量',     hint: 'envget("名字")',              code: 'v = envget("PATH");\n' },
   { cat: 'io', name: '启动并等它退出', hint: 'launchwait(命令);',           code: '退出码 = launchwait("cmd /c pause");\n' },
 
+  /* ---- 操作系统（C_OS.cash） ---- */
+  { cat: 'os', name: '安装操作系统插件', hint: 'use "C_OS.cash";',          code: 'use "C_OS.cash";\n' },
+  { cat: 'os', name: '本程序进程号',    hint: 'int p = os_pid();',         code: 'int 进程号 = os_pid();\n' },
+  { cat: 'os', name: 'CPU 核数',        hint: 'int n = os_cores();',       code: 'int 核数 = os_cores();\n' },
+  { cat: 'os', name: '内存（GB）',      hint: 'int g = os_ram();',         code: 'int 内存GB = os_ram();\n' },
+  { cat: 'os', name: 'CPU 型号',        hint: 'string c = os_cpu();',      code: 'string 型号 = os_cpu();\n' },
+  { cat: 'os', name: '主机名',          hint: 'string h = os_hostname();', code: 'string 主机 = os_hostname();\n' },
+  { cat: 'os', name: '平台',            hint: 'string p = os_platform();', code: 'string 平台 = os_platform();\n' },
+  { cat: 'os', name: '是管理员吗',     hint: 'if (isadmin()) { }',         code: 'if (isadmin() == 1) {\n}\n' },
+  { cat: 'os', name: '开机毫秒数',      hint: 'int ms = uptime();',        code: 'int 毫秒 = uptime();\n' },
+  { cat: 'os', name: '找进程',          hint: 'if (findproc("名称") != 0) { }', code: 'if (findproc("notepad") != 0) {\n}\n' },
+
+  /* ---- 网络与攻防（C_NET.cash） ---- */
+  { cat: 'net', name: '安装网络插件',   hint: 'use "C_NET.cash";',         code: 'use "C_NET.cash";\n' },
+  { cat: 'net', name: '是网址吗',       hint: 'if (isurl(文字) != 0) { }', code: 'if (isurl("https://a.com") != 0) {\n}\n' },
+  { cat: 'net', name: '是 IP 吗',       hint: 'if (isip(文字) != 0) { }',  code: 'if (isip("1.2.3.4") != 0) {\n}\n' },
+  { cat: 'net', name: '取网址的主机',   hint: 'urlhost("https://a.com/x")', code: 'string 主机 = urlhost("https://a.com/x");\n' },
+  { cat: 'net', name: '取网址的端口',   hint: 'urlport("https://a.com")',  code: 'int 端口 = urlport("https://a.com");\n' },
+  { cat: 'net', name: '内容哈希',       hint: 'int h = fnv1a(文字);',      code: 'int 哈希 = fnv1a(口令);\n' },
+  { cat: 'net', name: 'base64 编码',    hint: 'string e = base64(文字);', code: 'string 密 = base64(原文);\n' },
+  { cat: 'net', name: 'base64 解码',    hint: 'string d = unbase64(文字);', code: 'string 明 = unbase64(密);\n' },
+  { cat: 'net', name: '主机在线吗',     hint: 'if (hostalive(主机, 端口) != 0) { }', code: 'if (hostalive("127.0.0.1", 8080) != 0) {\n}\n' },
+
+  /* ---- 便携化交互（C_SC.cash） ---- */
+  { cat: 'sc', name: '安装便携插件',    hint: 'use "C_SC.cash";',          code: 'use "C_SC.cash";\n' },
+  { cat: 'sc', name: '能就地存文件吗',  hint: 'if (isportable() != 0) { }', code: 'if (isportable() != 0) {\n}\n' },
+  { cat: 'sc', name: '写到程序旁边',    hint: 'copytoexe(名, 内容);',     code: 'copytoexe("save.txt", "内容");\n' },
+  { cat: 'sc', name: '空闲内存（字节）', hint: 'int b = freebytes();',     code: 'int 空闲 = freebytes();\n' },
+  { cat: 'sc', name: '磁盘空闲（字节）', hint: 'int b = diskfree(路径);',  code: 'int 空闲 = diskfree("C:");\n' },
+  { cat: 'sc', name: '是 64 位吗',      hint: 'if (is64bit() != 0) { }',  code: 'if (is64bit() != 0) {\n}\n' },
+  { cat: 'sc', name: '端口开着吗',      hint: 'if (portcheck(端口) != 0) { }', code: 'if (portcheck(8080) != 0) {\n}\n' },
+  { cat: 'sc', name: '数开着的端口',    hint: 'portscan(起, 止);',        code: 'int 个数 = portscan(80, 89);\n' },
+
   { cat: 'misc', name: '安装 CSS 插件', hint: 'use "C_CSS.cash";',     code: 'use "C_CSS.cash";\n' },
   { cat: 'misc', name: '引入头文件', hint: 'use "my_helper.h";',       code: 'use "my_helper.h";\n' },
   { cat: 'misc', name: '空语句',     hint: ';',                        code: ';\n' },
@@ -1085,6 +1142,10 @@ var UI = (typeof window === 'undefined' || typeof document === 'undefined') ? nu
     '.c-text{--c:#ce9178;--bg:#5a4038}',
     '.c-win{--c:#4fc1ff;--bg:#1f4a66}',
     '.c-css{--c:#ab7dff;--bg:#3a2f5a}',
+    '.c-io{--c:#dcaa5a;--bg:#5a4a28}',
+    '.c-os{--c:#5fc9b8;--bg:#2a5a50}',
+    '.c-net{--c:#ff7f6e;--bg:#5a2a24}',
+    '.c-sc{--c:#e2b743;--bg:#5a4a18}',
     '.c-misc{--c:#8b93a3;--bg:#474e5e}',
     '.c-comment{--c:#6a9955;--bg:#2a3325}',
     '.slot.blk-comment{font-style:italic;font-weight:600;background:#2a3325;color:#a5d6a7;',

@@ -1,0 +1,230 @@
+/* ============================================================
+ *  C_OS.cash -- C* 的"操作系统"头（Windows / Linux / macOS 通用）
+ *
+ *      use "C_OS.cash";
+ *
+ *  给 C* 程序打开"操作系统"层面：查系统信息、看当前进程、
+ *  判断权限、数运行时长。用它可以把 C* 程序写成"能读懂系统"的
+ *  小工具（配合 C_IO 建一个系统信息面板，配合 C_NET 做网络面板）。
+ *
+ *  打开这些函数（失败给 0 或 ""，不崩溃）：
+ *
+ *      os_pid()        本程序的进程号（> 0）
+ *      os_cores()      逻辑 CPU 核数（>= 1）
+ *      os_ram()        物理内存大小，单位 GB（>= 0）
+ *      os_cpu()        CPU 型号文字（拿不到给 ""）
+ *      os_hostname()   本机主机名（拿不到给 ""）
+ *      os_platform()   "windows" / "linux" / "mac"
+ *      isadmin()      以管理员 / root 身份运行 -> 1 / 0
+ *      uptime()        开机到现在经过的毫秒数（>= 0）
+ *      findproc(名字)  有这个名字的进程在跑 -> 1 / 0
+ *
+ *  注意：os_cpu / os_hostname / os_ram 的值因机器而异，程序里别写死；
+ *  要显示就显示，要判断只判断"非空 / 非 0"。
+ * ============================================================ */
+#ifndef CASK_OS_CASH
+#define CASK_OS_CASH
+
+#ifdef _WIN32
+
+#include <windows.h>
+#include <tlhelp32.h>
+#include <winreg.h>
+#include <stdio.h>
+
+static int cask_os_pid(void)
+{ return (int)GetCurrentProcessId(); }
+
+static int cask_os_cores(void)
+{
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    int n = (int)si.dwNumberOfProcessors;
+    return n > 0 ? n : 1;
+}
+
+static int cask_os_ram(void)
+{
+    MEMORYSTATUSEX ms;
+    ms.dwLength = sizeof ms;
+    if (GlobalMemoryStatusEx(&ms))
+        return (int)(ms.ullTotalPhys / (1024ull * 1024 * 1024));
+    return 0;
+}
+
+static const char *cask_os_cpu(void)
+{
+    static char buf[512];
+    buf[0] = 0;
+    HKEY k;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+            "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+            0, KEY_READ, &k) == ERROR_SUCCESS) {
+        char val[512]; DWORD sz = sizeof val;
+        if (RegQueryValueExA(k, "ProcessorNameString", 0, NULL,
+                             (LPBYTE)val, &sz) == ERROR_SUCCESS) {
+            int L = 0;
+            for (DWORD i = 0; i < sz && val[i] && L < (int)sizeof buf - 1; i++)
+                buf[L++] = (val[i] >= 32 && val[i] < 127) ? val[i] : 0;
+            buf[L] = 0;
+            while (L > 0 && buf[L - 1] == ' ') buf[--L] = 0;   /* 去尾部空格 */
+        }
+        RegCloseKey(k);
+    }
+    return buf;
+}
+
+static const char *cask_os_hostname(void)
+{
+    static char buf[256];
+    DWORD n = sizeof buf;
+    if (!GetComputerNameA(buf, &n)) buf[0] = 0;
+    return buf;
+}
+
+static const char *cask_os_platform(void)
+{ return "windows"; }
+
+static int cask_os_isadmin(void)
+{
+    BOOL ok = FALSE;
+    HANDLE t = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &ok);
+    if (!t) return 0;
+    BOOL admin = FALSE;
+    LUID luid;
+    if (LookupPrivilegeValueA(NULL, "SeDebugPrivilege", &luid)) {
+        TOKEN_PRIVILEGES tp;
+        tp.PrivilegeCount = 1;
+        tp.Privileges[0].Luid = luid;
+        if (GetTokenInformation(t, TokenPrivileges, &tp, sizeof tp, NULL))
+            admin = (tp.Privileges[0].Attributes & SE_PRIVILEGE_ENABLED) != 0;
+    }
+    CloseHandle(t);
+    return admin ? 1 : 0;
+}
+
+static long long cask_os_uptime(void)
+{
+    return (long long)GetTickCount64();
+}
+
+static int cask_os_findproc(const char *name)
+{
+    if (!name || !*name) return 0;
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return 0;
+    PROCESSENTRY32 pe; pe.dwSize = sizeof pe;
+    int found = 0;
+    if (Process32First(snap, &pe))
+        do {
+            if (lstrcmpiA(pe.szExeFile, name) == 0) { found = 1; break; }
+        } while (Process32Next(snap, &pe));
+    CloseHandle(snap);
+    return found;
+}
+
+#else  /* ===================== Linux / macOS ===================== */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <dirent.h>
+
+static int cask_os_pid(void) { return (int)getpid(); }
+
+static int cask_os_cores(void)
+{
+    long n = sysconf(_SC_NPROCESSORS_ONLN);
+    return n > 0 ? (int)n : 1;
+}
+
+static int cask_os_ram(void)
+{
+    long pages = sysconf(_SC_PHYS_PAGES);
+    long ps    = sysconf(_SC_PAGESIZE);
+    if (pages <= 0 || ps <= 0) return 0;
+    return (int)((unsigned long long)pages * ps / (1024ull * 1024 * 1024));
+}
+
+static const char *cask_os_cpu(void)
+{
+    static char buf[512];
+    buf[0] = 0;
+    FILE *f = fopen("/proc/cpuinfo", "r");        /* macOS 没有 /proc，给 "" */
+    if (f) {
+        char line[1024];
+        while (fgets(line, sizeof line, f)) {
+            char *p = strstr(line, "model name");
+            if (!p) p = strstr(line, "Hardware");  /* mac: "Hardware Model" */
+            if (p) {
+                p = strchr(p, ':');
+                if (!p) continue;
+                p++;
+                while (*p == ' ' || *p == '\t') p++;
+                int i = 0;
+                while (*p && *p != '\n' && i < (int)sizeof buf - 1) buf[i++] = *p++;
+                buf[i] = 0;
+                break;
+            }
+        }
+        fclose(f);
+    }
+    return buf;
+}
+
+static const char *cask_os_hostname(void)
+{
+    static char buf[256];
+    if (gethostname(buf, sizeof buf) != 0) buf[0] = 0;
+    return buf;
+}
+
+static const char *cask_os_platform(void)
+{
+#if defined(__APPLE__)
+    return "mac";
+#else
+    return "linux";
+#endif
+}
+
+static int cask_os_isadmin(void)
+{ return (geteuid() == 0) ? 1 : 0; }
+
+static long long cask_os_uptime(void)
+{
+    FILE *f = fopen("/proc/uptime", "r");
+    long long ms = 0;
+    double sec = 0;
+    if (f) { if (fscanf(f, "%lf", &sec) == 1) ms = (long long)(sec * 1000); fclose(f); }
+    return ms;
+}
+
+static int cask_os_findproc(const char *name)
+{
+    if (!name || !*name) return 0;
+    DIR *d = opendir("/proc");
+    if (!d) return 0;
+    struct dirent *e;
+    int found = 0;
+    while ((e = readdir(d))) {
+        if (e->d_name[0] < '1' || e->d_name[0] > '9') continue;
+        char path[512];
+        snprintf(path, sizeof path, "/proc/%s/comm", e->d_name);
+        FILE *cf = fopen(path, "r");
+        if (!cf) continue;
+        char comm[128];
+        if (fgets(comm, sizeof comm, cf)) {
+            while (comm[strlen(comm) - 1] == '\n') comm[strlen(comm) - 1] = 0;
+            if (strcmp(comm, name) == 0) { found = 1; fclose(cf); break; }
+        }
+        fclose(cf);
+    }
+    closedir(d);
+    return found;
+}
+
+#endif /* _WIN32 / POSIX */
+
+#endif /* CASK_OS_CASH */

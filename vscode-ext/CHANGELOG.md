@@ -1,5 +1,21 @@
 # Change Log
 
+## 0.5.1
+
+- Extension is now a program (adds `extension.js`): besides highlighting
+  and snippets it ships a **Run** button (editor title bar) that compiles and
+  runs the open `.cask` with `caskc` (adds `--console` for window programs so
+  `print` is visible), and **syntax checking** — `caskc --check --diag` whose
+  machine-readable `P/S/E/H|line|col|message` lines are parsed into the
+  VS Code **Problems** panel (auto on open/save, or the "C*: 语法检查"
+  command). Point `casterisk.caskcPath` at your `caskc` if it is not on a
+  `bin/` folder above the file.
+- `.cask` files get a per-file **language icon** (`languages.icon`), not just
+  the package icon.
+- Follows C* 0.5.x headers `C_OS.cash` / `C_NET.cash` / `C_SC.cash`
+  (operating-system info, network/security helpers, portable S/C interop) plus
+  the 0.5.0 `C_IO.cash`.
+
 ## 0.5.0
 
 - Follows C* 0.5.0. The compiler now emits x86-64 assembly directly

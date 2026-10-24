@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>小学版教程 · C* 语言（0.5.0）</title>
+<title>小学版教程 · C* 语言（0.5.1）</title>
 <style>
   body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
          line-height: 1.7; color: #222; background: #fafafa;
@@ -27,13 +27,16 @@
 </style>
 </head>
 <body>
-<h1>小学版教程 · C* 语言（0.5.0）</h1>
+<h1>小学版教程 · C* 语言（0.5.1）</h1>
 <blockquote><p>C* 读作 <strong>C Asterisk</strong>。程序文件的后缀是 <code>.cask</code>。
 这本教程写给第一次学编程的同学：会打字、会数数就够了，不需要任何基础。
 一共 18 课，每课都有能直接按 F5 跑起来的小例子。
 
 <strong>0.5.0 新增</strong>：第 17 课「把东西存进文件」、第 18 课「给窗口穿上彩衣」。
-想查细节，翻 <code>docs\CStar手册.md</code>；想练更难的题，接着看《C* 初中版教程》。</p></blockquote>
+想查细节，翻 <code>docs\CStar手册.md</code>；想练更难的题，接着看《C* 初中版教程》。
+
+<strong>0.5.1 新增</strong>：第 17 课末补了一小块「小知识」，预告后面还会有 <code>C_OS.cash</code>、
+<code>C_NET.cash</code>、<code>C_SC.cash</code> 三个"工具箱头文件"，说人话版各能干什么。</p></blockquote>
 <hr>
 <h2>开始之前：先认识两个程序</h2>
 <p>安装好 C* 以后，<code>bin</code> 文件夹里有两个程序：</p>
@@ -733,6 +736,15 @@ function main() {
 <p><strong>注意</strong>：<code>readfile</code> 一次最多读 1MB，写日记、记名单足够用。</p>
 <h3>动手试一试</h3>
 <ol><li>把文件名改成 <code>我的日记.txt</code>，写一段今天发生的事，保存后关掉程序再打开。</li><li>给「保存」旁边再加一个「清空」按钮，点它把输入框清空（提示：<code>settext(记录框, "")</code>）。</li><li>在状态栏显示"上次保存成功"的时间？先想想：C* 有没有现成的取时间函数。</li></ol>
+<p><strong>小知识（学有余力的同学）</strong>：C* 后面还会多出几个"工具箱头文件"，写一行 <code>use</code> 就能用：</p>
+<table>
+<thead><tr><th>一行 <code>use</code></th><th>能干什么（说人话版）</th></tr></thead>
+<tbody>
+<tr><td><code>use "C_OS.cash";</code></td><td>看看这台电脑是几核、多少内存、是不是管理员开的</td></tr>
+<tr><td><code>use "C_NET.cash";</code></td><td>判断网址写得对不对、把内容变成一段"编码"再变回来</td></tr>
+<tr><td><code>use "C_SC.cash";</code></td><td>判断程序放哪儿都能跑（便携）、看看本机端口开没开</td></tr>
+</tbody></table>
+<p>这些头在中学、大学的 C* 教材里会详细讲；现在知道"有这几个工具箱"就够了。</p>
 <hr>
 <h2>第 18 课　给窗口穿上彩衣</h2>
 <p><strong>这一课学什么</strong>：用 <code>C_CSS.cash</code> 给窗口、标题、输入框和按钮换颜色、改字号。</p>

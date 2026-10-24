@@ -16,5 +16,20 @@
     "name": "文件与系统工具箱",
     "summary": "读写文件和一些系统小工具：readfile / writefile / appendfile 整文件读写追加，fileexists 判断存在，makedir 建目录，appdir 取本程序所在目录，envget 读环境变量，launchwait 启动外部程序并等它跑完拿退出码。控制台程序也能用，不需要 C_OPED.cash。",
     "provides": ["io"]
+  },
+  "C_OS.cash": {
+    "name": "操作系统工具箱",
+    "summary": "查系统信息：os_pid 进程号，os_cores 核数，os_ram 内存（GB），os_cpu 型号，os_hostname 主机名，os_platform 平台，isadmin 是否管理员，uptime 开机毫秒，findproc 找进程。把 C* 写成“能读懂系统”的小工具。",
+    "provides": ["os"]
+  },
+  "C_NET.cash": {
+    "name": "网络与攻防工具箱",
+    "summary": "网络协议校验 / 编码 / 哈希 / 主机探测：isurl 是网址吗，isip 是 IPv4 吗，urlhost / urlport 拆网址，fnv1a 内容哈希，base64 / unbase64 编解码，hostalive(主机, 端口) TCP 探活。配合 C_IO 和 C_OS 能做网络体检面板。",
+    "provides": ["net"]
+  },
+  "C_SC.cash": {
+    "name": "S/C 便携化交互工具箱",
+    "summary": "把工具做成便携单文件形态并做轻量交互：isportable 能否就地存文件，copytoexe 写文件到 exe 旁边，freebytes / diskfree 资源，is64bit 环境，portcheck / portscan 扫本地端口。",
+    "provides": ["sc"]
   }
 }

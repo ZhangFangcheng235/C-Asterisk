@@ -46,7 +46,22 @@ if errorlevel 1 (
     echo [build] FAILED to build compiler\cask_io.c.
     exit /b 1
 )
-ar rcs bin\libcastrt.a build\cask_rt.o build\cask_gui.o build\cask_io.o
+gcc -O2 -w -c compiler\cask_os.c -o build\cask_os.o
+if errorlevel 1 (
+    echo [build] FAILED to build compiler\cask_os.c.
+    exit /b 1
+)
+gcc -O2 -w -c compiler\cask_net.c -o build\cask_net.o
+if errorlevel 1 (
+    echo [build] FAILED to build compiler\cask_net.c.
+    exit /b 1
+)
+gcc -O2 -w -c compiler\cask_sc.c -o build\cask_sc.o
+if errorlevel 1 (
+    echo [build] FAILED to build compiler\cask_sc.c.
+    exit /b 1
+)
+ar rcs bin\libcastrt.a build\cask_rt.o build\cask_gui.o build\cask_io.o build\cask_os.o build\cask_net.o build\cask_sc.o
 if errorlevel 1 (
     echo [build] FAILED to create bin\libcastrt.a.
     exit /b 1
@@ -106,6 +121,12 @@ echo [build] header    -^> bin\C_CSS.cash
 copy /y compiler\C_CSS.cash bin\C_CSS.cash >nul
 echo [build] header    -^> bin\C_IO.cash
 copy /y compiler\C_IO.cash bin\C_IO.cash >nul
+echo [build] header    -^> bin\C_OS.cash
+copy /y compiler\C_OS.cash bin\C_OS.cash >nul
+echo [build] header    -^> bin\C_NET.cash
+copy /y compiler\C_NET.cash bin\C_NET.cash >nul
+echo [build] header    -^> bin\C_SC.cash
+copy /y compiler\C_SC.cash bin\C_SC.cash >nul
 if exist build\C_OPED.cash del /q build\C_OPED.cash >nul
 if exist build\C_CSS.cash del /q build\C_CSS.cash >nul
 if exist examples\C_OPED.cash del /q examples\C_OPED.cash >nul

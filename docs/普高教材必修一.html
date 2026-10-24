@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>C* 语言 必修一（0.5.0）</title>
+<title>C* 语言 必修一（0.5.1）</title>
 <style>
   body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
          line-height: 1.7; color: #222; background: #fafafa;
@@ -27,12 +27,16 @@
 </style>
 </head>
 <body>
-<h1>C* 语言 必修一（0.5.0）</h1>
+<h1>C* 语言 必修一（0.5.1）</h1>
 <blockquote><p>普通高中信息技术教材 · 必修一
-C* 读作 <strong>C Asterisk</strong>。书中的程序按 <strong>0.5.0 版</strong>的写法书写，全部经编译器实际编译验证。
+C* 读作 <strong>C Asterisk</strong>。书中的程序按 <strong>0.5.1 版</strong>的写法书写，全部经编译器实际编译验证。
 
 <strong>0.5.0 新增</strong>：4.5 节「文件与系统」、4.6 节「界面美化」；窗口程序现在能真正保存数据、
-使用自定义配色。</p></blockquote>
+使用自定义配色。
+
+<strong>0.5.1 新增</strong>：4.5 节末尾补了「三个新头」拓展——<code>C_OS.cash</code>（操作系统）、
+<code>C_NET.cash</code>（网络与攻防，只做校验/编码/哈希/只读探测）、<code>C_SC.cash</code>（S/C 便携化交互）；
+控制台程序也能用，完整讲法见高职教材第 13 章。</p></blockquote>
 <h2>写在前面</h2>
 <p>本书面向已经会使用计算机、第一次系统学习编程的高一学生。C* 的语法接近 C 语言，
 关键字都是英语里的常用词，变量名和函数名还可以写成中文，适合用来学习程序的基本结构。</p>
@@ -1585,6 +1589,24 @@ number main() {
 <ol><li>把上面的账本改成先问用户一行内容，再追加到文件。</li><li>用 <code>makedir(appdir() + "/data")</code> 建目录，把账本写进 <code>data/</code>。</li></ol>
 <p><strong>提高</strong></p>
 <ol><li>用 <code>envget("USERPROFILE")</code> 找到用户目录，把设置文件存到那里。</li><li>写一个程序：用 <code>launchwait("notepad.exe")</code> 打开记事本，等用户关掉后再打印"记事本已关闭"。</li></ol>
+<h3>拓展：三个新头（0.5.1）</h3>
+<p>0.5.1 给 C* 又开了三个头文件，控制台程序也能用（完整讲法见高职教材第 13 章）：</p>
+<table>
+<thead><tr><th>头文件</th><th>一句话</th><th>主要函数</th></tr></thead>
+<tbody>
+<tr><td><code>use "C_OS.cash";</code></td><td>读懂操作系统</td><td><code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code></td></tr>
+<tr><td><code>use "C_NET.cash";</code></td><td>网络与攻防（防御层）</td><td><code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code></td></tr>
+<tr><td><code>use "C_SC.cash";</code></td><td>S/C 便携化交互</td><td><code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code></td></tr>
+</tbody></table>
+<p>最常用的一小段：</p>
+<pre><code class="lang-cask">use "C_OS.cash";
+
+function main() {
+    print "平台 ", os_platform(), "，核数 ", os_cores(), "，内存 ", os_ram(), " GB";
+    return 0;
+}</code></pre>
+<p>积木视图里，"文件与系统"（<code>C_IO.cash</code>）以及"操作系统 / 网络与攻防 / 便携化交互"四个分类，
+都要先 <code>use</code> 对应头文件才出现。</p>
 <hr>
 <h2>4.6　界面美化</h2>
 <h3>学习目标</h3>

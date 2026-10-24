@@ -31,6 +31,10 @@
   --t-text: #ce9178;   /* 字符串与数组：LEN at "…" —— 橙（VS 字符串） */
   --t-win:  #4fc1ff;   /* 窗口程序：use window button … —— 天蓝 */
   --t-css:  #ab7dff;   /* CSS 美化：cstext csbg csfont … —— 紫 */
+  --t-io:   #dcaa5a;   /* 文件与系统：readfile writefile appdir … —— 沙金 */
+  --t-os:   #5fc9b8;   /* 操作系统：os_pid os_cores isadmin … —— 青绿 */
+  --t-net:  #ff7f6e;   /* 网络与攻防：isip fnv1a base64 hostalive … —— 珊瑚红 */
+  --t-sc:   #e2b743;   /* 便携化交互：isportable copytoexe portscan … —— 琥珀 */
   --t-misc: #9aa3b5;   /* 其它 */
   --t-var2: #9cdcfe;   /* 变量（不是关键字也不是函数名的名字）—— 亮蓝 */
   --com:    #6a9955;   /* 注释 */
@@ -247,6 +251,10 @@ button.toggle.on { background: var(--sel); border-color: var(--accent); color: #
 .t-text { color: var(--t-text); }
 .t-win  { color: var(--t-win); }
 .t-css  { color: var(--t-css); }
+.t-io   { color: var(--t-io); }
+.t-os   { color: var(--t-os); }
+.t-net  { color: var(--t-net); }
+.t-sc   { color: var(--t-sc); }
 .t-misc { color: var(--t-misc); }
 /* 字面量跟着分类走：字符串归"字符串与数组"，数字归"运算" */
 .c-str { color: var(--t-text); }

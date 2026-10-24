@@ -1,0 +1,11 @@
+isurl_https
+isurl_ftp_no
+isip_ok
+isip_bad_no
+host_a
+port_80
+port_443
+fnv_nonzero
+fnv_stable
+b64_rt
+alive_none

@@ -28,7 +28,7 @@
 </head>
 <body>
 <h1>C*（C Asterisk）编程语言 · 使用说明书</h1>
-<blockquote><p>版本 <strong>0.5.0</strong> — 一门语法像 C、关键字贴近初中英语词汇的小语言。
+<blockquote><p>版本 <strong>0.5.1</strong> — 一门语法像 C、关键字贴近初中英语词汇的小语言。
 源文件后缀：<code>.cask</code>　编译器：<code>bin\caskc.exe</code>　编辑器：<code>bin\caskide.exe</code>
 
 本文件是<strong>速查手册</strong>，把语言的每一处细节都列清楚。想跟着课学，选一本：
@@ -40,6 +40,22 @@
 | C* 语言 必修一 | <code>docs\普高教材必修一.md</code> | 普通高中信息技术课 |
 | C* 语言 选修一 | <code>docs\普高选修一.md</code> | 高中选修：算法与窗口程序进阶 |
 | C* 语言基础 | <code>docs\高职教程CStar语言基础.md</code> | 高职，面向就业 |
+
+<strong>0.5.1 相对 0.5.0 的变化</strong>
+
+* <strong>新增三个头文件</strong>（控制台程序也能用，详见 5.8）：
+* <code>use "C_OS.cash";</code> —— 操作系统：<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> /
+<code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>。
+* <code>use "C_NET.cash";</code> —— 网络与攻防（防御层）：<code>isurl</code> / <code>isip</code> / <code>urlhost</code> /
+<code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> / <code>hostalive</code>。
+* <code>use "C_SC.cash";</code> —— S/C 便携化交互：<code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> /
+<code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code>。
+* <strong>积木视图补齐「文件与系统」及三个新分类</strong>：<code>C_IO.cash</code> 的「文件与系统」积木，
+以及「操作系统」「网络与攻防」「便携化交互」三类，都要先 <code>use</code> 对应头文件才出现
+（积木箱共 14 类，见 3.4）。
+* <strong>VS Code 扩展升级（0.5.1）</strong>：<code>.cask</code> 文件带语言图标；工具栏新增「运行」按钮
+（编译并运行，可选保留控制台）；保存/停顿自动跑 <code>--check</code>，把每条问题按
+<code>P|行|列|信息</code> 解析进「问题」面板，实时语法检查（见第 10 节）。
 
 <strong>0.5.0 相对 0.4.2 的变化</strong>
 
@@ -101,10 +117,16 @@ function main() {
 │   ├─ cask_rt.c      控制台运行时（编译进 libcastrt.a）
 │   ├─ cask_gui.c     窗口 / CSS 运行时（编译进 libcastrt.a）
 │   ├─ cask_io.c      文件与系统运行时（编译进 libcastrt.a）
+│   ├─ cask_os.c      操作系统运行时（编译进 libcastrt.a）
+│   ├─ cask_net.c     网络与攻防运行时（编译进 libcastrt.a）
+│   ├─ cask_sc.c      便携化交互运行时（编译进 libcastrt.a）
 │   ├─ cask_rt.h      运行时语义基准与内建声明
 │   ├─ C_OPED.cash    窗口程序头（use "C_OPED.cash"; 打开 C / Win32 世界）
 │   ├─ C_CSS.cash     美化头（配 C_OPED 用）
-│   └─ C_IO.cash      文件与系统头（控制台程序也能用）
+│   ├─ C_IO.cash      文件与系统头（控制台程序也能用）
+│   ├─ C_OS.cash      操作系统头（查系统信息、进程、权限）
+│   ├─ C_NET.cash     网络与攻防头（校验、编码、哈希、探测）
+│   └─ C_SC.cash      便携化交互头（便携判断、就地写文件、扫本机端口）
 ├─ editor\
 │   ├─ webide.c       C* Studio 编辑器宿主（原生窗口 + 本机网页服务 + 编译运行桥）
 │   ├─ wv2.cpp        WebView2 接入层（把网页放进原生窗口里）
@@ -119,10 +141,11 @@ function main() {
 │   └─ images\        文档里的截图
 ├─ examples\          示例程序
 ├─ tests\             测试程序 + 期望输出
-├─ vscode-ext\        VS Code 插件（让 .cask 有高亮和补全）
+├─ vscode-ext\        VS Code 插件（.cask 高亮、补全、运行按钮、实时语法检查）
 ├─ dist\              打包好的发行文件（zip / vsix）
 ├─ bin\               build.bat 生成：caskc.exe、caskide.exe、libcastrt.a、libgcc.a、
-│                     cask_rt.h、C_OPED.cash / C_CSS.cash / C_IO.cash、web\、WebView2Loader.dll
+│                     cask_rt.h、C_OPED.cash / C_CSS.cash / C_IO.cash / C_OS.cash /
+│                     C_NET.cash / C_SC.cash、web\、WebView2Loader.dll
 ├─ build.bat          一键构建整个工具链
 ├─ run_tests.bat      跑全部测试
 └─ README.md</code></pre>
@@ -141,8 +164,9 @@ function main() {
 小学版教程、初中版教程、普高教材必修一、普高选修一、高职教程，一次全部更新。
 想检查教材里每个完整例子是否都能编译（<strong>窗口程序只编译、不运行</strong>，免得弹出窗口），可以跑：</p>
 <pre><code class="lang-bat">python docs\check_doc_code.py docs\小学版教程.md</code></pre>
-<p><code>build.bat</code> 还会把 <code>cask_rt.h</code>、<code>C_OPED.cash</code>、<code>C_CSS.cash</code>、<code>C_IO.cash</code> 和
-<code>libcastrt.a</code> 复制到 <code>bin\</code>。这些文件必须和 <code>caskc.exe</code> 放在一起，编译出来的程序才跑得起来。</p>
+<p><code>build.bat</code> 还会把 <code>cask_rt.h</code>、<code>C_OPED.cash</code>、<code>C_CSS.cash</code>、<code>C_IO.cash</code>、<code>C_OS.cash</code>、
+<code>C_NET.cash</code>、<code>C_SC.cash</code> 和 <code>libcastrt.a</code> 复制到 <code>bin\</code>。这些文件必须和 <code>caskc.exe</code> 放在一起，
+编译出来的程序才跑得起来。</p>
 <hr>
 <h2>3. 快速上手</h2>
 <h3>3.1 第一个程序</h3>
@@ -236,12 +260,16 @@ UTF-8 和系统编码（如 GBK）保存的 <code>.cask</code> 都能正确打�
 <h3>3.4 积木视图（Blocks）</h3>
 <p>点工具栏「<strong>积木</strong>」（或按 F1 里的快捷说明切换）就能在<strong>代码</strong>和<strong>积木</strong>之间切换：</p>
 <p><img src="images/blocks.png" alt="积木视图"></p>
-<ul><li>左边是<strong>积木箱</strong>，分成 10 类：输出输入、变量数据、运算、判断、循环、函数、</li></ul>
-<p>字符串与数组、<strong>窗口程序</strong>、<strong>CSS 美化</strong>、其它；每类默认收起，点一下展开。判断/循环类里有
+<ul><li>左边是<strong>积木箱</strong>，分成 14 类：输出输入、变量数据、运算、判断、循环、函数、</li></ul>
+<p>字符串与数组、<strong>窗口程序</strong>、<strong>CSS 美化</strong>、<strong>文件与系统</strong>、<strong>操作系统</strong>、
+<strong>网络与攻防</strong>、<strong>便携化交互</strong>、其它；每类默认收起，点一下展开。判断/循环类里有
 <code>if</code>、<code>while</code>、<code>for</code>、<code>until</code>、<code>do…while</code>、<code>foreach</code>、<code>switch/case/default</code> 这些新老积木；
-「窗口程序」「CSS 美化」这两类是<strong>头文件插件</strong>：程序里 <code>use</code> 了 <code>C_OPED.cash</code> /
-<code>C_CSS.cash</code> 它们才出现，没 <code>use</code> 就不显示（像没装的插件；「其它」里有
-"安装窗口插件""安装 CSS 插件" 两个入口积木，点了对应分类才装上）。</p>
+「窗口程序」「CSS 美化」「文件与系统」「操作系统」「网络与攻防」「便携化交互」这六类是
+<strong>头文件插件</strong>：程序里 <code>use</code> 了 <code>C_OPED.cash</code> / <code>C_CSS.cash</code> / <code>C_IO.cash</code> /
+<code>C_OS.cash</code> / <code>C_NET.cash</code> / <code>C_SC.cash</code> 它们才出现，没 <code>use</code> 就不显示（像没装的插件；
+「其它」里有"安装窗口插件""安装 CSS 插件"等入口积木，点了对应分类才装上）。
+0.5.1 起「文件与系统」（<code>C_IO.cash</code>）及三个新分类（<code>C_OS.cash</code> 操作系统、
+<code>C_NET.cash</code> 网络与攻防、<code>C_SC.cash</code> 便携化交互）的积木才真正出现在积木箱里（见 5.8）。</p>
 <ul><li><strong>加入</strong>：点一块积木就插进程序里（插在当前选中的积木后面，没选就插在末尾）；</li></ul>
 <p>也可以直接把它<strong>拖到画布</strong>上想要的位置松开。</p>
 <ul><li><strong>移动</strong>：拖动画布里的积木换位置——拖动时有一个半透明<strong>影子</strong>跟着鼠标走，</li></ul>
@@ -750,6 +778,74 @@ calc.exe                                                  # 运行，点按键�
 <tr><td>中文变成方块 / 乱码</td><td>源文件存成 UTF-8（菜单栏「编辑 → 转成 UTF-8」）</td></tr>
 <tr><td>提示 <code>找不到 'C_OPED.cash'</code></td><td><code>C_OPED.cash</code> 要和 <code>caskc.exe</code> 放在一起（<code>build.bat</code> 会自动复制）</td></tr>
 </tbody></table>
+<h3>5.8 三个新头：操作系统 / 网络攻防 / 便携化交互（0.5.1）</h3>
+<p>三个头都能<strong>单独给控制台程序用</strong>（不必开窗口），也都能和 <code>C_OPED.cash</code> / <code>C_CSS.cash</code> 叠在一起做成窗口工具。</p>
+<h4>5.8.1 操作系统：<code>use "C_OS.cash";</code></h4>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>返回</th></tr></thead>
+<tbody>
+<tr><td><code>os_pid()</code></td><td>本程序进程号</td><td><code>&gt; 0</code></td></tr>
+<tr><td><code>os_cores()</code></td><td>逻辑 CPU 核数</td><td><code>&gt;= 1</code></td></tr>
+<tr><td><code>os_ram()</code></td><td>物理内存（GB）</td><td><code>&gt;= 0</code></td></tr>
+<tr><td><code>os_cpu()</code></td><td>CPU 型号</td><td>拿不到给 <code>""</code></td></tr>
+<tr><td><code>os_hostname()</code></td><td>本机主机名</td><td>拿不到给 <code>""</code></td></tr>
+<tr><td><code>os_platform()</code></td><td><code>"windows"</code> / <code>"linux"</code> / <code>"mac"</code></td><td>文字</td></tr>
+<tr><td><code>isadmin()</code></td><td>以管理员 / root 运行</td><td><code>1</code> / <code>0</code></td></tr>
+<tr><td><code>uptime()</code></td><td>开机到现在的毫秒</td><td><code>&gt;= 0</code></td></tr>
+<tr><td><code>findproc(名字)</code></td><td>有这个名字的进程在跑</td><td><code>1</code> / <code>0</code></td></tr>
+</tbody></table>
+<pre><code class="lang-cask">use "C_OS.cash";
+
+function main() {
+    print "平台 ", os_platform(), "，核数 ", os_cores(), "，内存 ", os_ram(), " GB";
+    if (isadmin() == 1) print "管理员";
+    return 0;
+}</code></pre>
+<blockquote><p><code>os_cpu</code> / <code>os_hostname</code> / <code>os_ram</code> 的值因机器而异，<strong>只展示、别写死</strong>；要判断只判"非空 / 非 0"。</p></blockquote>
+<h4>5.8.2 网络与攻防（防御层）：<code>use "C_NET.cash";</code></h4>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>isurl(文字)</code></td><td>是 <code>http://</code> 或 <code>https://</code></td><td>纯计算</td></tr>
+<tr><td><code>isip(文字)</code></td><td>是 IPv4 点分十进制</td><td>纯计算</td></tr>
+<tr><td><code>urlhost(网址)</code></td><td>取主机名（去端口）</td><td>纯计算</td></tr>
+<tr><td><code>urlport(网址)</code></td><td>取端口（缺省 https=443/http=80）</td><td>纯计算</td></tr>
+<tr><td><code>fnv1a(文字)</code></td><td>32 位 FNV-1a 哈希</td><td>纯计算，同输入同输出</td></tr>
+<tr><td><code>base64(文字)</code> / <code>unbase64(文字)</code></td><td>编码 / 解码往返</td><td>纯计算</td></tr>
+<tr><td><code>hostalive(主机, 端口)</code></td><td>某端口 TCP 通不通</td><td>会 socket，约 3 秒；离网给 0</td></tr>
+</tbody></table>
+<pre><code class="lang-cask">use "C_NET.cash";
+
+function main() {
+    if (isurl("https://a.com") == 1) print "合法网址", urlhost("https://a.com/x");
+    string e = base64("hi");
+    print "base64 往返:", unbase64(e);
+    return 0;
+}</code></pre>
+<blockquote><p>"攻防"在这里指<strong>防御性的校验、编码、完整性与只读探测</strong>；C* 不提供发 raw socket、
+不做网络嗅探或攻击。<code>hostalive</code> 只尝试连接、看是否通。</p></blockquote>
+<h4>5.8.3 S/C 便携化交互：<code>use "C_SC.cash";</code></h4>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>返回</th></tr></thead>
+<tbody>
+<tr><td><code>isportable()</code></td><td>exe 所在目录可写（能就地放文件）</td><td><code>1</code> / <code>0</code></td></tr>
+<tr><td><code>copytoexe(名, 内容)</code></td><td>写一个文本文件到 exe 旁边</td><td>成功 <code>1</code></td></tr>
+<tr><td><code>freebytes()</code></td><td>空闲内存（字节）</td><td><code>&gt;= 0</code></td></tr>
+<tr><td><code>diskfree(路径)</code></td><td>路径所在分区空闲字节</td><td><code>&gt;= 0</code></td></tr>
+<tr><td><code>is64bit()</code></td><td>跑在 64 位环境</td><td><code>1</code> / <code>0</code></td></tr>
+<tr><td><code>portcheck(端口)</code></td><td><code>127.0.0.1</code> 上某 TCP 端口是否开着</td><td><code>1</code> / <code>0</code></td></tr>
+<tr><td><code>portscan(起, 止)</code></td><td>这段端口开着几个</td><td>个数</td></tr>
+</tbody></table>
+<pre><code class="lang-cask">use "C_SC.cash";
+
+function main() {
+    if (isportable() == 1) print "绿色版：可就地放文件";
+    if (copytoexe("note.txt", "ok") == 1) print "写了 note.txt";
+    print "80 端口：", portcheck(80);
+    return 0;
+}</code></pre>
+<blockquote><p><code>portcheck</code> / <code>portscan</code> 是往 <code>127.0.0.1</code> 拨号的<strong>只读探测</strong>：只连、不听，不对外。</p></blockquote>
+<p>三个头各自的完整讲解、综合示例（"系统信息面板"窗口）与测验，见高职教材第 13 章。</p>
 <hr>
 <h2>6. 安全机制（重点）</h2>
 <p>C* 默认打开三层运行时检查，出错时<strong>程序立刻停止</strong>，并打印：</p>
@@ -859,13 +955,26 @@ calc.exe                                                  # 运行，点按键�
 <hr>
 <h2>10. 在 VS Code 里写 C*</h2>
 <p><code>vscode-ext\</code> 里是一个 VS Code 扩展（<code>c-asterisk</code>）：装上以后，<code>.cask</code> 文件会有</p>
-<ul><li>语法高亮（关键字、类型、内建函数、字符串、注释）</li><li>代码片段（输入 <code>main</code>、<code>print</code>、<code>for</code>、<code>if</code>… 按 Tab 就能展开成完整骨架）</li><li>括号自动配对、<code>//</code> 自动注释</li></ul>
-<p>安装方法：在 VS Code 里按 <code>Ctrl+Shift+P</code> → 输入 <code>Install from VSIX</code> → 选 <code>dist\c-asterisk-0.5.0.vsix</code>。
+<ul><li>语言图标（编辑器文件树 / 标签页上显示 C* 的六边形图标）</li><li>语法高亮（关键字、类型、内建函数、字符串、注释）</li><li>代码片段（输入 <code>main</code>、<code>print</code>、<code>for</code>、<code>if</code>… 按 Tab 就能展开成完整骨架）</li><li>括号自动配对、<code>//</code> 自动注释</li><li><strong>工具栏「运行」按钮</strong>（<code>$(play)</code> 图标）：一键调用 <code>caskc</code> 编译并运行当前文件（可配 <code>runAttachConsole</code>）</li><li><strong>工具栏「语法检查」按钮</strong>（<code>$(checklist)</code> 图标）：手动触发一次 <code>caskc --check --diag</code></li><li><strong>实时语法检查</strong>：打开 / 改动停顿约 0.45 秒自动后台跑 <code>--check</code>；保存时立即再跑一次。</li></ul>
+<p>每条问题（<code>P/S/E/H|行|列|信息</code>）解析成 VS Code 的「问题」面板诊断：
+<code>E</code>/<code>S</code> → 错误（红）、<code>P</code> → 警告（橙）、<code>H</code> → 信息（蓝），来源标注 <code>C*</code></p>
+<p>安装方法：在 VS Code 里按 <code>Ctrl+Shift+P</code> → 输入 <code>Install from VSIX</code> → 选 <code>dist\c-asterisk-0.5.1.vsix</code>。
 （在 <code>vscode-ext\</code> 目录里运行 <code>npx @vscode/vsce package</code> 也可以自己重新打包。）</p>
-<p>想让它也能一键编译/运行，可以在 VS Code 的 <code>tasks.json</code> 里加一条调用 <code>bin\caskc.exe</code> 的任务，
-或者在 VS Code 的集成终端里直接用 <code>bin\caskc.exe 程序.cask --run</code>。</p>
+<p><strong>编译器怎么找到</strong>（自动按序尝试，也可手动指定）：</p>
+<ol><li>设置 <code>casterisk.caskcPath</code>（最优先，绝对路径或相对工作区）</li><li>向上找 <code>.caskc</code> 所在的 <code>bin\caskc.exe</code>（或 <code>caskc</code>）</li><li><code>PATH</code> 里的 <code>caskc.exe</code> / <code>caskc</code></li></ol>
+<p>设置项一览：</p>
+<table>
+<thead><tr><th>设置</th><th>默认</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>casterisk.caskcPath</code></td><td>空</td><td>显式指定 <code>caskc</code> 可执行文件</td></tr>
+<tr><td><code>casterisk.autoCheck</code></td><td><code>true</code></td><td>打开 / 改动时自动跑语法检查</td></tr>
+<tr><td><code>casterisk.checkOnSave</code></td><td><code>true</code></td><td>保存时再跑一次语法检查</td></tr>
+<tr><td><code>casterisk.runAttachConsole</code></td><td><code>false</code></td><td>运行时加 <code>--console</code>（窗口程序保留黑控制台看 print）</td></tr>
+</tbody></table>
+<p>命令行直接编译 / 运行的写法不变：</p>
+<pre><code class="lang-bat">bin\caskc.exe 程序.cask --run</code></pre>
 <hr>
-<p><em>C</em> 0.5.0 · 源码与问题反馈见 <code>README.md</code>。*</p>
+<p><em>C</em> 0.5.1 · 源码与问题反馈见 <code>README.md</code>。*</p>
 <hr>
 <p style="color:#888;font-size:0.9em;">由 docs/md2html.py 从 CStar手册.md 生成</p>
 </body>

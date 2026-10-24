@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>C* 语言基础（高职 · 0.5.0）</title>
+<title>C* 语言基础（高职 · 0.5.1）</title>
 <style>
   body { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
          line-height: 1.7; color: #222; background: #fafafa;
@@ -27,15 +27,24 @@
 </style>
 </head>
 <body>
-<h1>C* 语言基础（高职 · 0.5.0）</h1>
+<h1>C* 语言基础（高职 · 0.5.1）</h1>
 <blockquote><p>面向高等职业教育 <strong>软件技术 / 大数据技术 / 人工智能技术应用</strong> 等专业的程序设计入门课。
-语言版本 <strong>0.5.0</strong>；编译器 <code>bin\caskc.exe</code>；配套编辑器 **C* Studio**（<code>bin\caskide.exe</code>）。
+语言版本 <strong>0.5.1</strong>；编译器 <code>bin\caskc.exe</code>；配套编辑器 **C* Studio**（<code>bin\caskide.exe</code>）。
 C* 读作 <strong>C Asterisk</strong>（C 加一个星号）。
 
 <strong>0.5.0 新增</strong>：第 10 章「文件读写与界面美化」——用 <code>use "C_IO.cash";</code> 让程序读写文件、
 记住配置，用 <code>use "C_CSS.cash";</code> 给窗口界面配色。0.5.0 起 Windows 上的按钮改为自绘，
 美化函数才真正生效。全书把"先翻译成 C 再交给 gcc"的旧说法改成了"直接生成 x86-64 汇编，
-用 <code>as</code> + <code>ld</code> 链接"。</p></blockquote>
+用 <code>as</code> + <code>ld</code> 链接"。
+
+<strong>0.5.1 新增</strong>：第 13 章「操作系统、网络攻防与便携化交互」——新增三个头文件：
+<code>use "C_OS.cash";</code> 读系统信息（<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> /
+<code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>）；<code>use "C_NET.cash";</code> 做协议校验、
+编码与哈希（<code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> /
+<code>hostalive</code>）；<code>use "C_SC.cash";</code> 做 S/C 便携化交互（<code>isportable</code> / <code>copytoexe</code> /
+<code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code>）。同时积木视图补上了
+「文件与系统」及新增的三个分类（操作系统 / 网络与攻防 / 便携化交互），
+VS Code 扩展升级：<code>.cask</code> 文件有图标、工具栏「运行」按钮、语法检查实时进「问题」面板。</p></blockquote>
 <hr>
 <h2>本书怎么用</h2>
 <p>这本书按"做一个能跑起来的小程序"来组织。每章开头先给一个工作场景里的小任务，再补上完成任务需要的语法，然后动手做出来，最后讲规范、讲坑。</p>
@@ -61,9 +70,9 @@ C* 读作 <strong>C Asterisk</strong>（C 加一个星号）。
 <tr><td><code> </code>`<code>bat </code></td><td>在 Windows 命令行（cmd）里敲的命令</td></tr>
 <tr><td><code> </code>`<code>c </code></td><td>生成的 C 代码，或者 C 语言片段（只用来对照）</td></tr>
 </tbody></table>
-<p>全书所有带 <code>function main()</code> 的 C* 程序都在 <strong>0.5.0</strong> 编译器上真实编译过。窗口程序只编译、不自动运行（它要开窗口，会一直等你关掉），正文里会写清楚运行时你会看到什么。</p>
+<p>全书所有带 <code>function main()</code> 的 C* 程序都在 <strong>0.5.1</strong> 编译器上真实编译过。窗口程序只编译、不自动运行（它要开窗口，会一直等你关掉），正文里会写清楚运行时你会看到什么。</p>
 <h3>上机环境</h3>
-<ol><li>Windows 10/11，装机时已经装好 binutils（<code>as</code> / <code>ld</code>，MinGW-w64 系自带，Dev-C++、MSYS2、w64devkit、Strawberry Perl 里的都行）。<strong>编译 <code>.cask</code> 程序不再需要 gcc</strong>——<code>caskc</code> 直接生成 x86-64 汇编，用 <code>as</code> + <code>ld</code> 链接预编译好的 <code>bin\libcastrt.a</code>；只有构建工具链本身（<code>build.bat</code>）才需要 gcc / g++。</li><li>把整个 <code>C_AS</code> 目录拷到本机，比如 <code>D:\C_AS\</code>。目录里要有 <code>bin\caskc.exe</code>、<code>bin\caskide.exe</code>、<code>bin\cask_rt.h</code>、<code>bin\libcastrt.a</code>、<code>bin\C_OPED.cash</code>、<code>bin\C_CSS.cash</code>、<code>bin\C_IO.cash</code>。</li><li>在命令行里 <code>cd</code> 到 <code>C_AS</code> 目录，敲 <code>bin\caskc.exe --version</code>，能打出版本号 <code>0.5.0</code> 就算装好了。</li></ol>
+<ol><li>Windows 10/11，装机时已经装好 binutils（<code>as</code> / <code>ld</code>，MinGW-w64 系自带，Dev-C++、MSYS2、w64devkit、Strawberry Perl 里的都行）。<strong>编译 <code>.cask</code> 程序不再需要 gcc</strong>——<code>caskc</code> 直接生成 x86-64 汇编，用 <code>as</code> + <code>ld</code> 链接预编译好的 <code>bin\libcastrt.a</code>；只有构建工具链本身（<code>build.bat</code>）才需要 gcc / g++。</li><li>把整个 <code>C_AS</code> 目录拷到本机，比如 <code>D:\C_AS\</code>。目录里要有 <code>bin\caskc.exe</code>、<code>bin\caskide.exe</code>、<code>bin\cask_rt.h</code>、<code>bin\libcastrt.a</code>、<code>bin\C_OPED.cash</code>、<code>bin\C_CSS.cash</code>、<code>bin\C_IO.cash</code>。</li><li>在命令行里 <code>cd</code> 到 <code>C_AS</code> 目录，敲 <code>bin\caskc.exe --version</code>，能打出版本号 <code>0.5.1</code> 就算装好了。</li></ol>
 <h3>0.5.0 的类型名（重点）</h3>
 <p>0.5.0 用下面这套类型名。<strong>新写的程序一律用这套</strong>。</p>
 <table>
@@ -95,7 +104,7 @@ C* 读作 <strong>C Asterisk</strong>（C 加一个星号）。
 <p>这里先记住一条限制：<strong>只有 C 和 C++ 的世界是对你打开的，C# / .NET 没有 C 头文件，用不了。</strong></p>
 <hr>
 <h2>目录</h2>
-<ul><li>第 1 章　认识 C* 与开发环境</li><li>第 2 章　数据类型与变量</li><li>第 3 章　运算符与内置函数</li><li>第 4 章　流程控制</li><li>第 5 章　函数与模块化</li><li>第 6 章　数组与字符串处理</li><li>第 7 章　综合实训一：控制台小程序（学籍成绩统计）</li><li>第 8 章　窗口程序入门</li><li>第 9 章　窗口程序进阶</li><li>第 10 章　文件读写与界面美化</li><li>第 11 章　调用系统与 C 函数</li><li>第 12 章　综合实训二与项目交付规范</li><li>附录 A　语法速查表</li><li>附录 B　错误分级与调试流程</li><li>附录 C　从 C* 到 C 的对照表</li><li>附录 D　综合项目</li><li>附录 E　部分习题参考答案</li><li>附录 F　彩蛋与暗号：<code>rcl()</code></li></ul>
+<ul><li>第 1 章　认识 C* 与开发环境</li><li>第 2 章　数据类型与变量</li><li>第 3 章　运算符与内置函数</li><li>第 4 章　流程控制</li><li>第 5 章　函数与模块化</li><li>第 6 章　数组与字符串处理</li><li>第 7 章　综合实训一：控制台小程序（学籍成绩统计）</li><li>第 8 章　窗口程序入门</li><li>第 9 章　窗口程序进阶</li><li>第 10 章　文件读写与界面美化</li><li>第 11 章　调用系统与 C 函数</li><li>第 12 章　综合实训二与项目交付规范</li><li>第 13 章　操作系统、网络攻防与便携化交互</li><li>附录 A　语法速查表</li><li>附录 B　错误分级与调试流程</li><li>附录 C　从 C* 到 C 的对照表</li><li>附录 D　综合项目</li><li>附录 E　部分习题参考答案</li><li>附录 F　彩蛋与暗号：<code>rcl()</code></li></ul>
 <hr>
 <h2>第 1 章　认识 C* 与开发环境</h2>
 <h3>学习目标</h3>
@@ -3160,6 +3169,243 @@ if (率 &gt; 100) { return 100; }</code></pre>
 <ol><li>选择题：<code>on_click</code> 里最应该放的是（　）。</li></ol>
 <ul><li>A. 全部业务计算　B. 按钮分发的判断　C. 全局变量的定义　D. 注释</li></ul>
 <ol><li>判断题：界面上的数字和进度条，从一个统一的 <code>刷新()</code> 出口更新最好。（　）</li><li>判断题：测试只要跑通正常流程就算完成。（　）</li><li>判断题：窗口程序交付时不需要带上 <code>C_OPED.cash</code>。（　）</li><li>编程题：为一个"学生信息登记"窗口程序写出控件表和函数划分表，不必写代码。</li><li>编程题：为第 7 题设计的程序写一张不少于 6 条的测试用例表，覆盖正常、边界、异常三类，再从中挑两条写出实际测试结果。</li></ol>
+<hr>
+<h2>第 13 章　操作系统、网络攻防与便携化交互</h2>
+<h3>学习目标</h3>
+<ul><li>会用 <code>use "C_OS.cash";</code> 读系统信息：<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>。</li><li>会用 <code>use "C_NET.cash";</code> 做协议校验、编码与哈希：<code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> / <code>fnv1a</code> / <code>base64</code> / <code>unbase64</code>，以及主机探测 <code>hostalive</code>。</li><li>会用 <code>use "C_SC.cash";</code> 做便携化交互：<code>isportable</code> / <code>copytoexe</code> / <code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> / <code>portcheck</code> / <code>portscan</code>。</li><li>会把这些头与第 10 章的 <code>C_IO.cash</code>、第 9 章的窗口合起来，做出"系统信息面板"这类完整工具。</li><li>说得清每个新分类在积木视图里怎么用：文件与系统、操作系统、网络与攻防、便携化交互四类积木都要先 <code>use</code> 对应头文件才出现。</li></ul>
+<h3>任务引入</h3>
+<p>前面几章，程序读的是<strong>自己的</strong>数据和<strong>用户的</strong>输入。但一个真正能用的工具，往往还要"读懂它所在的环境"：</p>
+<ul><li>机房管理员想要一个<strong>系统体检小工具</strong>：这台机器几个核、多少内存、是不是管理员开的、开机多久了。</li><li>一个下载器要<strong>判断网址写得对不对</strong>、把下载内容编码成 base64 存起来、出发前<strong>探测服务器端口通不通</strong>。</li><li>你做的绿色版程序拷到 U 盘上，要确认<strong>这个目录能不能就地写文件</strong>（便携），顺便看看<strong>本机哪些端口开着</strong>。</li></ul>
+<p>这三类需求，分别对应 0.5.x 新增的三个头文件：</p>
+<table>
+<thead><tr><th>头文件</th><th>一句话定位</th><th>控制台也能用？</th></tr></thead>
+<tbody>
+<tr><td><code>C_OS.cash</code></td><td>读懂操作系统：系统信息、当前进程、权限、运行时长</td><td>能</td></tr>
+<tr><td><code>C_NET.cash</code></td><td>网络与攻防：协议校验、网址拆解、编码、哈希、端口探测</td><td>能</td></tr>
+<tr><td><code>C_SC.cash</code></td><td>S/C 便携化交互：判断便携、就地写文件、查资源、扫本机端口</td><td>能</td></tr>
+</tbody></table>
+<blockquote><p><strong>安全提示</strong>：这三个头里"攻防"指的是<strong>防御性的协议校验、编码、完整性检查和只读探测</strong>（判断网址/IP 是否合法、校验文件哈希、base64 编解码、探测某主机某端口通不通）。C* 不提供发 raw socket 数据包、不写网络嗅探或攻击代码；<code>hostalive</code> / <code>portcheck</code> / <code>portscan</code> 都是<strong>只读连接探测</strong>，不开监听、不改系统。教学与考试里也只考核"校验、编码、探测"这一层。</p></blockquote>
+<h3>知识准备</h3>
+<h4>13.1 操作系统工具箱：C_OS.cash</h4>
+<pre><code class="lang-cask">use "C_OS.cash";</code></pre>
+<p>不依赖窗口，控制台程序直接用。它打开"操作系统"层面的一组只读查询函数（失败给 <code>0</code> 或 <code>""</code>，不会崩溃）：</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>返回</th></tr></thead>
+<tbody>
+<tr><td><code>os_pid()</code></td><td>本程序的进程号</td><td><code>&gt; 0</code></td></tr>
+<tr><td><code>os_cores()</code></td><td>逻辑 CPU 核数</td><td><code>&gt;= 1</code></td></tr>
+<tr><td><code>os_ram()</code></td><td>物理内存大小（GB）</td><td><code>&gt;= 0</code></td></tr>
+<tr><td><code>os_cpu()</code></td><td>CPU 型号文字</td><td>拿不到给 <code>""</code></td></tr>
+<tr><td><code>os_hostname()</code></td><td>本机主机名</td><td>拿不到给 <code>""</code></td></tr>
+<tr><td><code>os_platform()</code></td><td><code>"windows"</code> / <code>"linux"</code> / <code>"mac"</code></td><td>文字</td></tr>
+<tr><td><code>isadmin()</code></td><td>以管理员 / root 身份运行</td><td><code>1</code> / <code>0</code></td></tr>
+<tr><td><code>uptime()</code></td><td>开机到现在的毫秒数</td><td><code>&gt;= 0</code></td></tr>
+<tr><td><code>findproc(名字)</code></td><td>有这个名字的进程在跑</td><td><code>1</code> / <code>0</code></td></tr>
+</tbody></table>
+<p><strong>注意</strong>：<code>os_cpu</code> / <code>os_hostname</code> / <code>os_ram</code> 的值<strong>因机器而异</strong>，程序里别写死。要显示就显示，要判断只判断"非空 / 非 0"。</p>
+<h4>13.2 一段"系统体检"控制台程序</h4>
+<pre><code class="lang-cask">// 系统体检：C_OS.cash + C_SC.cash 综合
+use "C_OS.cash";
+use "C_SC.cash";
+
+function main() {
+    print "== 系统体检 ==";
+    print "平台：", os_platform();
+    print "CPU：", os_cpu();
+    print "核数：", os_cores(), "，内存：", os_ram(), " GB";
+    print "主机名：", os_hostname();
+    print "运行中毫秒：", uptime();
+    if (isadmin() == 1) { print "当前是管理员权限"; }
+    else { print "当前是普通用户权限"; }
+    if (isportable() == 1) { print "exe 所在目录可写（便携）"; }
+    else { print "exe 所在目录不可写"; }
+    print "空闲内存字节：", freebytes();
+    if (is64bit() == 1) { print "64 位环境"; }
+    return 0;
+}</code></pre>
+<p>运行一次（不同机器输出不同，示意）：</p>
+<pre><code class="lang-text">== 系统体检 ==
+平台：windows
+CPU：Intel(R) Core(TM) i5-10400
+核数：8，内存：16 GB
+主机名：DESKTOP-XYZ
+运行中毫秒：86400000
+当前是普通用户权限
+exe 所在目录可写（便携）
+空闲内存字节：4194304000
+64 位环境</code></pre>
+<p>逐行看：<code>os_platform()</code> 只用来<strong>分支</strong>（不同系统走不同逻辑）；<code>os_cpu()</code> 这种机器相关的文字只<strong>显示</strong>、不拿去做等值判断；<code>os_ram()</code> 返回的是整数 GB，直接 <code>print</code> 就拼进文字里。</p>
+<h4>13.3 网络与攻防：C_NET.cash</h4>
+<pre><code class="lang-cask">use "C_NET.cash";</code></pre>
+<p>分三组。<strong>前两组是纯计算，不碰网络，随时能跑</strong>；第三组会开 socket，可能联网。</p>
+<p><strong>协议校验</strong>（判断网址、IP 写得对不对）：</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><code>isurl(文字)</code></td><td>以 <code>http://</code> 或 <code>https://</code> 开头才算合法网址</td><td><code>isurl("https://a.com")</code> → 1</td></tr>
+<tr><td><code>isip(文字)</code></td><td>严格 IPv4 点分十进制（每段 0..255）</td><td><code>isip("256.1.1.1")</code> → 0</td></tr>
+<tr><td><code>urlhost(网址)</code></td><td>取主机名（自动去掉端口）</td><td><code>urlhost("https://a.com:8443/x")</code> → <code>"a.com"</code></td></tr>
+<tr><td><code>urlport(网址)</code></td><td>取端口，没写按 https=443 / http=80</td><td><code>urlport("https://a.com")</code> → 443</td></tr>
+</tbody></table>
+<p><strong>编码与完整性</strong>（把内容编码、算哈希、base64 往返）：</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><code>fnv1a(文字)</code></td><td>32 位 FNV-1a 哈希，同一输入永远同一输出</td><td>用它发现"内容被改过"</td></tr>
+<tr><td><code>base64(文字)</code></td><td>把文字编码成 base64 字符串</td><td><code>base64("hello")</code> → <code>"aGVsbG8="</code></td></tr>
+<tr><td><code>unbase64(文字)</code></td><td>把 base64 解码回原文（失败给 <code>""</code>）</td><td>编码再解码能还原</td></tr>
+</tbody></table>
+<p><strong>主机探测</strong>（会用 socket，可能阻塞到约 3 秒）：</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>hostalive(主机, 端口)</code></td><td>某主机某端口的 TCP 通不通</td><td>通 1，不通 0；离网给 0，不崩</td></tr>
+</tbody></table>
+<blockquote><p><code>hostalive</code> 是<strong>只读探测</strong>：它去连一下对方端口，看能不能建立连接，<strong>不发包攻击、不开监听</strong>。离网时返回 0，程序照跑。</p></blockquote>
+<h4>13.4 一个"网址安全小工具"控制台程序</h4>
+<pre><code class="lang-cask">// 网址安全小工具：C_NET.cash 综合
+use "C_NET.cash";
+
+function main() {
+    print "== 网址校验 ==";
+    print "https://a.com 合法：", isurl("https://a.com");
+    print "ftp://x 合法：", isurl("ftp://x");
+    print "1.2.3.4 是 IP：", isip("1.2.3.4");
+    print "256.1.1.1 是 IP：", isip("256.1.1.1");
+    print "host：", urlhost("https://a.com:8443/x?y=1");
+    print "port：", urlport("https://a.com:8443/x");
+    print "== 编码 ==";
+    print "fnv1a：", fnv1a("abc");
+    string e = base64("hello");
+    print "base64：", e;
+    print "还原：", unbase64(e);
+    return 0;
+}</code></pre>
+<p>运行一次：</p>
+<pre><code class="lang-text">== 网址校验 ==
+https://a.com 合法：1
+ftp://x 合法：0
+1.2.3.4 是 IP：1
+256.1.1.1 是 IP：0
+host：a.com
+port：8443
+== 编码 ==
+fnv1a：440920331
+base64：aGVsbG8=
+还原：hello</code></pre>
+<p>注意 <code>base64</code> 再 <code>unbase64</code> 能<strong>原样还原</strong>，这是"编码—解码"往返的典型用法；<code>fnv1a</code> 对同一段文字<strong>永远给同一个数</strong>，所以可以用它当"内容指纹"——文件被改过一点点，哈希就变了。</p>
+<h4>13.5 S/C 便携化交互：C_SC.cash</h4>
+<pre><code class="lang-cask">use "C_SC.cash";</code></pre>
+<p>把 C* 工具做成<strong>单文件 / 绿色版</strong>形态时，最需要"和宿主系统轻量交互"的几件事：</p>
+<table>
+<thead><tr><th>函数</th><th>作用</th><th>返回</th></tr></thead>
+<tbody>
+<tr><td><code>isportable()</code></td><td>本程序（exe）所在目录<strong>可写</strong>（能就地放文件）</td><td><code>1</code> / <code>0</code></td></tr>
+<tr><td><code>copytoexe(名, 内容)</code></td><td>把一个文本文件<strong>写到 exe 旁边</strong></td><td>成功 <code>1</code></td></tr>
+<tr><td><code>freebytes()</code></td><td>当前空闲内存（字节）</td><td><code>&gt;= 0</code></td></tr>
+<tr><td><code>diskfree(路径)</code></td><td>路径所在分区的空闲字节</td><td><code>&gt;= 0</code></td></tr>
+<tr><td><code>is64bit()</code></td><td>本程序跑在 64 位环境</td><td><code>1</code> / <code>0</code></td></tr>
+<tr><td><code>portcheck(端口)</code></td><td><code>127.0.0.1</code> 上某 TCP 端口是否开着</td><td><code>1</code> / <code>0</code></td></tr>
+<tr><td><code>portscan(起, 止)</code></td><td>这一段端口里有几个开着</td><td>个数</td></tr>
+</tbody></table>
+<p><code>portcheck</code> / <code>portscan</code> 都是<strong>往 127.0.0.1 上拨号的只读探测</strong>：只尝试连接、看有没有服务在听，<strong>不开监听、不主动对外</strong>。没有服务时只是"连接被拒"，返回 0，不会崩。</p>
+<h4>13.6 便携化与本机端口探测</h4>
+<pre><code class="lang-cask">// 便携小工具：C_SC.cash + C_IO.cash 综合
+use "C_SC.cash";
+use "C_IO.cash";
+
+function main() {
+    print "== 便携体检 ==";
+    if (isportable() == 1) { print "exe 目录可写，能就地放文件"; }
+    else { print "exe 目录不可写，改用 C_IO 写到用户目录"; }
+    if (is64bit() == 1) { print "64 位环境"; }
+    else { print "32 位环境"; }
+    print "空闲内存：", freebytes(), " 字节";
+    print "exe 所在盘空闲：", diskfree(appdir()), " 字节";
+    // 把一个辅助文件写到 exe 旁边，再用 C_IO 读回验证
+    if (copytoexe("_probe.txt", "pong") == 1) {
+        print "写文件成功，读回：", readfile(appdir() + "/_probe.txt");
+    }
+    print "80 端口：", portcheck(80), "，443 端口：", portcheck(443);
+    return 0;
+}</code></pre>
+<p>这里 <code>copytoexe</code> 把文件写到 <strong>exe 旁边</strong>，而 <code>appdir()</code>（第 10 章的 <code>C_IO.cash</code>）拿到的是<strong>同一个目录</strong>，所以 <code>readfile(appdir() + "/_probe.txt")</code> 能读回刚写的内容——两个头配起来，就是一条"就地写、就地读"的闭环。绿色版程序判断 <code>isportable()</code> 为 1，就知道可以把缓存、配置都放在 exe 旁边，拷到 U 盘照样能用。</p>
+<h3>任务实施</h3>
+<p><strong>任务：做一个"系统信息面板"窗口程序。</strong> 深色界面，打开就把平台、CPU、核数、内存、主机名、权限、开机时长、64 位与否都显示出来；点"刷新"按钮重新读一遍。把第 9 章的窗口、第 10 章的配色、本章的三个头串成一个完整工具。</p>
+<p><strong>第 1 步　引四个头。</strong> 窗口 + 配色 + 操作系统 + 便携：</p>
+<pre><code class="lang-cask">use "C_OPED.cash";
+use "C_CSS.cash";
+use "C_OS.cash";
+use "C_SC.cash";</code></pre>
+<p><strong>第 2 步　写一个"拼信息"的普通函数。</strong> 把要显示的内容集中在一处，好维护：</p>
+<pre><code class="lang-cask">string 信息() {
+    string 行 = "平台：" + os_platform() + "\n";
+    行 = 行 + "CPU：" + os_cpu() + "\n";
+    行 = 行 + "核数：" + os_cores() + "，内存：" + os_ram() + " GB\n";
+    行 = 行 + "主机名：" + os_hostname() + "\n";
+    if (isadmin() == 1) { 行 = 行 + "权限：管理员\n"; }
+    else { 行 = 行 + "权限：普通用户\n"; }
+    行 = 行 + "已开机 " + uptime() / 60000 + " 分钟\n";
+    if (is64bit() == 1) { 行 = 行 + "运行在 64 位环境\n"; }
+    return 行;
+}</code></pre>
+<p><code>uptime()</code> 是毫秒，<code>/ 60000</code> 换成分钟；机器相关的值只<strong>显示</strong>，不做等值判断。</p>
+<p><strong>第 3 步　把完整程序拼出来。</strong> 事件函数只刷新标签，<code>main</code> 建窗口、放标签和按钮、上色：</p>
+<pre><code class="lang-cask">// 系统信息面板：C_OS + C_SC + C_CSS 综合（第 13 章示例）
+use "C_OPED.cash";
+use "C_CSS.cash";
+use "C_OS.cash";
+use "C_SC.cash";
+
+int 信息区;
+int 刷新按钮;
+
+string 信息() {
+    string 行 = "平台：" + os_platform() + "\n";
+    行 = 行 + "CPU：" + os_cpu() + "\n";
+    行 = 行 + "核数：" + os_cores() + "，内存：" + os_ram() + " GB\n";
+    行 = 行 + "主机名：" + os_hostname() + "\n";
+    if (isadmin() == 1) { 行 = 行 + "权限：管理员\n"; }
+    else { 行 = 行 + "权限：普通用户\n"; }
+    行 = 行 + "已开机 " + uptime() / 60000 + " 分钟\n";
+    if (is64bit() == 1) { 行 = 行 + "运行在 64 位环境\n"; }
+    return 行;
+}
+
+function on_click(int 控件) {
+    if (控件 == 刷新按钮) {
+        settext(信息区, 信息());
+    }
+}
+
+function main() {
+    int 窗口 = window("系统信息面板", 520, 380);
+    信息区 = label(信息(), 20, 20, 480, 260);
+    刷新按钮 = button("刷新", 20, 320, 120, 36);
+    csbg(窗口, "0D1117");
+    cstext(信息区, "#E6EDF3");
+    csfont(信息区, 13, 0);
+    csbg(刷新按钮, "238636");
+    cstext(刷新按钮, "#FFFFFF");
+    run();
+}</code></pre>
+<p>编译运行（窗口程序加 <code>--console</code> 才能看到 <code>print</code> 调试输出）：</p>
+<pre><code class="lang-bat">bin\caskc.exe 系统面板.cask -o 系统面板.exe --console</code></pre>
+<p>打开就是一张深色"体检卡"；点"刷新"，标签重新读一遍 <code>os_*</code> / <code>uptime</code> / <code>is64bit</code>，值会随系统变化。</p>
+<h3>拓展与规范</h3>
+<ul><li><strong>机器相关的值只展示、不写死。</strong> <code>os_cpu()</code> / <code>os_hostname()</code> / <code>os_ram()</code> 换台机器就变，判断只判断"非空 / 非 0"，别拿具体型号去 <code>==</code>。</li><li><strong>"攻防"只做防御性那一层。</strong> 用 <code>isurl</code> / <code>isip</code> / <code>fnv1a</code> / <code>base64</code> 做校验、编码、完整性，用 <code>hostalive</code> / <code>portcheck</code> / <code>portscan</code> 做只读探测；不写发包攻击、不写嗅探。</li><li><strong>探测类函数可能阻塞</strong>（<code>hostalive</code> 约 3 秒、<code>portcheck</code> / <code>portscan</code> 逐个拨号），别在界面主循环里高频狂调。</li><li><strong>绿色版先判 <code>isportable()</code>。</strong> 为 1 才把缓存/配置写 exe 旁边；为 0（如装在 C 盘系统目录）就退回 <code>C_IO</code> 的 <code>envget("USERPROFILE")</code> 写用户目录。</li><li><strong>三个头都能单独给控制台用</strong>，不依赖窗口；要放进界面再叠 <code>C_OPED.cash</code> + <code>C_CSS.cash</code>。</li></ul>
+<h3>本章小结</h3>
+<ul><li><code>C_OS.cash</code> 读系统：<code>os_pid</code> / <code>os_cores</code> / <code>os_ram</code> / <code>os_cpu</code> / <code>os_hostname</code> / <code>os_platform</code> / <code>isadmin</code> / <code>uptime</code> / <code>findproc</code>。</li><li><code>C_NET.cash</code> 管网络与攻防（防御层）：<code>isurl</code> / <code>isip</code> / <code>urlhost</code> / <code>urlport</code> 校验拆解，<code>fnv1a</code> / <code>base64</code> / <code>unbase64</code> 编码与完整性，<code>hostalive</code> 只读探测。</li><li><code>C_SC.cash</code> 做便携化交互：<code>isportable</code> / <code>copytoexe</code> 判断与就地写文件，<code>freebytes</code> / <code>diskfree</code> / <code>is64bit</code> 查资源，<code>portcheck</code> / <code>portscan</code> 扫本机端口。</li><li>三个头都<strong>控制台可用</strong>；做窗口工具时叠 <code>C_OPED.cash</code> + <code>C_CSS.cash</code> 出一块深色"系统信息面板"。</li><li>积木视图里，文件与系统、操作系统、网络与攻防、便携化交互四个新分类，都要先 <code>use</code> 对应头文件才显示。</li></ul>
+<h3>实训任务</h3>
+<ol><li>给 13.2 的"系统体检"加一段：用 <code>findproc</code> 检查常见后台进程（如 <code>explorer</code>）在不在，<code>print</code> 出结果。</li><li>写一个"文件指纹"小工具：用 <code>C_IO.cash</code> 的 <code>readfile</code> 读出一个文本，再 <code>fnv1a</code> 算指纹并 <code>writefile</code> 存成 <code>.hash</code>；下次再读，指纹变了就提示"文件被改过"。</li><li>做一个绿色版"下载器骨架"：先用 <code>isurl</code> 校验地址，再 <code>hostalive(urlhost(地址), urlport(地址))</code> 探端口，通了才 <code>appendfile</code> 记一条到日志；整包判断 <code>isportable()</code> 决定缓存放哪里。</li></ol>
+<h3>本章测验</h3>
+<ol><li>选择题：想知道"本程序是不是以管理员身份运行"，用（　）。</li></ol>
+<ul><li>A. <code>os_pid()</code>　B. <code>isadmin()</code>　C. <code>findproc()</code>　D. <code>uptime()</code></li></ul>
+<ol><li>选择题：判断一段文字是不是合法的 <code>http</code> / <code>https</code> 网址，用（　）。</li></ol>
+<ul><li>A. <code>isip()</code>　B. <code>fnv1a()</code>　C. <code>isurl()</code>　D. <code>urlhost()</code></li></ul>
+<ol><li>选择题：把 <code>"hello"</code> 编码成 base64 再还原，应该（　）。</li></ol>
+<ul><li>A. 还原成 <code>"hello"</code>　B. 还原成 <code>"aGVsbG8="</code>　C. 还原成空串　D. 编译报错</li></ul>
+<ol><li>判断题：<code>os_cpu()</code> 的返回值因机器而异，程序里可以放心写死判断。（　）</li><li>判断题：<code>hostalive</code> / <code>portcheck</code> / <code>portscan</code> 是只读连接探测，不开监听、不对外攻击。（　）</li><li>判断题：绿色版程序在 <code>isportable()</code> 为 1 时，可以把缓存文件写到 exe 旁边。（　）</li><li>编程题：写一个控制台程序，用 <code>os_cores()</code>、<code>os_ram()</code>、<code>uptime()</code> 三行拼出一句"本机器 X 核、Y GB 内存，已开机约 Z 分钟"。</li><li>编程题：做一个"网址检查"窗口——输入框填网址，点按钮用 <code>isurl</code> + <code>urlhost</code> + <code>urlport</code> 在标签里显示"合法/不合法、主机、端口"；不合法就变红提示。</li></ol>
 <hr>
 <h2>附录 A　语法速查表</h2>
 <p>这一份是把全书用到的写法收在一起，写代码时查这里比翻正文快。</p>

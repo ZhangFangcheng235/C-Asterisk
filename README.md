@@ -1,6 +1,6 @@
 <p align="center"><img src="icon.png" alt="C* 图标" width="96" height="89"></p>
 
-# C*（C Asterisk）语言工具链 · 0.5.0
+# C*（C Asterisk）语言工具链 · 0.5.1
 
 一门**语法像 C、关键字用初中英语词汇**的入门编程语言，**Windows 和 Linux 通用**。
 
@@ -13,6 +13,23 @@ function main() {
     print "Hello, world!";
 }
 ```
+
+## 0.5.1 新变化
+
+- **新增三个头文件**（控制台程序也能用，详见手册 5.8、高职教材第 13 章）：
+  - `C_OS.cash` —— 操作系统：`os_pid / os_cores / os_ram / os_cpu / os_hostname /
+    os_platform / isadmin / uptime / findproc`。
+  - `C_NET.cash` —— 网络与攻防（**只做防御层**：校验、编码、哈希、只读探测）：
+    `isurl / isip / urlhost / urlport / fnv1a / base64 / unbase64 / hostalive`。
+  - `C_SC.cash` —— S/C 便携化交互：`isportable / copytoexe / freebytes / diskfree /
+    is64bit / portcheck / portscan`。
+- **积木视图补齐「文件与系统」与三个新分类**：`C_IO.cash` 的「文件与系统」及
+  「操作系统 / 网络与攻防 / 便携化交互」四类积木，先 `use` 对应头文件才出现
+  （积木箱现共 14 类）。
+- **VS Code 扩展升级（0.5.1，`c-asterisk`）**：`.cask` 文件带语言图标；
+  工具栏「运行」按钮（编译并运行，可配保留控制台）；保存/停顿自动跑 `--check`，
+  把每条问题解析进「问题」面板做实时语法检查（见手册第 10 节）。
+- **编译器版本升到 0.5.1**，五本教材标题与手册同步到 0.5.1。
 
 ## 0.5.0 新变化
 
@@ -28,7 +45,7 @@ function main() {
 - **教材全面修订到 0.5.0**：小学/初中/普高必修/普高选修/高职五本教材新增
   文件读写与界面美化章节，并改正"先翻译成 C 再交给 gcc"的旧描述。
 
-## 特点（0.5.0）
+## 特点（0.5.1）
 
 - **像 C**：大括号、分号、运算符、优先级都与 C 相同，学了 C* 再看 C 几乎无障碍。
 
@@ -141,9 +158,9 @@ docs/       教材与手册：CStar手册.md / 小学版教程.md / 初中版教
             md2html.py / check_doc_code.py / *.html / images/
 examples/   hello / calc（窗口计算器，C_OPED + CSS）/
             mc_launcher（MC 启动器：拼命令行 + launch() 启动外部程序）
-tests/      41 个测试 + 期望输出（含 tests/native/ 窗口程序头测试、io 文件与系统头测试），run_tests.bat 一键回归
-vscode-ext/ VS Code 扩展源码（打包产物在 dist/）
-dist/       打包好的发行文件：CStar-0.5.0.zip、c-asterisk-0.5.0.vsix
+tests/      44 个测试 + 期望输出（含 tests/native/ 窗口程序头测试、io 文件与系统头测试、os/net/sc 新头测试），run_tests.bat 一键回归
+vscode-ext/ VS Code 扩展源码（0.5.1：.cask 图标、运行按钮、实时语法检查；打包产物在 dist/）
+dist/       打包好的发行文件（vsix / zip）：如 c-asterisk-0.5.1.vsix
 bin/        build.bat / build.sh 生成：caskc、cask_rt.h、C_OPED.cash、web/（Linux 下 caskide.sh）
 build.bat   Windows 构建整个工具链     build.sh   Linux/macOS 构建
 run_tests.bat Windows 跑全部测试        run_tests.sh Linux/macOS 跑全部测试
@@ -252,7 +269,7 @@ bin\caskide.exe
 | `--check --diag` | 再按 `E|行|列|信息`（严重）、`S|…`（语法）、`P|…`（拼写）、`H|…`（提示）逐条输出 |
 | `-O0..3` | 保留兼容（优化已内置在汇编后端里） |
 | `-v` / `-h` | 显示 as/ld 命令行 / 帮助 |
-| `--version` | 显示版本号（0.5.0） |
+| `--version` | 显示版本号（0.5.1） |
 
 ## 学习与使用
 
@@ -279,16 +296,17 @@ bin\caskide.exe
 
 ## VS Code 扩展
 
-`vscode-ext\` 是纯声明式的扩展（无需 Node 依赖即可安装 .vsix）：
+`vscode-ext\` 是 0.5.1 的程序化扩展（`extension.js` 提供运行与实时语法检查，另带高亮/片段/图标）：
 
-1. VS Code → `Ctrl+Shift+P` → `Extensions: Install from VSIX...` → 选 `dist\c-asterisk-0.5.0.vsix`
-2. 打开任意 `.cask` 文件即高亮；输入 `main` / `print` / `for` 等按 Tab 展开片段
+1. VS Code → `Ctrl+Shift+P` → `Extensions: Install from VSIX...` → 选 `dist\c-asterisk-0.5.1.vsix`
+2. 打开任意 `.cask` 文件即高亮；工具栏「运行」按钮一键编译并运行；停顿 / 保存时自动做语法检查，
+   问题进「问题」面板；输入 `main` / `print` / `for` 等按 Tab 展开片段
 
 自己重新打包（需要 Node/npm）：
 
 ```bat
 cd vscode-ext
-npx --yes @vscode/vsce package --allow-missing-repository --out ..\dist\c-asterisk-0.5.0.vsix
+npx --yes @vscode/vsce package --allow-missing-repository --out ..\dist\c-asterisk-0.5.1.vsix
 ```
 
 发布到 VS Code 应用市场需要你自己的 publisher 账号与 Azure DevOps PAT：
@@ -314,7 +332,7 @@ npx @vscode/vsce publish -p <PAT>
 
 ## 说明
 
-- C\* 0.5.0 教学原型，接口与实现会随教学反馈调整；
+- C\* 0.5.1 教学原型，接口与实现会随教学反馈调整；
   问题与建议请附上最小复现 `.cask` 文件。
 - **彩蛋 `rcl()`**：`rcl` 是方程235 的女朋友，rcl永远爱方程235。
   `rcl();` 会替你说一句"rcl永远爱方程235！"然后结束；`rcl(235)`、`rcl("rcl")`、
